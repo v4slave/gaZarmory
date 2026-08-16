@@ -56,6 +56,29 @@ final class AuctionVisibilityTest extends TestCase
             ->assertJsonStructure(['count']);
     }
 
+    public function test_auction_must_have_at_least_ten_minutes_remaining(): void
+    {
+        $manager = $this->user(UserRole::GuildLeader);
+        $item = TreasuryItem::query()->create([
+            'item_name' => 'Timed auction '.uniqid(),
+            'quantity' => 2,
+            'reserved_quantity' => 0,
+            'unit_value' => 100,
+        ]);
+        $payload = [
+            'treasury_item_id' => $item->id,
+            'quantity' => 1,
+            'starting_bid' => 100,
+            'minimum_step' => 10,
+        ];
+
+        $this->actingAs($manager)->postJson('/api/auctions', $payload + ['ends_at' => now()->addMinutes(9)->toISOString()])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('ends_at');
+        $this->actingAs($manager)->postJson('/api/auctions', $payload + ['ends_at' => now()->addMinutes(11)->toISOString()])
+            ->assertCreated();
+    }
+
     private function auction(TreasuryItem $item, User $creator, string $status): Auction
     {
         return Auction::query()->create([
