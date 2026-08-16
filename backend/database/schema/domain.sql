@@ -16,7 +16,7 @@ CREATE TABLE users (
   discord_username VARCHAR(255) NOT NULL,
   discord_display_name VARCHAR(255),
   discord_avatar VARCHAR(255),
-  role user_role NOT NULL DEFAULT 'member', roles JSONB NOT NULL DEFAULT '["member"]'::jsonb CHECK (jsonb_typeof(roles) = 'array'),
+  role user_role NOT NULL DEFAULT 'member',
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE TABLE groups (
