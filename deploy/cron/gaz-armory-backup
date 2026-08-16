@@ -1,0 +1,2 @@
+# Ежедневная резервная копия в 03:20 от root.
+20 3 * * * root APP_DIR=/var/www/gaz-armory/current BACKUP_DIR=/var/backups/gaz-armory ENV_FILE=/etc/gaz-armory/backup.env /var/www/gaz-armory/current/deploy/scripts/backup.sh >> /var/log/gaz-armory-backup.log 2>&1

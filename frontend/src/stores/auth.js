@@ -1,0 +1,26 @@
+import { defineStore } from 'pinia'
+import { api } from '../api.js'
+
+export const useAuthStore = defineStore('auth', {
+  state: () => ({ user: null, loading: true }),
+  getters: {
+    authenticated: (state) => Boolean(state.user),
+    canManage: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'developer'].includes(role)),
+    canAdmin: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'developer'].includes(role)),
+    isGuildLeader: (state) => (state.user?.roles ?? [state.user?.role]).includes('guild_leader'),
+    isPartyLeader: (state) => (state.user?.roles ?? [state.user?.role]).includes('party_leader'),
+    partyGroupId: (state) => (state.user?.roles ?? [state.user?.role]).includes('party_leader') ? state.user?.player?.group_id ?? null : null,
+  },
+  actions: {
+    async fetchMe() {
+      try { this.user = (await api.get('/api/me')).data }
+      catch (error) { if (error.response?.status === 401) this.user = null; else throw error }
+      finally { this.loading = false }
+    },
+    login() { window.location.assign(`${api.defaults.baseURL}/auth/discord`) },
+    async logout() { await api.post('/api/logout'); this.user = null },
+    async linkPlayer(playerId) { await api.post('/api/me/player', { player_id: playerId }); await this.fetchMe() },
+    async renamePlayer(nickname) { await api.patch('/api/me/player/nickname', { nickname }); await this.fetchMe() },
+    async changePlayerClass(playerClass) { await api.patch('/api/me/player/class', { class: playerClass }); await this.fetchMe() },
+  },
+})
