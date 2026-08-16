@@ -9,6 +9,7 @@ use App\Services\UserRoleManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 
 final class AdminUserController extends Controller
@@ -74,6 +75,42 @@ final class AdminUserController extends Controller
         });
 
         return response()->json($updated->refresh()->load(['player.group:id,name']));
+    }
+
+    public function destroy(Request $request, User $managedUser, AuditService $audit): JsonResponse
+    {
+        $this->authorizeAdministrator($request);
+        if ($request->user()->is($managedUser)) {
+            throw ValidationException::withMessages(['user' => 'Нельзя удалить собственный аккаунт.']);
+        }
+
+        DB::transaction(function () use ($managedUser, $audit): void {
+            $lockedUser = User::query()->lockForUpdate()->with('player')->findOrFail($managedUser->id);
+            $roles = $lockedUser->roles ?: [$lockedUser->role->value];
+            if (in_array(UserRole::GuildLeader->value, $roles, true)) {
+                $leadersCount = User::query()
+                    ->whereJsonContains('roles', UserRole::GuildLeader->value)
+                    ->lockForUpdate()->get(['id'])->count();
+                if ($leadersCount <= 1) {
+                    throw ValidationException::withMessages(['user' => 'Нельзя удалить последнего ГЛ.']);
+                }
+            }
+
+            foreach (['activities', 'activity_loot', 'treasury_item_transactions', 'treasury_transactions', 'auctions', 'payouts', 'loot_imports'] as $table) {
+                if (DB::table($table)->where('created_by', $lockedUser->id)->exists()) {
+                    throw ValidationException::withMessages([
+                        'user' => 'Пользователь уже проводил операции. Его нельзя удалить, чтобы не повредить историю; отвяжите от него персонажа.',
+                    ]);
+                }
+            }
+
+            $snapshot = $lockedUser->only(['id', 'discord_id', 'discord_username', 'discord_display_name']);
+            $snapshot['player_id'] = $lockedUser->player?->id;
+            $audit->record('user.deleted', $lockedUser, $snapshot, null);
+            $lockedUser->delete();
+        });
+
+        return response()->json(null, 204);
     }
 
     private function authorizeAdministrator(Request $request): void

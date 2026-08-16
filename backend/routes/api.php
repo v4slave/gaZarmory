@@ -34,9 +34,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
 
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::patch('/admin/users/{managedUser}/roles', [AdminUserController::class, 'updateRole']);
+    Route::delete('/admin/users/{managedUser}', [AdminUserController::class, 'destroy']);
     Route::get('/admin/audit-logs', AuditLogController::class);
 
     Route::apiResource('players', PlayerController::class);
+    Route::post('/players/{player}/activate', [PlayerController::class, 'activate']);
     Route::put('/players/{player}/group', [PlayerController::class, 'move']);
     Route::put('/players/{player}/user', PlayerLinkController::class);
     Route::apiResource('groups', GuildGroupController::class)->except('show');

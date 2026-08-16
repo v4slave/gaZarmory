@@ -147,4 +147,14 @@ final class PlayerController extends Controller
         $this->audit->record('player.deactivated', $player, $old, ['is_active' => false]);
         return response()->json(null, 204);
     }
+
+    public function activate(Player $player): JsonResponse
+    {
+        $this->authorize('update', $player);
+        $old = ['is_active' => $player->is_active];
+        $player->update(['is_active' => true]);
+        $this->audit->record('player.activated', $player, $old, ['is_active' => true]);
+
+        return response()->json($player->refresh()->load(['group', 'user']));
+    }
 }
