@@ -48,6 +48,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::delete('/activities/{activity}/players/{playerId}', [ActivityController::class, 'removePlayer']);
     Route::post('/activities/{activity}/complete', [ActivityController::class, 'complete']);
     Route::post('/activities/{activity}/loot', [ActivityLootController::class, 'store']);
+    Route::delete('/activities/{activity}/loot/{loot}', [ActivityLootController::class, 'destroy']);
     Route::post('/activities/{activity}/calculate-prime', PrimeCalculationController::class);
     Route::post('/activities/{activity}/loot-imports', [LootImportController::class, 'store']);
     Route::get('/loot-imports/{lootImport}', [LootImportController::class, 'show']);

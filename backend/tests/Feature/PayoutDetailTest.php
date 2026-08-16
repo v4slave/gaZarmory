@@ -9,6 +9,7 @@ use App\Models\ActivityDefinition;
 use App\Models\Payout;
 use App\Models\Player;
 use App\Models\PrimePlayerEarning;
+use App\Models\TreasuryTransaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -72,6 +73,51 @@ final class PayoutDetailTest extends TestCase
 
         self::assertSame($payoutsBefore, Payout::query()->count());
         self::assertSame($auditLogsBefore, \App\Models\AuditLog::query()->count());
+    }
+
+    public function test_creation_calculates_and_pays_earnings_atomically(): void
+    {
+        $leader = $this->user(UserRole::GuildLeader);
+        [, $player] = $this->memberWithPlayer('PaidOnCreate');
+        $definition = ActivityDefinition::query()->create([
+            'name' => 'Paid payout '.uniqid(),
+            'type' => 'prime',
+            'is_active' => true,
+        ]);
+        $activity = Activity::query()->create([
+            'activity_definition_id' => $definition->id,
+            'occurred_at' => '2026-08-16 12:00:00+03',
+            'gold_value' => 400,
+            'completed_at' => '2026-08-16 12:10:00+03',
+            'created_by' => $leader->id,
+        ]);
+        $activity->players()->attach($player->id, ['created_at' => now()]);
+        $earning = PrimePlayerEarning::query()->create([
+            'activity_id' => $activity->id,
+            'player_id' => $player->id,
+            'nickname_snapshot' => $player->nickname,
+            'prime_gold_value_snapshot' => 400,
+            'participants_count_snapshot' => 1,
+            'player_share' => 400,
+            'status' => 'pending',
+        ]);
+        TreasuryTransaction::query()->create([
+            'type' => 'manual_income',
+            'amount' => 1000,
+            'balance_after' => 1000,
+            'description' => 'Test balance',
+            'created_by' => $leader->id,
+        ]);
+
+        $response = $this->actingAs($leader)->postJson('/api/payouts', [
+            'period_from' => '2026-08-16',
+            'period_to' => '2026-08-16',
+        ])->assertCreated()->assertJsonPath('status', 'paid')->assertJsonPath('total_amount', 400);
+
+        $payoutId = $response->json('id');
+        $this->assertDatabaseHas('prime_player_earnings', ['id' => $earning->id, 'payout_id' => $payoutId, 'status' => 'paid']);
+        $this->assertDatabaseHas('payout_players', ['payout_id' => $payoutId, 'player_id' => $player->id, 'status' => 'paid', 'amount' => 400]);
+        self::assertSame(600, (int) TreasuryTransaction::query()->latest('id')->value('balance_after'));
     }
 
     public function test_activity_from_cancelled_payout_can_be_calculated_again_across_months(): void

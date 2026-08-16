@@ -33,6 +33,7 @@ export const useActivitiesStore = defineStore('activities', {
       await api.post(`/api/activities/${id}/loot`, body)
       await this.fetchActivity(id)
     },
+    async removeLoot(id, lootId) { await api.delete(`/api/activities/${id}/loot/${lootId}`); await this.fetchActivity(id) },
     async calculatePrime(id) { this.current = (await api.post(`/api/activities/${id}/calculate-prime`)).data },
     async completeActivity(id) { this.current = (await api.post(`/api/activities/${id}/complete`)).data },
     async uploadLootTable(activityId, file) {

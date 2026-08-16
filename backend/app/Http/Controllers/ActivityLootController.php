@@ -11,6 +11,7 @@ use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class ActivityLootController extends Controller
 {
@@ -61,5 +62,36 @@ final class ActivityLootController extends Controller
         });
 
         return response()->json($loot->refresh(), 201);
+    }
+
+    public function destroy(Request $request, Activity $activity, ActivityLoot $loot, AuditService $audit): JsonResponse
+    {
+        abort_unless($request->user()->canManageGuild(), 403);
+        abort_unless($loot->activity_id === $activity->id, 404);
+
+        DB::transaction(function () use ($activity, $loot, $request, $audit): void {
+            $lockedActivity = Activity::query()->lockForUpdate()->findOrFail($activity->id);
+            abort_if($lockedActivity->completed_at, 409, 'Из завершённой активности нельзя удалить лут.');
+            abort_if($lockedActivity->earnings()->exists(), 409, 'Лут рассчитанного прайма нельзя изменить.');
+            $lockedLoot = ActivityLoot::query()->lockForUpdate()->findOrFail($loot->id);
+            $item = TreasuryItem::query()->where('item_name', $lockedLoot->item_name)->lockForUpdate()->first();
+            if (!$item || $item->available_quantity < $lockedLoot->quantity) {
+                throw ValidationException::withMessages(['loot' => 'Предмет уже зарезервирован, продан или выдан. Сначала отмените связанную операцию.']);
+            }
+            $item->decrement('quantity', $lockedLoot->quantity);
+            TreasuryItemTransaction::query()->create([
+                'treasury_item_id' => $item->id,
+                'type' => 'adjustment',
+                'quantity_delta' => -$lockedLoot->quantity,
+                'source_activity_id' => $lockedActivity->id,
+                'reason' => 'Удаление лута из черновика активности',
+                'created_by' => $request->user()->id,
+            ]);
+            $old = $lockedLoot->getAttributes();
+            $audit->record('activity_loot.deleted', $lockedLoot, $old, null);
+            $lockedLoot->delete();
+        });
+
+        return response()->json(null, 204);
     }
 }

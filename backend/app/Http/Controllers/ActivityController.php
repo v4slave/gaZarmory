@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Activity;
 use App\Models\ActivityDefinition;
+use App\Models\TreasuryItem;
+use App\Models\TreasuryItemTransaction;
 use App\Actions\CalculatePrimeShares;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
@@ -50,11 +52,28 @@ final class ActivityController extends Controller
         return $activity->refresh()->load('definition');
     }
 
-    public function destroy(Activity $activity)
+    public function destroy(Request $request, Activity $activity)
     {
         $this->authorize('delete',$activity);
-        abort_if($activity->completed_at||$activity->loot()->exists()||$activity->earnings()->exists()||$activity->lootImports()->exists(),409,'Нельзя удалить завершённую активность или черновик с лутом.');
-        $old=$activity->getAttributes(); $activity->delete(); $this->audit->record('activity.deleted',$activity,$old,null);
+        DB::transaction(function () use ($activity, $request): void {
+            $locked = Activity::query()->with('loot')->lockForUpdate()->findOrFail($activity->id);
+            abort_if($locked->completed_at || $locked->earnings()->exists(), 409, 'Удалить можно только незавершённый черновик без начислений.');
+            foreach ($locked->loot as $loot) {
+                $item = TreasuryItem::query()->where('item_name', $loot->item_name)->lockForUpdate()->first();
+                if (!$item || $item->available_quantity < $loot->quantity) {
+                    throw ValidationException::withMessages(['activity' => "Лут «{$loot->item_name}» уже использован. Сначала отмените связанную операцию."]);
+                }
+                $item->decrement('quantity', $loot->quantity);
+                TreasuryItemTransaction::query()->create(['treasury_item_id'=>$item->id,'type'=>'adjustment','quantity_delta'=>-$loot->quantity,'source_activity_id'=>$locked->id,'reason'=>'Удаление черновика активности','created_by'=>$request->user()->id]);
+            }
+            $old = $locked->getAttributes();
+            $this->audit->record('activity.deleted', $locked, $old, null);
+            $locked->lootImports()->delete();
+            $locked->loot()->delete();
+            $locked->players()->detach();
+            TreasuryItemTransaction::query()->where('source_activity_id', $locked->id)->update(['source_activity_id'=>null]);
+            $locked->delete();
+        });
         return response()->noContent();
     }
 
