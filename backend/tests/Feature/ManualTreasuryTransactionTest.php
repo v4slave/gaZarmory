@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Enums\PlayerClass;
+use App\Models\Player;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -49,6 +51,8 @@ final class ManualTreasuryTransactionTest extends TestCase
         $suffix = str_replace('.', '', uniqid('', true));
         $user = User::query()->create(['discord_id' => $suffix, 'discord_username' => 'treasury-'.$suffix]);
         $user->forceFill(['role' => $role, 'roles' => [$role->value]])->save();
+        Player::query()->create(['nickname' => 'Treasury'.$user->id, 'class' => PlayerClass::Melee, 'is_active' => false])
+            ->forceFill(['user_id' => $user->id])->save();
         return $user;
     }
 }

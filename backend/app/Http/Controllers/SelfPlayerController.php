@@ -11,6 +11,15 @@ use Illuminate\Validation\ValidationException;
 
 final class SelfPlayerController extends Controller
 {
+    public function options()
+    {
+        return Player::query()
+            ->where('is_active', true)
+            ->whereNull('user_id')
+            ->orderBy('nickname')
+            ->get(['id', 'nickname', 'class']);
+    }
+
     public function link(Request $request,LinkDiscordUserToPlayer $action)
     {
         $data=$request->validate(['player_id'=>['required','integer','exists:players,id']]);

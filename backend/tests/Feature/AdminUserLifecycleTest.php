@@ -63,6 +63,8 @@ final class AdminUserLifecycleTest extends TestCase
             'discord_username' => 'lifecycle-'.$suffix,
         ]);
         $user->forceFill(['roles' => $roles, 'role' => User::primaryRoleFor($roles)])->save();
+        Player::query()->create(['nickname' => 'Life'.$user->id, 'class' => PlayerClass::Melee, 'is_active' => false])
+            ->forceFill(['user_id' => $user->id])->save();
         return $user;
     }
 }

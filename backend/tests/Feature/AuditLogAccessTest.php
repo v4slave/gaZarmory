@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Enums\PlayerClass;
 use App\Models\AuditLog;
+use App\Models\Player;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -51,6 +53,8 @@ final class AuditLogAccessTest extends TestCase
             'discord_username' => 'audit-'.$suffix,
         ]);
         $user->forceFill(['roles' => $roles, 'role' => User::primaryRoleFor($roles)])->save();
+        Player::query()->create(['nickname' => 'Audit'.$user->id, 'class' => PlayerClass::Melee, 'is_active' => false])
+            ->forceFill(['user_id' => $user->id])->save();
         return $user;
     }
 }

@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Enums\UserRole;
+use App\Enums\PlayerClass;
 use App\Models\Auction;
+use App\Models\Player;
 use App\Models\TreasuryItem;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -97,6 +99,8 @@ final class AuctionVisibilityTest extends TestCase
         $suffix = str_replace('.', '', uniqid('', true));
         $user = User::query()->create(['discord_id' => $suffix, 'discord_username' => 'auction-'.$suffix]);
         $user->forceFill(['role' => $role, 'roles' => [$role->value]])->save();
+        Player::query()->create(['nickname' => 'Auction'.$user->id, 'class' => PlayerClass::Melee, 'is_active' => false])
+            ->forceFill(['user_id' => $user->id])->save();
 
         return $user;
     }

@@ -1,11 +1,9 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
-import { useGuildStore } from '../stores/guild.js'
 const auth = useAuthStore()
-const guild = useGuildStore()
 const route = useRoute()
 const menuOpen = ref(false)
 const showLinker = ref(false)
@@ -13,12 +11,13 @@ const selectedPlayerId = ref('')
 const linking = ref(false)
 const linkError = ref('')
 const activeAuctions = ref(0)
-const freePlayers = computed(() => guild.players.filter(player => player.is_active && !player.user))
+const freePlayers = ref([])
+const playerOptionsLoading = ref(false)
 const links = [
   ['/dashboard', 'Обзор'], ['/roster', 'Состав'], ['/groups', 'Конст-пати'],
   ['/activities', 'Активности'], ['/treasury', 'Казна'], ['/auctions', 'Аукционы'], ['/payouts', 'Нахрюк'],
 ]
-async function loadActiveAuctions(){if(!auth.authenticated)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
+async function loadActiveAuctions(){if(!auth.user?.player)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
 function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
 watch(() => route.fullPath, () => { menuOpen.value = false;loadActiveAuctions() })
 watch(() => auth.authenticated, authenticated => { if(authenticated)loadActiveAuctions();else activeAuctions.value=0 })
@@ -27,7 +26,10 @@ onBeforeUnmount(()=>window.removeEventListener('auction-count-changed',updateAuc
 async function openLinker() {
   showLinker.value = true
   linkError.value = ''
-  await guild.fetchPlayers({ active: true, per_page: 100 })
+  playerOptionsLoading.value = true
+  try { freePlayers.value = (await api.get('/api/me/player-options')).data }
+  catch (error) { linkError.value = error.response?.data?.message ?? 'Не удалось загрузить список персонажей.' }
+  finally { playerOptionsLoading.value = false }
 }
 async function linkProfile() {
   if (!selectedPlayerId.value) return
@@ -39,7 +41,10 @@ async function linkProfile() {
 </script>
 
 <template>
-  <div class="shell">
+  <div v-if="auth.loading" class="access-gate"><div class="access-card"><span class="access-loader"></span><p>Проверяем авторизацию…</p></div></div>
+  <div v-else-if="!auth.authenticated" class="access-gate"><div class="access-card guest-card"><img src="/gaz-armory-logo.png" alt="GAZ ARMORY"><p class="eyebrow">ARCHAGE GUILD MANAGEMENT</p><h1>GAZ ARMORY</h1><button class="primary access-primary" @click="auth.login">Войти через Discord</button></div></div>
+  <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/gaz-armory-logo.png" alt="GAZ ARMORY"><p class="eyebrow">ПЕРВЫЙ ВХОД</p><h1>Привяжите персонажа</h1><p class="muted">До привязки игрового профиля разделы гильдии недоступны.</p><button class="primary access-primary" @click="openLinker">Выбрать персонажа</button><button class="access-logout" @click="auth.logout">Выйти</button></div></div>
+  <div v-else class="shell">
     <aside :class="{ open: menuOpen }">
       <div class="brand">
         <img src="/gaz-armory-logo.png" alt="GAZ ARMORY">
@@ -61,20 +66,20 @@ async function linkProfile() {
       </header>
       <RouterView />
     </main>
-    <div v-if="showLinker" class="modal" @click.self="showLinker=false">
-      <form class="form-card" @submit.prevent="linkProfile">
-        <h2>Привязать игровой профиль</h2>
-        <p class="muted">Выберите своего персонажа. После привязки этот профиль нельзя будет занять другому пользователю.</p>
-        <label>Игровой никнейм
-          <select v-model="selectedPlayerId" required>
-            <option value="" disabled>Выберите персонажа</option>
-            <option v-for="player in freePlayers" :key="player.id" :value="player.id">{{ player.nickname }}</option>
-          </select>
-        </label>
-        <p v-if="!guild.loading&&!freePlayers.length" class="empty">Свободных активных профилей не найдено.</p>
-        <p v-if="linkError" class="notice error">{{ linkError }}</p>
-        <div class="form-actions"><button type="button" @click="showLinker=false">Отмена</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ linking?'Привязка…':'Привязать' }}</button></div>
-      </form>
-    </div>
+  </div>
+  <div v-if="showLinker" class="modal" @click.self="showLinker=false">
+    <form class="form-card" @submit.prevent="linkProfile">
+      <h2>Привязать игровой профиль</h2>
+      <p class="muted">Выберите своего персонажа. После привязки этот профиль нельзя будет занять другому пользователю.</p>
+      <label>Игровой никнейм
+        <select v-model="selectedPlayerId" required>
+          <option value="" disabled>Выберите персонажа</option>
+          <option v-for="player in freePlayers" :key="player.id" :value="player.id">{{ player.nickname }}</option>
+        </select>
+      </label>
+      <p v-if="!playerOptionsLoading&&!freePlayers.length" class="empty">Свободных активных профилей не найдено.</p>
+      <p v-if="linkError" class="notice error">{{ linkError }}</p>
+      <div class="form-actions"><button type="button" @click="showLinker=false">Отмена</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ linking?'Привязка…':'Привязать' }}</button></div>
+    </form>
   </div>
 </template>

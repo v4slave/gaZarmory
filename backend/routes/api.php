@@ -29,9 +29,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/me', fn (Request $request) => $request->user()?->load('player'));
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/me/player', [SelfPlayerController::class, 'link']);
+    Route::get('/me/player-options', [SelfPlayerController::class, 'options']);
     Route::patch('/me/player/nickname', [SelfPlayerController::class, 'rename']);
     Route::patch('/me/player/class', [SelfPlayerController::class, 'changeClass']);
 
+    Route::middleware('player.linked')->group(function (): void {
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::patch('/admin/users/{managedUser}/roles', [AdminUserController::class, 'updateRole']);
     Route::delete('/admin/users/{managedUser}', [AdminUserController::class, 'destroy']);
@@ -84,4 +86,5 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/loot-catalog', [LootCatalogController::class, 'store']);
     Route::put('/loot-catalog/{lootCatalogItem}', [LootCatalogController::class, 'update']);
     Route::delete('/loot-catalog/{lootCatalogItem}', [LootCatalogController::class, 'destroy']);
+    });
 });

@@ -3,8 +3,10 @@
 namespace Tests\Feature;
 
 use App\Enums\ActivityType;
+use App\Enums\PlayerClass;
 use App\Enums\UserRole;
 use App\Models\ActivityDefinition;
+use App\Models\Player;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
@@ -41,6 +43,8 @@ final class ActivityDefinitionIconTest extends TestCase
         $suffix=str_replace('.','',uniqid('',true));
         $user=User::query()->create(['discord_id'=>$suffix,'discord_username'=>'icon-'.$suffix]);
         $user->forceFill(['role'=>$role,'roles'=>[$role->value]])->save();
+        Player::query()->create(['nickname'=>'Icon'.$user->id,'class'=>PlayerClass::Melee,'is_active'=>false])
+            ->forceFill(['user_id'=>$user->id])->save();
         return $user;
     }
 }

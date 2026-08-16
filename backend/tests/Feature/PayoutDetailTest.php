@@ -176,12 +176,15 @@ final class PayoutDetailTest extends TestCase
         $suffix=str_replace('.','',uniqid('',true));
         $user=User::query()->create(['discord_id'=>$suffix,'discord_username'=>'payout-'.$suffix]);
         $user->forceFill(['role'=>$role,'roles'=>[$role->value]])->save();
+        Player::query()->create(['nickname'=>'Payout'.$user->id,'class'=>PlayerClass::Melee,'is_active'=>false])
+            ->forceFill(['user_id'=>$user->id])->save();
         return $user;
     }
 
     private function memberWithPlayer(string $prefix): array
     {
         $user=$this->user(UserRole::Member);
+        $user->player()->delete();
         $player=Player::query()->create(['nickname'=>$prefix.'-'.substr($user->discord_id,-8),'class'=>PlayerClass::Melee,'is_active'=>true]);
         $player->forceFill(['user_id'=>$user->id])->save();
         $user->setRelation('player',$player);

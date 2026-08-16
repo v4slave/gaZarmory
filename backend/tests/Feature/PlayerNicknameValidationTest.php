@@ -38,6 +38,7 @@ final class PlayerNicknameValidationTest extends TestCase
     public function test_self_rename_uses_the_same_nickname_rule(): void
     {
         $member = $this->user(UserRole::Member);
+        $member->player()->delete();
         $player = Player::query()->create([
             'nickname' => 'ValidName',
             'class' => PlayerClass::Melee,
@@ -57,6 +58,8 @@ final class PlayerNicknameValidationTest extends TestCase
         $suffix = str_replace('.', '', uniqid('', true));
         $user = User::query()->create(['discord_id' => $suffix, 'discord_username' => 'nickname-'.$suffix]);
         $user->forceFill(['role' => $role, 'roles' => [$role->value]])->save();
+        Player::query()->create(['nickname' => 'Nickname'.$user->id, 'class' => PlayerClass::Melee, 'is_active' => false])
+            ->forceFill(['user_id' => $user->id])->save();
 
         return $user;
     }

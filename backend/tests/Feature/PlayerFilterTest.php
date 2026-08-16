@@ -21,6 +21,8 @@ final class PlayerFilterTest extends TestCase
             'discord_username' => 'filter-test',
         ]);
         $user->forceFill(['role' => UserRole::Member, 'roles' => [UserRole::Member->value]])->save();
+        Player::query()->create(['nickname' => 'Filter'.$user->id, 'class' => PlayerClass::Melee, 'is_active' => false])
+            ->forceFill(['user_id' => $user->id])->save();
         $group = GuildGroup::query()->create(['name' => 'Filter group '.uniqid()]);
         $solo = Player::query()->create(['nickname' => 'Solo '.uniqid(), 'class' => PlayerClass::Melee, 'is_active' => true]);
         Player::query()->create(['nickname' => 'Grouped '.uniqid(), 'class' => PlayerClass::Melee, 'group_id' => $group->id, 'is_active' => true]);
