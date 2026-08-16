@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { api } from '../api.js'
 
 export const useActivitiesStore = defineStore('activities', {
-  state: () => ({ items: [], definitions: [], current: null, lootImport: null, loading: false, error: '', filters: { type: '', date_from: '', date_to: '' } }),
+  state: () => ({ items: [], definitions: [], current: null, lootImport: null, loading: false, error: '', filters: { type: '', definition_id: '', date_from: '', date_to: '' } }),
   actions: {
     async fetchDefinitions() {
       try { this.definitions = (await api.get('/api/activity-definitions')).data }
