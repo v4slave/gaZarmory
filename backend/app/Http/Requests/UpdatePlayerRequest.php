@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Enums\PlayerClass;
 use App\Models\Player;
+use App\Rules\ValidPlayerNickname;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -15,11 +16,10 @@ final class UpdatePlayerRequest extends FormRequest
         /** @var Player $player */
         $player = $this->route('player');
         return [
-            'nickname' => ['sometimes', 'required', 'string', 'max:120', Rule::unique('players', 'nickname')->ignore($player)],
+            'nickname' => ['sometimes', 'required', 'string', new ValidPlayerNickname(), Rule::unique('players', 'nickname')->ignore($player)],
             'class' => ['sometimes', 'required', Rule::enum(PlayerClass::class)],
             'group_id' => ['sometimes', 'nullable', 'integer', 'exists:groups,id'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
 }
-

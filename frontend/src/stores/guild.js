@@ -8,7 +8,9 @@ export const useGuildStore = defineStore('guild', {
       this.loading = true; this.error = ''
       try {
         const source = paramsOverride ?? this.filters
-        const params = Object.fromEntries(Object.entries(source).filter(([, value]) => value !== '' && value !== false))
+        const params = Object.fromEntries(Object.entries(source)
+          .filter(([, value]) => value !== '' && value !== false)
+          .map(([key, value]) => [key, typeof value === 'boolean' ? Number(value) : value]))
         const { data } = await api.get('/api/players', { params })
         this.players = data.data; this.pagination = data.meta ?? { current_page: data.current_page, last_page: data.last_page, total: data.total }
       } catch (error) { this.error = error.response?.status === 401 ? 'Войдите через Discord, чтобы загрузить состав.' : (error.response?.data?.message ?? 'Backend недоступен. Запустите Laravel API.') }

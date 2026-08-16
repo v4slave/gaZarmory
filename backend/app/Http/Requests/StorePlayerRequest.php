@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use App\Enums\PlayerClass;
+use App\Rules\ValidPlayerNickname;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -12,11 +13,10 @@ final class StorePlayerRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nickname' => ['required', 'string', 'max:120', 'unique:players,nickname'],
+            'nickname' => ['required', 'string', new ValidPlayerNickname(), 'unique:players,nickname'],
             'class' => ['required', Rule::enum(PlayerClass::class)],
             'group_id' => ['nullable', 'integer', 'exists:groups,id'],
             'is_active' => ['sometimes', 'boolean'],
         ];
     }
 }
-

@@ -21,6 +21,11 @@ final class PlayerController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', Player::class);
+        foreach (['solo', 'active'] as $booleanFilter) {
+            if ($request->has($booleanFilter)) {
+                $request->merge([$booleanFilter => $request->boolean($booleanFilter)]);
+            }
+        }
         $filters = $request->validate([
             'search' => ['nullable', 'string', 'max:120'],
             'class' => ['nullable', Rule::enum(PlayerClass::class)],

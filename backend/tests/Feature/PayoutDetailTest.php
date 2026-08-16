@@ -4,8 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\PlayerClass;
 use App\Enums\UserRole;
+use App\Models\Activity;
+use App\Models\ActivityDefinition;
 use App\Models\Payout;
 use App\Models\Player;
+use App\Models\PrimePlayerEarning;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -54,6 +57,72 @@ final class PayoutDetailTest extends TestCase
 
         $this->actingAs($developer)->deleteJson('/api/payouts/'.$payout->id)->assertNoContent();
         $this->assertDatabaseMissing('payouts',['id'=>$payout->id]);
+    }
+
+    public function test_failed_creation_rolls_back_payout_and_audit_log(): void
+    {
+        $leader = $this->user(UserRole::GuildLeader);
+        $payoutsBefore = Payout::query()->count();
+        $auditLogsBefore = \App\Models\AuditLog::query()->count();
+
+        $this->actingAs($leader)->postJson('/api/payouts', [
+            'period_from' => '1999-01-01',
+            'period_to' => '1999-01-31',
+        ])->assertUnprocessable();
+
+        self::assertSame($payoutsBefore, Payout::query()->count());
+        self::assertSame($auditLogsBefore, \App\Models\AuditLog::query()->count());
+    }
+
+    public function test_activity_from_cancelled_payout_can_be_calculated_again_across_months(): void
+    {
+        $leader = $this->user(UserRole::GuildLeader);
+        [, $player] = $this->memberWithPlayer('AcrossMonths');
+        $definition = ActivityDefinition::query()->create([
+            'name' => 'Cross-month '.uniqid(),
+            'type' => 'prime',
+            'is_active' => true,
+        ]);
+        $activity = Activity::query()->create([
+            'activity_definition_id' => $definition->id,
+            'occurred_at' => '2026-07-31 23:30:00+03',
+            'gold_value' => 500,
+            'created_by' => $leader->id,
+        ]);
+        $activity->players()->attach($player->id, ['created_at' => now()]);
+        PrimePlayerEarning::query()->create([
+            'activity_id' => $activity->id,
+            'player_id' => $player->id,
+            'nickname_snapshot' => $player->nickname,
+            'prime_gold_value_snapshot' => 500,
+            'participants_count_snapshot' => 1,
+            'player_share' => 500,
+            'status' => 'pending',
+        ]);
+
+        $cancelled = Payout::query()->create([
+            'period_from' => '2026-07-01',
+            'period_to' => '2026-07-31',
+            'status' => 'cancelled',
+            'total_amount' => 0,
+            'created_by' => $leader->id,
+        ]);
+        $cancelled->activities()->attach($activity->id);
+        $draft = Payout::query()->create([
+            'period_from' => '2026-07-01',
+            'period_to' => '2026-08-31',
+            'status' => 'draft',
+            'total_amount' => 0,
+            'created_by' => $leader->id,
+        ]);
+
+        $this->actingAs($leader)->postJson('/api/payouts/'.$draft->id.'/calculate')
+            ->assertOk()
+            ->assertJsonPath('status', 'calculated')
+            ->assertJsonPath('total_amount', 500);
+
+        $this->assertDatabaseMissing('payout_activities', ['payout_id' => $cancelled->id, 'activity_id' => $activity->id]);
+        $this->assertDatabaseHas('payout_activities', ['payout_id' => $draft->id, 'activity_id' => $activity->id]);
     }
 
     private function user(UserRole $role): User

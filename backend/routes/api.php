@@ -69,6 +69,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/treasury/items/{item}/sell', TreasuryItemSaleController::class);
     Route::get('/dashboard', DashboardController::class);
     Route::get('/auctions', [AuctionController::class, 'index']);
+    Route::get('/auctions/active-count', [AuctionController::class, 'activeCount']);
     Route::post('/auctions', [AuctionController::class, 'store']);
     Route::get('/auctions/{auction}', [AuctionController::class, 'show']);
     Route::put('/auctions/{auction}', [AuctionController::class, 'update']);

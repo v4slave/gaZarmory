@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useGuildStore } from '../stores/guild.js'
 const auth = useAuthStore()
@@ -11,12 +12,18 @@ const showLinker = ref(false)
 const selectedPlayerId = ref('')
 const linking = ref(false)
 const linkError = ref('')
+const activeAuctions = ref(0)
 const freePlayers = computed(() => guild.players.filter(player => player.is_active && !player.user))
 const links = [
   ['/dashboard', 'Обзор'], ['/roster', 'Состав'], ['/groups', 'Конст-пати'],
   ['/activities', 'Активности'], ['/treasury', 'Казна'], ['/auctions', 'Аукционы'], ['/payouts', 'Нахрюк'],
 ]
-watch(() => route.fullPath, () => { menuOpen.value = false })
+async function loadActiveAuctions(){if(!auth.authenticated)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
+function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
+watch(() => route.fullPath, () => { menuOpen.value = false;loadActiveAuctions() })
+watch(() => auth.authenticated, authenticated => { if(authenticated)loadActiveAuctions();else activeAuctions.value=0 })
+onMounted(()=>{loadActiveAuctions();window.addEventListener('auction-count-changed',updateAuctionCount)})
+onBeforeUnmount(()=>window.removeEventListener('auction-count-changed',updateAuctionCount))
 async function openLinker() {
   showLinker.value = true
   linkError.value = ''
@@ -38,7 +45,7 @@ async function linkProfile() {
         <img src="/gaz-armory-logo.png" alt="GAZ ARMORY">
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
-      <nav><RouterLink v-for="link in links" :key="link[0]" :to="link[0]">{{ link[1] }}</RouterLink></nav>
+      <nav><RouterLink v-for="link in links" :key="link[0]" :to="link[0]"><span>{{ link[1] }}</span><b v-if="link[0]==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></nav>
       <RouterLink v-if="auth.canAdmin" class="admin" to="/admin">Администрирование</RouterLink>
     </aside>
     <button v-if="menuOpen" class="mobile-nav-backdrop" type="button" aria-label="Закрыть меню" @click="menuOpen=false"></button>
