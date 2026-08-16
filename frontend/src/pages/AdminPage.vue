@@ -102,16 +102,20 @@ onMounted(async () => { await Promise.all([loadItems(), loadDefinitions(), loadU
     <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · УПРАВЛЕНИЕ</p><h1>Администрирование</h1><p class="muted">Пользователи, права доступа и справочник предметов</p></div></div>
 
 
+    <div class="admin-action-guide">
+      <article><strong>Отвязать Discord</strong><p>Убирает связь аккаунта с персонажем. Персонаж, его посещения и финансовая история сохраняются, после чего профиль можно привязать другому пользователю.</p></article>
+      <article class="danger-guide"><strong>Ликвидировать персонажа</strong><p>Деактивирует игровой профиль и убирает его из активного состава и списков выбора. История не удаляется, Discord-аккаунт остаётся.</p></article>
+    </div>
     <div class="panel admin-users-panel">
-      <div class="panel-title"><div><h2>Пользователи и роли</h2><p class="muted">ГЛ и Разработчик могут изменять роли. Последнего ГЛ понизить нельзя.</p></div><span class="muted">{{ users.length }} пользователей</span></div>
+      <div class="panel-title"><div><h2>Пользователи и доступ</h2><p class="muted">Назначайте только необходимые права. Последнего ГЛ понизить нельзя.</p></div><span class="muted">{{ users.length }} пользователей</span></div>
       <p v-if="userError" class="notice error">{{ userError }}</p>
       <div class="admin-user-list">
         <article v-for="user in users" :key="user.id" class="admin-user-row">
           <div class="admin-user-avatar"><span>{{ (user.discord_display_name || user.discord_username).slice(0, 1).toUpperCase() }}</span><img v-if="avatarUrl(user)" :src="avatarUrl(user)" alt="" referrerpolicy="no-referrer" @error="$event.currentTarget.remove()"></div>
           <div class="admin-user-identity"><strong>{{ user.discord_display_name || user.discord_username }}</strong><small>@{{ user.discord_username }}</small></div>
           <div class="admin-user-player"><RouterLink v-if="user.player" :to="`/players/${user.player.id}`">{{ user.player.nickname }}</RouterLink><span v-else>Профиль не привязан</span><small v-if="user.player?.group">{{ user.player.group.name }}</small><small v-else-if="user.player">Одиночка</small></div>
-          <div class="admin-role-select"><span>Роли</span><label v-for="(label, value) in roleLabels" :key="value"><input type="checkbox" :checked="(user.roles ?? [user.role]).includes(value)" :disabled="userBusy === user.id" @change="toggleRole(user, value, $event.target.checked)">{{ label }}</label></div>
-          <div class="admin-user-actions"><button :disabled="!user.player || userBusy === user.id" @click="unlinkPlayer(user)">Отвязать</button><button class="danger" :disabled="!user.player?.is_active || userBusy === user.id" @click="deactivatePlayer(user)">Ликвидировать</button></div>
+          <div class="admin-role-select"><span>Права доступа</span><label v-for="(label, value) in roleLabels" :key="value"><input type="checkbox" :checked="(user.roles ?? [user.role]).includes(value)" :disabled="userBusy === user.id" @change="toggleRole(user, value, $event.target.checked)">{{ label }}</label></div>
+          <div class="admin-user-actions"><button title="Снять связь Discord-аккаунта с игровым персонажем, сохранив профиль и историю" :disabled="!user.player || userBusy === user.id" @click="unlinkPlayer(user)">Отвязать Discord</button><button class="danger" title="Деактивировать персонажа без удаления истории" :disabled="!user.player?.is_active || userBusy === user.id" @click="deactivatePlayer(user)">Ликвидировать персонажа</button></div>
         </article>
         <p v-if="!users.length" class="empty">Discord-пользователей пока нет.</p>
       </div>

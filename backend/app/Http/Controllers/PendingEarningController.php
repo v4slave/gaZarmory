@@ -1,6 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 use App\Models\PrimePlayerEarning;
+use App\Models\PayoutPlayer;
 use Illuminate\Http\Request;
 final class PendingEarningController extends Controller
 {
@@ -15,6 +16,8 @@ final class PendingEarningController extends Controller
             ->groupBy('player_id')->orderByDesc('amount')->get();
         $primes=(clone $query)->whereHas('activity.definition',fn($q)=>$q->where('type','prime'))->distinct('activity_id')->count('activity_id');
         $mini=(clone $query)->whereHas('activity.definition',fn($q)=>$q->where('type','mini_activity'))->distinct('activity_id')->count('activity_id');
-        return ['summary'=>['gold'=>(int)$rows->sum('amount'),'primes'=>(int)$primes,'mini_activities'=>(int)$mini,'participants'=>$rows->count()],'players'=>$rows];
+        $paid=PayoutPlayer::query()->where('status','paid');
+        if(!$request->user()->canManageGuild()){$paid->where('player_id',$request->user()->player->id);}
+        return ['summary'=>['gold'=>(int)$rows->sum('amount'),'primes'=>(int)$primes,'mini_activities'=>(int)$mini,'participants'=>$rows->count(),'paid_gold'=>(int)$paid->sum('amount')],'players'=>$rows];
     }
 }
