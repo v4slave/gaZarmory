@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { api } from '../api.js'
 
 export const useGuildStore = defineStore('guild', {
-  state: () => ({ players: [], groups: [], pagination: null, loading: false, error: '', filters: { search: '', class: '', solo: false } }),
+  state: () => ({ players: [], groups: [], pagination: null, loading: false, error: '', filters: { search: '', class: '' } }),
   actions: {
     async fetchPlayers(paramsOverride = null) {
       this.loading = true; this.error = ''

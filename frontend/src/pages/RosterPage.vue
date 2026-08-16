@@ -9,7 +9,7 @@ const moving = ref(null)
 const classes = [['', 'Все классы'], ['melee', 'Милик'], ['archer', 'Лук'], ['mage', 'Маг'], ['healer', 'Хил'], ['bard', 'Бард'], ['tank', 'Танк']]
 const labels = Object.fromEntries(classes)
 let timer
-watch(() => [guild.filters.search, guild.filters.class, guild.filters.solo], () => { clearTimeout(timer); timer = setTimeout(guild.fetchPlayers, 250) })
+watch(() => [guild.filters.search, guild.filters.class], () => { clearTimeout(timer); timer = setTimeout(guild.fetchPlayers, 250) })
 onMounted(() => Promise.all([guild.fetchGroups(), guild.fetchPlayers()]))
 async function movePlayer(player, value) {
   moving.value = player.id
@@ -23,7 +23,7 @@ function availableGroups() { return auth.canManage ? guild.groups : guild.groups
 <template>
   <section>
     <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · ГИЛЬДИЯ</p><h1>Состав</h1><p class="muted">Игроки, классы и распределение по конст-пати</p></div><button v-if="auth.canManage" class="primary" @click="showForm = true">Добавить игрока</button></div>
-    <div class="toolbar"><input v-model="guild.filters.search" placeholder="Поиск по никнейму"><select v-model="guild.filters.class"><option v-for="item in classes" :key="item[0]" :value="item[0]">{{ item[1] }}</option></select><label class="check"><input v-model="guild.filters.solo" type="checkbox"> Только одиночки</label></div>
+    <div class="toolbar"><input v-model="guild.filters.search" placeholder="Поиск по никнейму"><select v-model="guild.filters.class"><option v-for="item in classes" :key="item[0]" :value="item[0]">{{ item[1] }}</option></select></div>
     <p v-if="guild.error" class="notice error">{{ guild.error }}</p>
     <div class="table-wrap"><table><thead><tr><th>Никнейм</th><th>Класс</th><th>Конст-пати</th><th>Посещено праймов</th><th>Посещено мини-праймов</th></tr></thead><tbody>
       <tr v-if="guild.loading"><td colspan="5" class="empty">Загрузка…</td></tr>
