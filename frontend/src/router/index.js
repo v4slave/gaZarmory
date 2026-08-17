@@ -14,7 +14,7 @@ import AuctionPage from '../pages/AuctionPage.vue'
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
-  { path: '/dashboard', component: DashboardPage, meta: { title: 'Обзор' } },
+  { path: '/dashboard', component: DashboardPage, meta: { title: 'Дашборд' } },
   { path: '/roster', component: RosterPage, meta: { title: 'Состав' } },
   { path: '/groups', component: GroupsPage, meta: { title: 'Конст-пати' } },
   { path: '/players/:id', component: PlayerPage, meta: { title: 'Игрок' } },

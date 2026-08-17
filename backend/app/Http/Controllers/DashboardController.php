@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Activity;
+use App\Models\ActivityDefinition;
 use App\Models\Auction;
 use App\Models\Player;
 use App\Models\PrimePlayerEarning;
 use App\Models\TreasuryItem;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
 final class DashboardController extends Controller
@@ -59,6 +61,8 @@ final class DashboardController extends Controller
             'inventory_value' => (int) $items->sum(fn ($item) => $item->quantity * $item->unit_value),
             'pending_payout' => (int) PrimePlayerEarning::query()->where('status', 'pending')->sum('player_share'),
             'active_auctions' => Auction::query()->where('status', 'active')->count(),
+            'treasury_dynamics' => $this->treasuryDynamics(),
+            'upcoming_events' => $this->upcomingEvents(),
             'attendance_period_days' => 30,
             'attendance_top' => $attendanceTop,
             'recent_activities' => Activity::query()
@@ -68,5 +72,57 @@ final class DashboardController extends Controller
                 ->limit(5)
                 ->get(),
         ];
+    }
+
+    private function treasuryDynamics(): array
+    {
+        return collect(range(13, 0))->map(function (int $daysAgo): array {
+            $date = CarbonImmutable::now()->subDays($daysAgo);
+            $endOfDay = $date->endOfDay();
+            $gold = (int) (DB::table('treasury_transactions')
+                ->where('created_at', '<=', $endOfDay)
+                ->latest('id')
+                ->value('balance_after') ?? 0);
+            $inventory = $daysAgo === 0
+                ? (int) TreasuryItem::query()->get()->sum(fn (TreasuryItem $item) => $item->quantity * $item->unit_value)
+                : (int) DB::table('treasury_item_transactions as transactions')
+                    ->join('treasury_items as items', 'items.id', '=', 'transactions.treasury_item_id')
+                    ->where('transactions.created_at', '<=', $endOfDay)
+                    ->sum(DB::raw('transactions.quantity_delta * items.unit_value'));
+
+            return ['date' => $date->toDateString(), 'gold' => $gold, 'inventory_value' => max(0, $inventory)];
+        })->all();
+    }
+
+    private function upcomingEvents(): array
+    {
+        $schedule = [
+            1 => [['16:00','Пепельные равнины'],['19:30','Кракен'],['20:00','Пепельные равнины'],['20:30','Калидис'],['21:00','Летучий Дельфиец'],['21:30','Анталлон'],['21:30','Фантомы']],
+            2 => [['15:00','Око Бури'],['19:30','Ксанатос'],['20:30','Левиафан'],['21:00','Око Бури'],['21:30','Фесаникс'],['21:30','Фантомы']],
+            3 => [['16:00','Пепельные равнины'],['20:00','Пепельные равнины'],['21:00','Осада замка'],['21:00','Летучий Дельфиец']],
+            4 => [['15:00','Око Бури'],['16:00','Пепельные равнины'],['19:30','Кракен'],['20:00','Пепельные равнины'],['20:30','Левиафан'],['21:00','Око Бури'],['21:30','Фантомы']],
+            5 => [['16:00','Пепельные равнины'],['19:30','Ксанатос'],['20:00','Пепельные равнины'],['20:30','Калидис'],['21:00','Летучий Дельфиец'],['21:30','Анталлон'],['21:30','Фантомы'],['22:00','Оборона Ифнира']],
+            6 => [['15:00','Око Бури'],['16:00','Оборона Ифнира'],['16:00','Пепельные равнины'],['18:00','Великий лут'],['19:30','Кракен'],['20:30','Калидис'],['21:00','Око Бури'],['21:20','ГИ Кампания'],['21:30','Фантомы']],
+            7 => [['18:00','Великий лут'],['18:30','Фесаникс'],['19:30','Ксанатос'],['19:50','Анталлон'],['20:30','Левиафан'],['21:00','Летучий Дельфиец'],['21:30','Фантомы']],
+        ];
+        $now = CarbonImmutable::now('Europe/Moscow');
+        $definitions = ActivityDefinition::query()->whereNotNull('icon_path')->get()->keyBy(fn ($item) => mb_strtolower($item->name));
+        $events = collect();
+
+        foreach (range(0, 7) as $offset) {
+            $day = $now->startOfDay()->addDays($offset);
+            foreach ($schedule[$day->dayOfWeekIso] as [$time, $name]) {
+                $startsAt = $day->setTimeFromTimeString($time);
+                if ($startsAt->isBefore($now)) continue;
+                $definition = $definitions->get(mb_strtolower($name));
+                $events->push([
+                    'name' => $name,
+                    'starts_at' => $startsAt->toIso8601String(),
+                    'icon_url' => $definition?->icon_url,
+                ]);
+            }
+        }
+
+        return $events->sortBy('starts_at')->take(6)->values()->all();
     }
 }

@@ -14,7 +14,7 @@ const activeAuctions = ref(0)
 const freePlayers = ref([])
 const playerOptionsLoading = ref(false)
 const links = [
-  ['/dashboard', 'Обзор'], ['/roster', 'Состав'], ['/groups', 'Конст-пати'],
+  ['/dashboard', 'Дашборд'], ['/roster', 'Состав'], ['/groups', 'Конст-пати'],
   ['/activities', 'Активности'], ['/treasury', 'Казна'], ['/auctions', 'Аукционы'], ['/payouts', 'Нахрюк'],
 ]
 async function loadActiveAuctions(){if(!auth.user?.player)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
