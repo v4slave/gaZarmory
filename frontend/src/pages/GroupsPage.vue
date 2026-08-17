@@ -10,8 +10,15 @@ async function rename(group) { const value = window.prompt('Новое назв�
 async function remove(group) { if (window.confirm(`Удалить «${group.name}»? Игроки станут одиночками.`)) await guild.deleteGroup(group.id) }
 function canManageGroup(group) { return auth.canManage || (auth.isPartyLeader && auth.partyGroupId === group.id) }
 function isPartyLeader(player) { return (player.user?.roles ?? [player.user?.role]).includes('party_leader') }
-function sortedPlayers(group) { return [...(group.players ?? [])].sort((left, right) => Number(isPartyLeader(right)) - Number(isPartyLeader(left)) || left.nickname.localeCompare(right.nickname, 'ru')) }
-const soloPlayers = computed(() => guild.players.filter(player => player.is_active && player.group_id === null))
+function comparePlayers(left, right, keepLeaderFirst = false) {
+  return (keepLeaderFirst ? Number(isPartyLeader(right)) - Number(isPartyLeader(left)) : 0)
+    || classLabels[left.class].localeCompare(classLabels[right.class], 'ru')
+    || left.nickname.localeCompare(right.nickname, 'ru')
+}
+function sortedPlayers(group) { return [...(group.players ?? [])].sort((left, right) => comparePlayers(left, right, true)) }
+const soloPlayers = computed(() => guild.players
+  .filter(player => player.is_active && player.group_id === null)
+  .sort((left, right) => comparePlayers(left, right)))
 onMounted(() => Promise.all([guild.fetchGroups(), guild.fetchPlayers({ active: true, per_page: 100 })]))
 </script>
 
