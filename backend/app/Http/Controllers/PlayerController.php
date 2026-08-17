@@ -12,6 +12,7 @@ use App\Models\PrimePlayerEarning;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 final class PlayerController extends Controller
@@ -35,6 +36,12 @@ final class PlayerController extends Controller
         ]);
 
         $query = Player::query()
+            ->addSelect([
+                'paid_total' => DB::table('payout_players')
+                    ->selectRaw('COALESCE(SUM(amount), 0)')
+                    ->whereColumn('player_id', 'players.id')
+                    ->where('status', 'paid'),
+            ])
             ->with(['group:id,name', 'user:id,discord_id,discord_username,discord_display_name'])
             ->withCount([
                 'activities as primes_count' => fn ($activityQuery) => $activityQuery
