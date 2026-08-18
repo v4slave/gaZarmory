@@ -271,6 +271,62 @@ section { width:100%;max-width:2100px; }
 .roster-page .class-tag { padding:4px 8px;font-size:11px; }
 .roster-page .attendance-count { font-size:13px; }
 
+/* 2K and ultrawide displays need larger type, not a larger layout. */
+@media (min-width:1900px) {
+  main { font-size:16px; }
+  nav a,aside .admin { font-size:16px; }
+  header .user-link,header .user-unlinked,header>button { font-size:15px; }
+  .eyebrow { font-size:13px; }
+  .muted,.empty { font-size:15px;line-height:1.55; }
+  .panel h2 { font-size:19px; }
+  button,input,select,textarea { font-size:15px; }
+
+  .dashboard-heading h1 { font-size:42px; }
+  .dashboard-heading>.muted { font-size:16px; }
+  .dashboard-page .stat-card span { font-size:13px; }
+  .dashboard-page .stat-card strong { font-size:32px; }
+  .dashboard-page .stat-card small { font-size:14px; }
+  .dashboard-page .panel-title h2 { font-size:19px; }
+  .dashboard-page .chart-legend { font-size:13px; }
+  .dashboard-page .chart-grid text,
+  .dashboard-page .chart-dates text { font-size:11px; }
+  .dashboard-page .upcoming-list strong { font-size:15px; }
+  .dashboard-page .upcoming-list small,
+  .dashboard-page .upcoming-list b { font-size:13px; }
+  .dashboard-page .attendance-top .panel-title p,
+  .dashboard-page .attendance-top .panel-title>a,
+  .dashboard-page .recent-activities .panel-title>a { font-size:13px; }
+  .dashboard-page .rank-player strong,
+  .dashboard-page .recent-activity-name strong { font-size:15px; }
+  .dashboard-page .rank-player small,
+  .dashboard-page .recent-activity-name small { font-size:13px; }
+  .dashboard-page .rank-percent,
+  .dashboard-page .recent-activity-count b { font-size:16px; }
+  .dashboard-page .recent-activity-count small { font-size:11px; }
+
+  .roster-page .toolbar input,
+  .roster-page .toolbar select { height:46px;font-size:16px; }
+  .roster-page .roster-table th { font-size:13px; }
+  .roster-page .roster-table td { font-size:16px; }
+  .roster-page .group-select { font-size:15px; }
+  .roster-page .class-tag { font-size:13px; }
+  .roster-page .attendance-count { font-size:16px; }
+  .roster-table-summary { font-size:14px; }
+  .roster-table-summary strong { font-size:15px; }
+
+  .treasury-workspace .recent-drop .panel-title h2 { font-size:19px; }
+  .treasury-workspace .recent-drop .panel-title span { font-size:15px; }
+  .treasury-workspace .activity-drop-list>a { min-height:112px;padding:13px 16px; }
+  .treasury-workspace .activity-drop-main { gap:5px; }
+  .treasury-workspace .activity-drop-main>strong { font-size:17px; }
+  .treasury-workspace .activity-drop-main>small { font-size:13px; }
+  .treasury-workspace .activity-drop-source { font-size:11px; }
+  .treasury-workspace .activity-drop-items { gap:6px;margin-top:6px; }
+  .treasury-workspace .activity-drop-items>span { width:40px;height:40px; }
+  .treasury-workspace .activity-drop-items b { font-size:11px; }
+  .treasury-workspace .activity-drop-list .gold-amount { font-size:18px; }
+}
+
 @media(min-width:2100px){
   section { padding-left:52px;padding-right:52px; }
   .treasury-workspace { grid-template-columns:minmax(470px,.8fr) minmax(900px,1.65fr); }
