@@ -235,6 +235,50 @@ td a:hover,.user-link:hover,.catalog-link { color:#e5ae62; }
 .dashboard-page .recent-activity-list>a { padding:7px 5px; }
 .dashboard-page .recent-activity-mark { width:44px;height:31px; }
 @media(max-width:1000px){.dashboard-page .dashboard-overview-grid,.dashboard-page .dashboard-grid-two { grid-template-columns:1fr; }}
+
+/* Wide desktop workspace: use the screen without shrinking the interface. */
+section { width:100%;max-width:2100px; }
+.dashboard-page,.roster-page { width:100%;max-width:2100px; }
+
+.dashboard-heading h1 { font-size:38px; }
+.dashboard-page .stats-row { gap:13px;margin:24px 0 14px; }
+.dashboard-page .stat-card { min-height:108px;padding:18px 20px; }
+.dashboard-page .stat-card span { font-size:11px; }
+.dashboard-page .stat-card strong { margin-top:10px;font-size:29px; }
+.dashboard-page .stat-card small { margin-top:7px;font-size:12px; }
+.dashboard-page .dashboard-overview-grid { grid-template-columns:minmax(0,2.15fr) minmax(330px,.85fr);gap:13px;margin-bottom:13px; }
+.dashboard-page .panel { padding:21px; }
+.dashboard-page .treasury-chart,.dashboard-page .upcoming-events { min-height:330px; }
+.dashboard-page .treasury-chart svg { height:250px; }
+.dashboard-page .panel-title h2 { font-size:16px; }
+.dashboard-page .upcoming-list article { grid-template-columns:50px minmax(0,1fr) auto;gap:10px;padding:8px; }
+.dashboard-page .upcoming-list img,.dashboard-page .event-placeholder { width:50px;height:40px; }
+.dashboard-page .upcoming-list strong { font-size:13px; }
+.dashboard-page .upcoming-list small,.dashboard-page .upcoming-list b { font-size:11px; }
+.dashboard-page .dashboard-grid-two { gap:13px; }
+.dashboard-page .dashboard-grid-two>.panel { min-height:245px; }
+.dashboard-page .attendance-ranking>a,.dashboard-page .recent-activity-list>a { padding:10px 6px; }
+.dashboard-page .recent-activity-mark { width:48px;height:34px; }
+
+.roster-page .page-heading { margin-bottom:25px; }
+.roster-page .toolbar { padding:12px 14px; }
+.roster-page .toolbar input,.roster-page .toolbar select { height:42px;padding:9px 12px;font-size:13px; }
+.roster-page .roster-table table { min-width:1120px; }
+.roster-page .roster-table th,.roster-page .roster-table td { padding:13px 16px; }
+.roster-page .roster-table th { font-size:11px; }
+.roster-page .roster-table td { font-size:13px; }
+.roster-page .group-select { min-width:160px;padding:7px 9px;font-size:12px; }
+.roster-page .class-tag { padding:4px 8px;font-size:11px; }
+.roster-page .attendance-count { font-size:13px; }
+
+@media(min-width:2100px){
+  section { padding-left:52px;padding-right:52px; }
+  .treasury-workspace { grid-template-columns:minmax(470px,.8fr) minmax(900px,1.65fr); }
+}
+@media(max-width:1000px){
+  .dashboard-page .dashboard-overview-grid,
+  .dashboard-page .dashboard-grid-two { grid-template-columns:1fr; }
+}
 @media (max-width:800px) { .audit-filters { grid-template-columns:1fr 1fr; } }
 @media (max-width:760px) { main { background-position:center top;background-size:auto 100vh; } }
 
