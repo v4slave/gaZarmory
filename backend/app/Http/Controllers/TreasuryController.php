@@ -12,6 +12,9 @@ final class TreasuryController extends Controller
     public function __invoke(): array
     {
         $items = TreasuryItem::query()->where('quantity', '>', 0)->orderBy('item_name')->get();
+        $tokenSettings = DB::table('treasury_token_settings')->where('id', 1)->first();
+        $tokenCount = (int) ($tokenSettings?->token_count ?? 0);
+        $tokenUnitValue = (int) ($tokenSettings?->token_unit_value ?? 0);
         $transactionQuery = TreasuryItemTransaction::query()->with([
             'item:id,item_name,icon_path,unit_value',
             'recipient:id,nickname',
@@ -52,6 +55,9 @@ final class TreasuryController extends Controller
 
         return [
             'gold' => (int) (DB::table('treasury_transactions')->latest('id')->value('balance_after') ?? 0),
+            'token_count' => $tokenCount,
+            'token_unit_value' => $tokenUnitValue,
+            'token_gold_value' => $tokenCount * $tokenUnitValue,
             'inventory_value' => (int) $items->sum(fn ($item) => $item->quantity * $item->unit_value),
             'items' => $items,
             'recent_drops' => $recentDrops,
