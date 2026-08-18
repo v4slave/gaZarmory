@@ -12,7 +12,7 @@ class User extends Authenticatable
     use Notifiable;
 
     protected $fillable = ['discord_id', 'discord_username', 'discord_display_name', 'discord_avatar'];
-    protected $hidden = [];
+    protected $hidden = ['remember_token'];
     protected function casts(): array { return ['role' => UserRole::class, 'roles' => 'array']; }
     public function player(): HasOne { return $this->hasOne(Player::class); }
 

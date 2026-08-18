@@ -34,6 +34,7 @@ final class TreasuryController extends Controller
                 return [
                     'id' => $activity->id,
                     'name' => $activity->definition->name,
+                    'type' => $activity->definition->type->value,
                     'occurred_at' => $activity->occurred_at,
                     'icon_url' => $activity->definition->icon_url,
                     'total_value' => (int) $transactions->sum(

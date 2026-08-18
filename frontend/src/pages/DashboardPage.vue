@@ -32,8 +32,8 @@ onBeforeUnmount(()=>window.clearInterval(timer))
 </script>
 
 <template>
-  <section>
-    <p class="eyebrow">GAZ ARMORY · ARCHEAGE</p><h1>Дашборд</h1><p class="muted">Оперативное состояние гильдии</p>
+  <section class="dashboard-page">
+    <div class="dashboard-heading"><p class="eyebrow">GAZ ARMORY · ARCHEAGE</p><h1>Дашборд</h1><p class="muted">Оперативное состояние гильдии</p></div>
     <div class="stats-row four"><StatCard label="Золото в казне" :value="Number(data.gold).toLocaleString('ru-RU')" gold note="Фактический баланс" accent/><StatCard label="Дроп с РБ" :value="Number(data.inventory_value).toLocaleString('ru-RU')" gold note="Эквивалент в золоте"/><StatCard label="Ожидаемый нахрюк" :value="Number(data.pending_payout).toLocaleString('ru-RU')" gold/><StatCard label="Активных аукционов" :value="data.active_auctions"/></div>
     <div class="dashboard-overview-grid">
       <div class="panel treasury-chart"><div class="panel-title"><h2>↗ Динамика казны</h2><span class="chart-legend"><i class="gold-line"></i> Золото <i class="inventory-line"></i> Стоимость предметов</span></div><svg v-if="data.treasury_dynamics.length" viewBox="0 0 720 220" role="img" aria-label="Динамика золота и стоимости предметов за 14 дней"><g class="chart-grid"><line v-for="step in 4" :key="step" x1="40" x2="690" :y1="185-step*36.25" :y2="185-step*36.25"/><text v-for="step in 4" :key="`label-${step}`" x="34" :y="190-step*36.25" text-anchor="end">{{ compactGold(chartMax*step/4) }}</text></g><polyline class="chart-area-gold" :points="`40,185 ${chartPoints('gold')} 690,185`"/><polyline class="chart-line gold" :points="chartPoints('gold')"/><polyline class="chart-line inventory" :points="chartPoints('inventory_value')"/><g class="chart-dates"><text v-for="(item,index) in data.treasury_dynamics" :key="item.date" v-show="index%2===0||index===data.treasury_dynamics.length-1" :x="40+index*(650/Math.max(1,data.treasury_dynamics.length-1))" y="208" text-anchor="middle">{{ new Date(`${item.date}T00:00:00`).toLocaleDateString('ru-RU',{day:'numeric',month:'short'}) }}</text></g></svg><p v-else class="empty">Операций казны пока нет.</p></div>

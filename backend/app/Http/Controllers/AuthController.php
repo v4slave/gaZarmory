@@ -29,7 +29,9 @@ final class AuthController
             ],
         );
 
-        Auth::login($user);
+        // Discord is the only sign-in method, so remember successful logins across
+        // browser restarts until the user explicitly signs out.
+        Auth::login($user, true);
         $request->session()->regenerate();
 
         return redirect()->away(rtrim(config('app.frontend_url', env('FRONTEND_URL')), '/').'/dashboard');
