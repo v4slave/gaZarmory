@@ -15,7 +15,7 @@ final class AuctionVisibilityTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_member_sees_only_active_auctions(): void
+    public function test_member_sees_active_and_recently_finished_auctions(): void
     {
         $manager = $this->user(UserRole::GuildLeader);
         $member = $this->user(UserRole::Member);
@@ -28,14 +28,22 @@ final class AuctionVisibilityTest extends TestCase
         $active = $this->auction($item, $manager, 'active');
         $draft = $this->auction($item, $manager, 'draft');
         $cancelled = $this->auction($item, $manager, 'cancelled');
+        $recentFinished = $this->auction($item, $manager, 'finished');
+        $recentFinished->forceFill(['finished_at' => now()->subDays(2)])->save();
+        $expiredFinished = $this->auction($item, $manager, 'finished');
+        $expiredFinished->forceFill(['finished_at' => now()->subDays(4)])->save();
 
         $response = $this->actingAs($member)->getJson('/api/auctions')->assertOk();
         $ids = collect($response->json())->pluck('id');
 
         self::assertTrue($ids->contains($active->id));
+        self::assertTrue($ids->contains($recentFinished->id));
         self::assertFalse($ids->contains($draft->id));
         self::assertFalse($ids->contains($cancelled->id));
+        self::assertFalse($ids->contains($expiredFinished->id));
+        $this->actingAs($member)->getJson('/api/auctions/'.$recentFinished->id)->assertOk();
         $this->actingAs($member)->getJson('/api/auctions/'.$draft->id)->assertNotFound();
+        $this->actingAs($member)->getJson('/api/auctions/'.$expiredFinished->id)->assertNotFound();
     }
 
     public function test_manager_sees_all_auction_statuses_and_active_count(): void

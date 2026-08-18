@@ -39,7 +39,7 @@ final class PayoutDetailTest extends TestCase
         $this->actingAs($leader)->postJson('/api/payouts/'.$payout->id.'/complete')->assertUnprocessable();
     }
 
-    public function test_manager_can_adjust_calculated_player_amount_and_total(): void
+    public function test_calculated_player_amount_cannot_be_changed_through_api(): void
     {
         $leader=$this->user(UserRole::GuildLeader);
         [, $player]=$this->memberWithPlayer('Adjusted');
@@ -47,8 +47,9 @@ final class PayoutDetailTest extends TestCase
         $row=$payout->players()->create(['player_id'=>$player->id,'nickname_snapshot'=>$player->nickname,'prime_attendance_percentage_snapshot'=>100,'primes_count'=>1,'mini_activities_count'=>0,'amount'=>100,'status'=>'pending']);
 
         $this->actingAs($leader)->patchJson('/api/payouts/'.$payout->id.'/players/'.$row->id,['amount'=>275])
-            ->assertOk()->assertJsonPath('total_amount',275);
-        self::assertSame(275,$payout->fresh()->total_amount);
+            ->assertNotFound();
+        self::assertSame(100, (int) $payout->fresh()->total_amount);
+        self::assertSame(100, (int) $row->fresh()->amount);
     }
 
     public function test_empty_draft_can_be_deleted(): void

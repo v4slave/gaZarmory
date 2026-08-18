@@ -16,7 +16,7 @@ const issueItem = ref(null); const issueQuantity = ref(1); const recipientId = r
 const busy = ref(false)
 const goldOperation = ref(null); const goldAmount = ref(1); const goldDescription = ref('')
 const transactionLabels = { loot_income: 'Поступление лута', issue: 'Выдача игроку', auction_reserve: 'Резерв аукциона', auction_release: 'Снятие резерва', auction_sale: 'Продажа на аукционе', manual_sale: 'Ручная продажа', adjustment: 'Корректировка' }
-const goldTransactionLabels = { prime_income: 'Доход с прайма', auction_income: 'Продажа на аукционе', payout: 'Выплата нахрюка', manual_income: 'Ручное пополнение', manual_expense: 'Ручной расход', adjustment: 'Корректировка' }
+const goldTransactionLabels = { auction_income: 'Продажа на аукционе', payout: 'Выплата нахрюка', manual_income: 'Продажа вне гильдии / пополнение', manual_expense: 'Ручной расход', adjustment: 'Корректировка' }
 
 async function load() { try { data.value = (await api.get('/api/treasury')).data } catch (requestError) { error.value = requestError.response?.data?.message ?? 'Не удалось загрузить казну.' } }
 function availableItems() { return data.value.items.filter(item => item.available_quantity > 0) }

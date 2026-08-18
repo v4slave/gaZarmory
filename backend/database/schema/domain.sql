@@ -7,7 +7,7 @@ CREATE TYPE earning_status AS ENUM ('pending', 'paid', 'cancelled');
 CREATE TYPE payout_status AS ENUM ('draft', 'calculated', 'paid', 'cancelled');
 CREATE TYPE payout_player_status AS ENUM ('pending', 'paid', 'cancelled');
 CREATE TYPE auction_status AS ENUM ('draft', 'active', 'finished', 'cancelled');
-CREATE TYPE treasury_transaction_type AS ENUM ('prime_income', 'auction_income', 'payout', 'manual_income', 'manual_expense', 'adjustment');
+CREATE TYPE treasury_transaction_type AS ENUM ('auction_income', 'payout', 'manual_income', 'manual_expense', 'adjustment');
 CREATE TYPE item_transaction_type AS ENUM ('loot_income', 'issue', 'auction_reserve', 'auction_release', 'auction_sale', 'adjustment');
 
 CREATE TABLE users (

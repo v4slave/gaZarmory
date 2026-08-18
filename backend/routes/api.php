@@ -63,7 +63,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/payouts', [PayoutController::class, 'index']);
     Route::post('/payouts', [PayoutController::class, 'store']);
     Route::get('/payouts/{payout}', [PayoutController::class, 'show']);
-    Route::patch('/payouts/{payout}/players/{payoutPlayer}', [PayoutController::class, 'updatePlayerAmount']);
     Route::delete('/payouts/{payout}', [PayoutController::class, 'destroy']);
     Route::post('/payouts/{payout}/calculate', [PayoutController::class, 'calculate']);
     Route::post('/payouts/{payout}/complete', [PayoutController::class, 'complete']);

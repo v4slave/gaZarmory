@@ -1,6 +1,12 @@
 backend/.env
 backend/vendor/
 backend/storage/*.key
+backend/storage/logs/*
+backend/storage/framework/cache/*
+backend/storage/framework/sessions/*
+backend/storage/framework/testing/*
+backend/storage/framework/views/*
+!backend/storage/**/.gitignore
 backend/public/storage
 frontend/.env
 frontend/node_modules/
