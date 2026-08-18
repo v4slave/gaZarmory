@@ -17,12 +17,19 @@ const data = ref({
 const classLabels = { melee: 'Милик', archer: 'Лук', mage: 'Маг', healer: 'Хил', bard: 'Бард', tank: 'Танк' }
 const now = ref(Date.now())
 let timer
-const chart = { left: 58, right: 978, top: 30, bottom: 220, labelY: 253 }
+const chart = { left: 88, right: 958, top: 30, bottom: 220, labelY: 253 }
 const chartMax = computed(() => Math.max(1, ...data.value.treasury_dynamics.flatMap(item => [Number(item.gold), Number(item.inventory_value)])))
 function chartX(index) { return chart.left + index * ((chart.right - chart.left) / Math.max(1, data.value.treasury_dynamics.length - 1)) }
 function chartY(value) { return chart.bottom - Number(value) / chartMax.value * (chart.bottom - chart.top) }
 function chartPoints(field) { return data.value.treasury_dynamics.map((item,index) => `${chartX(index)},${chartY(item[field])}`).join(' ') }
-function compactGold(value) { return Intl.NumberFormat('ru-RU',{notation:'compact',maximumFractionDigits:1}).format(value) }
+function compactGold(value) {
+  const amount = Number(value)
+  const absolute = Math.abs(amount)
+  const units = [[1e15, 'квадр.'], [1e12, 'трлн'], [1e9, 'млрд'], [1e6, 'млн'], [1e3, 'тыс.']]
+  const unit = units.find(([threshold]) => absolute >= threshold)
+  if (!unit) return Math.round(amount).toLocaleString('ru-RU')
+  return `${new Intl.NumberFormat('ru-RU', { maximumFractionDigits: 1 }).format(amount / unit[0])} ${unit[1]}`
+}
 function eventCountdown(startsAt) {
   const seconds=Math.max(0,Math.floor((new Date(startsAt).getTime()-now.value)/1000));
   if(seconds<60)return `${seconds} сек.`

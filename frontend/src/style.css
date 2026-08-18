@@ -477,3 +477,6 @@ section { width:100%;max-width:2100px; }
 @media (max-width:760px) { .link-request-list article { grid-template-columns:1fr; }.link-request-list>article>span { display:none; }.link-request-actions { justify-content:stretch; }.link-request-actions button { flex:1; }.financial-preview { grid-template-columns:1fr; } }
 .stat-card .stat-divider { color:#776d61;font-weight:500; }
 .stat-card .token-icon { width:30px;height:30px;object-fit:contain;image-rendering:auto; }
+.treasury-chart svg{overflow:hidden}
+.chart-grid text{font-variant-numeric:tabular-nums}
+.auction-grid-v2>.empty-state{grid-column:1/-1;width:100%;min-height:180px;padding:28px;text-align:center;line-height:1.55}
