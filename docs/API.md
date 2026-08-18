@@ -4,10 +4,13 @@
 
 Дополнения, необходимые для явно описанных возможностей:
 
-- `GET/POST/PUT/DELETE /api/activity-definitions[/{id}]` — справочник событий (leader/officer для записи).
-- `PATCH /api/admin/users/{user}/roles` — роли, только Guild Leader/Developer согласно серверной политике.
+- `GET/POST/PUT/DELETE /api/activity-definitions[/{id}]` — справочник событий (управляющие роли для записи).
+- `PATCH /api/admin/users/{user}/roles` — роли; Микро-ГЛ не может назначать или изменять ГЛ/Разработчика.
 - `PUT /api/players/{player}/user` — linking Discord user, управляющие роли.
-- `GET /api/admin/audit-logs` — только Guild Leader/Developer.
+- `GET /api/admin/audit-logs` — Guild Leader, Micro Guild Leader и Developer.
+- `POST /api/me/player` — создать заявку на привязку персонажа.
+- `GET/POST /api/admin/player-link-requests[...]` — просмотр, подтверждение и отклонение заявок.
+- `GET /api/payouts-preview` — точный предварительный расчёт нахрюка и баланса.
 - `GET /api/dashboard` — агрегированный read endpoint.
 
 Фильтры коллекций передаются query parameters. Sorting принимается только из allowlist. Для ставок, расчёта, завершения auction/payout повторный запрос возвращает текущее состояние либо `409`, но никогда не повторяет финансовый side effect.

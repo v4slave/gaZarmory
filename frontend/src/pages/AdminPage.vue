@@ -5,6 +5,7 @@ import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
 const users = ref([])
+const linkRequests = ref([])
 const items = ref([])
 const definitions = ref([])
 const name = ref('')
@@ -21,14 +22,14 @@ const auditAction = ref('')
 const auditLoading = ref(false)
 const expandedAudit = ref(null)
 const definitionBusy = ref(null)
-const roleLabels = { guild_leader: 'ГЛ', developer: 'Разработчик', party_leader: 'PL', member: 'Участник' }
+const roleLabels = { guild_leader: 'ГЛ', micro_guild_leader: 'Микро-ГЛ', developer: 'Разработчик', party_leader: 'PL', member: 'Участник' }
 const filteredUsers = computed(() => {
   const query = userSearch.value.trim().toLocaleLowerCase('ru-RU')
   if (!query) return users.value
   return users.value.filter(user => [user.discord_display_name, user.discord_username, user.player?.nickname]
     .some(value => value?.toLocaleLowerCase('ru-RU').includes(query)))
 })
-const auditLabels = { 'user.roles_changed':'Изменены роли', 'user.deleted':'Удалён Discord-пользователь', 'player.created':'Добавлен игрок', 'player.updated':'Изменён игрок', 'player.group_changed':'Игрок перемещён', 'player.deactivated':'Игрок ликвидирован', 'player.activated':'Игрок восстановлен', 'player.self_renamed':'Игрок сменил имя', 'player.self_class_changed':'Игрок сменил класс', 'player.discord_link_changed':'Изменена Discord-привязка', 'group.created':'Создана конст-пати', 'group.updated':'Изменена конст-пати', 'group.deleted':'Удалена конст-пати', 'activity.created':'Создана активность', 'activity.updated':'Изменена активность', 'activity.deleted':'Удалена активность', 'activity_loot.created':'Добавлен лут', 'prime.calculated':'Рассчитан прайм', 'mini_activity.calculated':'Рассчитан мини-прайм', 'loot_import.confirmed':'Подтверждён импорт лута', 'treasury_item.sold':'Продан предмет', 'treasury_item.issued':'Выдан предмет', 'auction.created':'Создан аукцион', 'auction.updated':'Изменён аукцион', 'auction.started':'Запущен аукцион', 'auction.cancelled':'Отменён аукцион', 'auction.bid_placed':'Сделана ставка', 'auction.finished':'Завершён аукцион', 'auction.finished_without_bids':'Аукцион завершён без ставок', 'payout.created':'Создан нахрюк', 'payout.calculated':'Рассчитан нахрюк', 'payout.completed':'Нахрюк выплачен', 'payout.cancelled':'Нахрюк отменён', 'loot_catalog.created':'Добавлен предмет справочника', 'loot_catalog.updated':'Изменён предмет справочника', 'loot_catalog.restored':'Восстановлен предмет справочника', 'loot_catalog.deactivated':'Удалён предмет справочника' }
+const auditLabels = { 'user.roles_changed':'Изменены роли', 'user.deleted':'Удалён Discord-пользователь', 'player.created':'Добавлен игрок', 'player.updated':'Изменён игрок', 'player.group_changed':'Игрок перемещён', 'player.deactivated':'Игрок ликвидирован', 'player.activated':'Игрок восстановлен', 'player.self_renamed':'Игрок сменил имя', 'player.self_class_changed':'Игрок сменил класс', 'player.discord_link_changed':'Изменена Discord-привязка', 'player_link_request.approved':'Заявка на привязку одобрена', 'player_link_request.rejected':'Заявка на привязку отклонена', 'group.created':'Создана конст-пати', 'group.updated':'Изменена конст-пати', 'group.deleted':'Удалена конст-пати', 'activity.created':'Создана активность', 'activity.updated':'Изменена активность', 'activity.deleted':'Удалена активность', 'activity_loot.created':'Добавлен лут', 'prime.calculated':'Рассчитан прайм', 'mini_activity.calculated':'Рассчитан мини-прайм', 'loot_import.confirmed':'Подтверждён импорт лута', 'treasury_item.sold':'Продан предмет', 'treasury_item.issued':'Выдан предмет', 'auction.created':'Создан аукцион', 'auction.updated':'Изменён аукцион', 'auction.started':'Запущен аукцион', 'auction.cancelled':'Отменён аукцион', 'auction.bid_placed':'Сделана ставка', 'auction.finished':'Завершён аукцион', 'auction.finished_without_bids':'Аукцион завершён без ставок', 'payout.created':'Создан нахрюк', 'payout.calculated':'Рассчитан нахрюк', 'payout.completed':'Нахрюк выплачен', 'payout.cancelled':'Нахрюк отменён', 'loot_catalog.created':'Добавлен предмет справочника', 'loot_catalog.updated':'Изменён предмет справочника', 'loot_catalog.restored':'Восстановлен предмет справочника', 'loot_catalog.deactivated':'Удалён предмет справочника' }
 
 function avatarUrl(user) {
   if (!user.discord_avatar) return null
@@ -40,6 +41,7 @@ function avatarUrl(user) {
 async function loadItems() { if (auth.canAdmin) items.value = (await api.get('/api/loot-catalog')).data }
 async function loadDefinitions() { if (auth.canAdmin) definitions.value = (await api.get('/api/activity-definitions')).data }
 async function loadUsers() { if (auth.canAdmin) users.value = (await api.get('/api/admin/users')).data }
+async function loadLinkRequests() { if (auth.canAdmin) linkRequests.value = (await api.get('/api/admin/player-link-requests')).data }
 async function loadAudit(page = 1) {
   if (!auth.canAdmin) return
   auditLoading.value = true
@@ -66,6 +68,12 @@ async function toggleRole(user, role, checked) {
     userError.value = requestError.response?.data?.message ?? Object.values(requestError.response?.data?.errors ?? {}).flat()[0] ?? 'Не удалось изменить роль.'
     await loadUsers()
   } finally { userBusy.value = null }
+}
+function roleOptionDisabled(user, role) {
+  if (userBusy.value === user.id) return true
+  if (auth.canAssignElevatedRoles) return false
+  const roles = user.roles ?? [user.role]
+  return ['guild_leader', 'developer'].includes(role) || roles.some(value => ['guild_leader', 'developer'].includes(value))
 }
 
 async function unlinkPlayer(user) {
@@ -108,6 +116,16 @@ async function deleteUser(user) {
   } finally { userBusy.value = null }
 }
 
+async function reviewLinkRequest(linkRequest, decision) {
+  userBusy.value = `link-${linkRequest.id}`; userError.value = ''
+  try {
+    await api.post(`/api/admin/player-link-requests/${linkRequest.id}/${decision}`)
+    await Promise.all([loadLinkRequests(), loadUsers(), loadAudit()])
+  } catch (requestError) {
+    userError.value = Object.values(requestError.response?.data?.errors ?? {}).flat()[0] ?? requestError.response?.data?.message ?? 'Не удалось обработать заявку.'
+  } finally { userBusy.value = null }
+}
+
 async function add() {
   busy.value = true; error.value = ''
   try {
@@ -121,7 +139,7 @@ async function add() {
 async function remove(item) { if (confirm(`Убрать «${item.name}» из доступного лута?`)) { await api.delete(`/api/loot-catalog/${item.id}`); await loadItems() } }
 async function uploadDefinitionIcon(definition, file) { if(!file)return;definitionBusy.value=definition.id;error.value='';try{const body=new FormData();body.append('icon',file);const {data}=await api.post(`/api/activity-definitions/${definition.id}/icon`,body);Object.assign(definition,data)}catch(e){error.value=Object.values(e.response?.data?.errors??{}).flat()[0]??e.response?.data?.message??'Не удалось загрузить изображение.'}finally{definitionBusy.value=null} }
 async function deleteDefinitionIcon(definition) { if(!confirm(`Удалить изображение события «${definition.name}»?`))return;definitionBusy.value=definition.id;try{const {data}=await api.delete(`/api/activity-definitions/${definition.id}/icon`);Object.assign(definition,data)}finally{definitionBusy.value=null} }
-onMounted(async () => { await Promise.all([loadItems(), loadDefinitions(), loadUsers(), loadAudit()]) })
+onMounted(async () => { await Promise.all([loadItems(), loadDefinitions(), loadUsers(), loadLinkRequests(), loadAudit()]) })
 </script>
 
 <template>
@@ -133,6 +151,18 @@ onMounted(async () => { await Promise.all([loadItems(), loadDefinitions(), loadU
       <article><strong>Отвязать Discord</strong><p>Убирает связь аккаунта с персонажем. Персонаж, его посещения и финансовая история сохраняются, после чего профиль можно привязать другому пользователю.</p></article>
       <article class="danger-guide"><strong>Ликвидировать персонажа</strong><p>Деактивирует игровой профиль и убирает его из активного состава и списков выбора. История не удаляется, Discord-аккаунт остаётся.</p></article>
     </div>
+    <div class="panel link-request-panel">
+      <div class="panel-title"><div><h2>Заявки на привязку</h2><p class="muted">Проверьте Discord-пользователя и персонажа перед подтверждением</p></div><span class="muted">{{ linkRequests.length }} ожидают</span></div>
+      <div v-if="linkRequests.length" class="link-request-list">
+        <article v-for="linkRequest in linkRequests" :key="linkRequest.id">
+          <div><strong>{{ linkRequest.user?.discord_display_name || linkRequest.user?.discord_username }}</strong><small>@{{ linkRequest.user?.discord_username }}</small></div>
+          <span>хочет привязать</span>
+          <div><strong>{{ linkRequest.player?.nickname }}</strong><small>{{ linkRequest.player?.class }}</small></div>
+          <div class="link-request-actions"><button class="primary" :disabled="userBusy===`link-${linkRequest.id}`" @click="reviewLinkRequest(linkRequest,'approve')">Подтвердить</button><button class="danger" :disabled="userBusy===`link-${linkRequest.id}`" @click="reviewLinkRequest(linkRequest,'reject')">Отклонить</button></div>
+        </article>
+      </div>
+      <p v-else class="empty">Новых заявок нет.</p>
+    </div>
     <div class="panel admin-users-panel">
       <div class="panel-title"><div><h2>Пользователи и доступ</h2><p class="muted">Назначайте только необходимые права. Последнего ГЛ понизить нельзя.</p></div><span class="muted">{{ users.length }} пользователей</span></div>
       <input v-model="userSearch" class="admin-user-search" type="search" placeholder="Найти по Discord или игровому никнейму">
@@ -142,7 +172,7 @@ onMounted(async () => { await Promise.all([loadItems(), loadDefinitions(), loadU
           <div class="admin-user-avatar"><span>{{ (user.discord_display_name || user.discord_username).slice(0, 1).toUpperCase() }}</span><img v-if="avatarUrl(user)" :src="avatarUrl(user)" alt="" referrerpolicy="no-referrer" @error="$event.currentTarget.remove()"></div>
           <div class="admin-user-identity"><strong>{{ user.discord_display_name || user.discord_username }}</strong><small>@{{ user.discord_username }}</small></div>
           <div class="admin-user-player"><RouterLink v-if="user.player" :to="`/players/${user.player.id}`">{{ user.player.nickname }}</RouterLink><span v-else>Профиль не привязан</span><small v-if="user.player?.group">{{ user.player.group.name }}</small><small v-else-if="user.player">Одиночка</small></div>
-          <div class="admin-role-select"><span>Права доступа</span><label v-for="(label, value) in roleLabels" :key="value"><input type="checkbox" :checked="(user.roles ?? [user.role]).includes(value)" :disabled="userBusy === user.id" @change="toggleRole(user, value, $event.target.checked)">{{ label }}</label></div>
+          <div class="admin-role-select"><span>Права доступа</span><label v-for="(label, value) in roleLabels" :key="value"><input type="checkbox" :checked="(user.roles ?? [user.role]).includes(value)" :disabled="roleOptionDisabled(user,value)" @change="toggleRole(user, value, $event.target.checked)">{{ label }}</label></div>
           <details class="admin-actions-menu"><summary>Действия</summary><div><button :disabled="!user.player || userBusy === user.id" @click="unlinkPlayer(user)">Отвязать Discord</button><button v-if="user.player?.is_active" class="danger" :disabled="userBusy === user.id" @click="deactivatePlayer(user)">Ликвидировать персонажа</button><button v-else-if="user.player" :disabled="userBusy === user.id" @click="activatePlayer(user)">Восстановить персонажа</button><button class="danger" :disabled="user.id === auth.user?.id || userBusy === user.id" @click="deleteUser(user)">Удалить пользователя</button></div></details>
         </article>
         <p v-if="!filteredUsers.length" class="empty">Пользователи не найдены.</p>

@@ -1,6 +1,6 @@
 BEGIN;
 
-CREATE TYPE user_role AS ENUM ('guild_leader', 'developer', 'party_leader', 'member');
+CREATE TYPE user_role AS ENUM ('guild_leader', 'micro_guild_leader', 'developer', 'party_leader', 'member');
 CREATE TYPE player_class AS ENUM ('melee', 'archer', 'mage', 'healer', 'bard', 'tank');
 CREATE TYPE activity_type AS ENUM ('prime', 'activity', 'mini_activity');
 CREATE TYPE earning_status AS ENUM ('pending', 'paid', 'cancelled');

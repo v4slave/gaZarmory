@@ -12,7 +12,7 @@ final class TreasuryItemIssueController extends Controller
 {
     public function __invoke(Request $request, TreasuryItem $item, IssueTreasuryItem $action): TreasuryItemTransaction
     {
-        abort_unless($request->user()->canManageGuild(), 403);
+        abort_unless($request->user()->canHandleTreasuryItems(), 403);
         $data = $request->validate([
             'quantity' => ['required', 'integer', 'min:1'],
             'recipient_player_id' => [

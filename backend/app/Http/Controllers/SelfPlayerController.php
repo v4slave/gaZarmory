@@ -1,8 +1,8 @@
 <?php
 namespace App\Http\Controllers;
-use App\Actions\LinkDiscordUserToPlayer;
 use App\Enums\PlayerClass;
 use App\Models\Player;
+use App\Models\PlayerLinkRequest;
 use App\Rules\ValidPlayerNickname;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
@@ -20,14 +20,16 @@ final class SelfPlayerController extends Controller
             ->get(['id', 'nickname', 'class']);
     }
 
-    public function link(Request $request,LinkDiscordUserToPlayer $action)
+    public function link(Request $request)
     {
         $data=$request->validate(['player_id'=>['required','integer','exists:players,id']]);
         if($request->user()->player()->exists()) throw ValidationException::withMessages(['player_id'=>'Ваш Discord уже привязан к игровому профилю.']);
+        if(PlayerLinkRequest::query()->where('user_id',$request->user()->id)->where('status','pending')->exists()) throw ValidationException::withMessages(['player_id'=>'У вас уже есть заявка на рассмотрении.']);
         $player=Player::query()->findOrFail($data['player_id']);
         if(!$player->is_active) throw ValidationException::withMessages(['player_id'=>'Нельзя привязать деактивированный профиль.']);
         if($player->user_id!==null) throw ValidationException::withMessages(['player_id'=>'Этот профиль уже занят.']);
-        return $action->execute($player,$request->user()->id,true);
+        if(PlayerLinkRequest::query()->where('player_id',$player->id)->where('status','pending')->exists()) throw ValidationException::withMessages(['player_id'=>'На этот профиль уже подана заявка.']);
+        return response()->json(PlayerLinkRequest::query()->create(['user_id'=>$request->user()->id,'player_id'=>$player->id,'status'=>'pending'])->load('player:id,nickname,class'),201);
     }
 
     public function rename(Request $request,AuditService $audit)

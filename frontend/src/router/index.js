@@ -11,6 +11,8 @@ import AuctionsPage from '../pages/AuctionsPage.vue'
 import PlayerPage from '../pages/PlayerPage.vue'
 import AdminPage from '../pages/AdminPage.vue'
 import AuctionPage from '../pages/AuctionPage.vue'
+import AccessDeniedPage from '../pages/AccessDeniedPage.vue'
+import NotFoundPage from '../pages/NotFoundPage.vue'
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
@@ -25,7 +27,9 @@ const routes = [
   { path: '/auctions/:id', component: AuctionPage, meta: { title: 'Аукцион' } },
   { path: '/payouts', component: PayoutsPage, meta: { title: 'Нахрюк' } },
   { path: '/payouts/:id', component: PayoutPage, meta: { title: 'Нахрюк' } },
-  { path: '/admin', component: AdminPage, meta: { title: 'Админка', roles: ['guild_leader', 'developer'] } },
+  { path: '/admin', component: AdminPage, meta: { title: 'Админка', roles: ['guild_leader', 'micro_guild_leader', 'developer'] } },
+  { path: '/forbidden', name: 'forbidden', component: AccessDeniedPage, meta: { title: 'Нет доступа' } },
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundPage, meta: { title: 'Страница не найдена' } },
 ]
 
 export default createRouter({ history: createWebHistory(), routes })

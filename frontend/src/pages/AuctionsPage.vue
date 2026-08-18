@@ -41,6 +41,7 @@ function currentPrice(auction) { return Number(topBid(auction)?.amount ?? auctio
 function finalPrice(auction) { return Number(auction.winning_bid ?? currentPrice(auction)) }
 function winnerName(auction) { return topBid(auction)?.player?.nickname ?? auction.winner?.nickname ?? '—' }
 function statusLabel(status) { return ({ active: 'Активен', draft: 'Черновик', finished: 'Завершён', cancelled: 'Отменён' })[status] ?? status }
+function statusDescription(status) { return ({ active: 'Участники могут делать ставки до указанного времени', draft: 'Лот виден только управляющим и ещё не принимает ставки', finished: 'Победитель определён, предмет и золото проведены по казне', cancelled: 'Лот отменён, резерв предмета освобождён' })[status] ?? '' }
 
 function countdown(endsAt) {
   const distance = Math.max(0, new Date(endsAt).getTime() - clock.value)
@@ -135,7 +136,7 @@ onUnmounted(() => window.clearInterval(ticker))
   <section class="page auctions-page">
     <header class="page-heading split-heading">
       <div><p class="eyebrow">Экономика · аукцион</p><h1>Аукцион гильдии</h1></div>
-      <button v-if="auth.canManage" class="primary" @click="openForm">Добавить лот</button>
+      <button v-if="auth.canCreateAuctions" class="primary" @click="openForm">Добавить лот</button>
     </header>
 
     <p v-if="error" class="error-banner">{{ error }}</p>
@@ -149,7 +150,7 @@ onUnmounted(() => window.clearInterval(ticker))
             <span v-else class="auction-item-placeholder">?</span>
               <div><strong>{{ auction.item?.item_name }}</strong><small>{{ auction.quantity }} шт.</small></div>
           </div>
-          <span class="status-pill" :class="`status-${auction.status}`">{{ statusLabel(auction.status) }}</span>
+          <span class="status-pill" :class="`status-${auction.status}`" :title="statusDescription(auction.status)">{{ statusLabel(auction.status) }}</span>
         </div>
 
         <div class="auction-price-grid">

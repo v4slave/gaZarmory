@@ -34,7 +34,7 @@ async function openLinker() {
 async function linkProfile() {
   if (!selectedPlayerId.value) return
   linking.value = true; linkError.value = ''
-  try { await auth.linkPlayer(selectedPlayerId.value); showLinker.value = false }
+  try { await auth.requestPlayerLink(selectedPlayerId.value); showLinker.value = false }
   catch (error) { linkError.value = error.response?.data?.message ?? 'Не удалось привязать игровой профиль.' }
   finally { linking.value = false }
 }
@@ -43,7 +43,7 @@ async function linkProfile() {
 <template>
   <div v-if="auth.loading" class="access-gate"><div class="access-card"><span class="access-loader"></span><p>Проверяем авторизацию…</p></div></div>
   <div v-else-if="!auth.authenticated" class="access-gate"><div class="access-card guest-card"><img src="/gaz-armory-logo.png" alt="GAZ ARMORY"><p class="eyebrow">ARCHAGE GUILD MANAGEMENT</p><h1>GAZ ARMORY</h1><button class="primary access-primary" @click="auth.login">Войти через Discord</button></div></div>
-  <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/gaz-armory-logo.png" alt="GAZ ARMORY"><p class="eyebrow">ПЕРВЫЙ ВХОД</p><h1>Привяжите персонажа</h1><p class="muted">До привязки игрового профиля разделы гильдии недоступны.</p><button class="primary access-primary" @click="openLinker">Выбрать персонажа</button><button class="access-logout" @click="auth.logout">Выйти</button></div></div>
+  <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/gaz-armory-logo.png" alt="GAZ ARMORY"><p class="eyebrow">ПЕРВЫЙ ВХОД</p><template v-if="auth.user?.pending_player_link_request"><h1>Заявка отправлена</h1><p class="muted">Персонаж «{{ auth.user.pending_player_link_request.player?.nickname }}». Дождитесь подтверждения ГЛ или администратора.</p></template><template v-else><h1>Привяжите персонажа</h1><p class="muted">Выберите персонажа и отправьте заявку. Разделы гильдии откроются после подтверждения.</p><button class="primary access-primary" @click="openLinker">Выбрать персонажа</button></template><button class="access-logout" @click="auth.logout">Выйти</button></div></div>
   <div v-else class="shell">
     <aside :class="{ open: menuOpen }">
       <div class="brand">
@@ -70,7 +70,7 @@ async function linkProfile() {
   <div v-if="showLinker" class="modal" @click.self="showLinker=false">
     <form class="form-card" @submit.prevent="linkProfile">
       <h2>Привязать игровой профиль</h2>
-      <p class="muted">Выберите своего персонажа. После привязки этот профиль нельзя будет занять другому пользователю.</p>
+      <p class="muted">Выберите своего персонажа. Заявку проверит ГЛ или администратор.</p>
       <label>Игровой никнейм
         <select v-model="selectedPlayerId" required>
           <option value="" disabled>Выберите персонажа</option>
@@ -79,7 +79,7 @@ async function linkProfile() {
       </label>
       <p v-if="!playerOptionsLoading&&!freePlayers.length" class="empty">Свободных активных профилей не найдено.</p>
       <p v-if="linkError" class="notice error">{{ linkError }}</p>
-      <div class="form-actions"><button type="button" @click="showLinker=false">Отмена</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ linking?'Привязка…':'Привязать' }}</button></div>
+      <div class="form-actions"><button type="button" @click="showLinker=false">Отмена</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ linking?'Отправка…':'Отправить заявку' }}</button></div>
     </form>
   </div>
 </template>

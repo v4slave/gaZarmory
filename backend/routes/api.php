@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GuildGroupController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerLinkController;
+use App\Http\Controllers\PlayerLinkRequestController;
 use App\Http\Controllers\ActivityController;
 use App\Http\Controllers\ActivityDefinitionController;
 use App\Http\Controllers\LootImportController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\AuctionController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LootCatalogController;
 use App\Http\Controllers\PayoutController;
+use App\Http\Controllers\PayoutPreviewController;
 use App\Http\Controllers\TreasuryItemSaleController;
 use App\Http\Controllers\TreasuryItemIssueController;
 use App\Http\Controllers\TreasuryIssueOptionsController;
@@ -26,7 +28,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
-    Route::get('/me', fn (Request $request) => $request->user()?->load('player'));
+    Route::get('/me', fn (Request $request) => $request->user()?->load(['player', 'pendingPlayerLinkRequest.player:id,nickname,class']));
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/me/player', [SelfPlayerController::class, 'link']);
     Route::get('/me/player-options', [SelfPlayerController::class, 'options']);
@@ -38,6 +40,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::patch('/admin/users/{managedUser}/roles', [AdminUserController::class, 'updateRole']);
     Route::delete('/admin/users/{managedUser}', [AdminUserController::class, 'destroy']);
     Route::get('/admin/audit-logs', AuditLogController::class);
+    Route::get('/admin/player-link-requests', [PlayerLinkRequestController::class, 'index']);
+    Route::post('/admin/player-link-requests/{playerLinkRequest}/approve', [PlayerLinkRequestController::class, 'approve']);
+    Route::post('/admin/player-link-requests/{playerLinkRequest}/reject', [PlayerLinkRequestController::class, 'reject']);
 
     Route::delete('/players/{player}/permanent', [PlayerController::class, 'destroyPermanently']);
     Route::apiResource('players', PlayerController::class);
@@ -61,6 +66,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/loot-imports/{lootImport}/confirm', [LootImportController::class, 'confirm']);
     Route::get('/earnings/pending', PendingEarningController::class);
     Route::get('/payouts', [PayoutController::class, 'index']);
+    Route::get('/payouts-preview', PayoutPreviewController::class);
     Route::post('/payouts', [PayoutController::class, 'store']);
     Route::get('/payouts/{payout}', [PayoutController::class, 'show']);
     Route::delete('/payouts/{payout}', [PayoutController::class, 'destroy']);

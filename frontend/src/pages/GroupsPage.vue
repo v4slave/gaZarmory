@@ -8,7 +8,7 @@ const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг
 async function create() { if (!name.value.trim()) return; busy.value = true; try { await guild.createGroup(name.value.trim()); name.value = '' } finally { busy.value = false } }
 async function rename(group) { const value = window.prompt('Новое название конст-пати', group.name); if (value?.trim() && value.trim() !== group.name) await guild.renameGroup(group.id, value.trim()) }
 async function remove(group) { if (window.confirm(`Удалить «${group.name}»? Игроки станут одиночками.`)) await guild.deleteGroup(group.id) }
-function canManageGroup(group) { return auth.canManage || (auth.isPartyLeader && auth.partyGroupId === group.id) }
+function canManageGroup() { return auth.canManage }
 function isPartyLeader(player) { return (player.user?.roles ?? [player.user?.role]).includes('party_leader') }
 function comparePlayers(left, right, keepLeaderFirst = false) {
   return (keepLeaderFirst ? Number(isPartyLeader(right)) - Number(isPartyLeader(left)) : 0)

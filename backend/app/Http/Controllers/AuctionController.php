@@ -27,7 +27,7 @@ final class AuctionController extends Controller
     }
     public function store(Request $request,AuditService $audit)
     {
-        abort_unless($request->user()->canManageGuild(),403);
+        abort_unless($request->user()->canCreateAuctions(),403);
         $data=$request->validate(['treasury_item_id'=>['required','integer','exists:treasury_items,id'],'quantity'=>['required','integer','min:1'],'starting_bid'=>['required','integer','min:0'],'minimum_step'=>['required','integer','min:1'],'ends_at'=>['required','date','after_or_equal:'.now()->addMinutes(10)->toISOString()]],['ends_at.after_or_equal'=>'Аукцион должен длиться не менее 10 минут.']);
         return DB::transaction(function()use($request,$data,$audit){$item=TreasuryItem::query()->lockForUpdate()->findOrFail($data['treasury_item_id']);if($data['quantity']>$item->available_quantity)throw ValidationException::withMessages(['quantity'=>'Недостаточно свободного количества в казне.']);$auction=Auction::query()->create($data+['status'=>'draft','created_by'=>$request->user()->id]);$audit->record('auction.created',$auction,null,$auction->getAttributes());return response()->json($auction->load('item'),201);});
     }

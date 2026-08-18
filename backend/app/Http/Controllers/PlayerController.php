@@ -51,7 +51,10 @@ final class PlayerController extends Controller
                     ->whereNotNull('completed_at')
                     ->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'mini_activity')),
             ]);
-        $query->when($filters['search'] ?? null, fn ($q, $value) => $q->where('nickname', 'ilike', '%'.$value.'%'));
+        $query->when($filters['search'] ?? null, function ($query, string $value): void {
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);
+            $query->whereRaw("nickname ILIKE ? ESCAPE E'\\\\'", ['%'.$escaped.'%']);
+        });
         $query->when($filters['class'] ?? null, fn ($q, $value) => $q->where('class', $value));
         $query->when(array_key_exists('active', $filters), fn ($q) => $q->where('is_active', $filters['active']));
         $query->when($filters['group_id'] ?? null, fn ($q, $value) => $q->where('group_id', $value));

@@ -20,7 +20,7 @@ final class AdminUserController extends Controller
 
         $users = User::query()
             ->with(['player.group:id,name'])
-            ->orderByRaw("CASE WHEN roles @> '[\"guild_leader\"]'::jsonb THEN 1 WHEN roles @> '[\"developer\"]'::jsonb THEN 2 WHEN roles @> '[\"party_leader\"]'::jsonb THEN 3 ELSE 4 END")
+            ->orderByRaw("CASE WHEN roles @> '[\"guild_leader\"]'::jsonb THEN 1 WHEN roles @> '[\"micro_guild_leader\"]'::jsonb THEN 2 WHEN roles @> '[\"developer\"]'::jsonb THEN 3 WHEN roles @> '[\"party_leader\"]'::jsonb THEN 4 ELSE 5 END")
             ->orderBy('discord_username')
             ->get();
 
@@ -39,6 +39,13 @@ final class AdminUserController extends Controller
             'roles.*' => ['required', 'distinct', Rule::enum(UserRole::class)],
         ]);
         $newRoles = array_values($data['roles']);
+        $actorCanAssignElevatedRoles = $request->user()->hasRole(UserRole::GuildLeader)
+            || $request->user()->hasRole(UserRole::Developer);
+        $managedRoles = $managedUser->roles ?: [$managedUser->role->value];
+        $elevatedRoles = [UserRole::GuildLeader->value, UserRole::Developer->value];
+        if (! $actorCanAssignElevatedRoles && (array_intersect($managedRoles, $elevatedRoles) || array_intersect($newRoles, $elevatedRoles))) {
+            throw ValidationException::withMessages(['roles' => 'Микро-ГЛ не может назначать или изменять роли ГЛ и Разработчик.']);
+        }
 
         $updated = DB::transaction(function () use ($managedUser, $newRoles, $audit, $roleManager): User {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($managedUser->id);
@@ -82,6 +89,12 @@ final class AdminUserController extends Controller
         $this->authorizeAdministrator($request);
         if ($request->user()->is($managedUser)) {
             throw ValidationException::withMessages(['user' => 'Нельзя удалить собственный аккаунт.']);
+        }
+        $managedRoles = $managedUser->roles ?: [$managedUser->role->value];
+        $actorCanManageElevated = $request->user()->hasRole(UserRole::GuildLeader)
+            || $request->user()->hasRole(UserRole::Developer);
+        if (! $actorCanManageElevated && array_intersect($managedRoles, [UserRole::GuildLeader->value, UserRole::Developer->value])) {
+            throw ValidationException::withMessages(['user' => 'Микро-ГЛ не может удалить ГЛ или Разработчика.']);
         }
 
         DB::transaction(function () use ($managedUser, $audit): void {

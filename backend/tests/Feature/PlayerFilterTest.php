@@ -33,4 +33,28 @@ final class PlayerFilterTest extends TestCase
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.id', $solo->id);
     }
+
+    public function test_search_treats_sql_wildcards_and_injection_text_as_literals(): void
+    {
+        $user = User::query()->create([
+            'discord_id' => str_replace('.', '', uniqid('', true)),
+            'discord_username' => 'safe-search',
+        ]);
+        $user->forceFill(['role' => UserRole::Member, 'roles' => [UserRole::Member->value]])->save();
+        Player::query()->create(['nickname' => 'SearchUser'.$user->id, 'class' => PlayerClass::Melee, 'is_active' => true])
+            ->forceFill(['user_id' => $user->id])->save();
+        $literal = Player::query()->create(['nickname' => 'Wildcard%Needle', 'class' => PlayerClass::Mage, 'is_active' => true]);
+        Player::query()->create(['nickname' => 'WildcardXNeedle', 'class' => PlayerClass::Mage, 'is_active' => true]);
+
+        $this->actingAs($user)
+            ->getJson('/api/players?'.http_build_query(['search' => '%']))
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $literal->id);
+
+        $this->actingAs($user)
+            ->getJson('/api/players?'.http_build_query(['search' => "' OR 1=1 --"]))
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+    }
 }

@@ -1,0 +1,1 @@
+<template><section class="status-page panel"><p class="eyebrow">ОШИБКА 404</p><h1>Страница не найдена</h1><p class="muted">Возможно, ссылка устарела или объект был удалён.</p><RouterLink class="primary" to="/dashboard">Вернуться на дашборд</RouterLink></section></template>

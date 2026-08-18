@@ -12,15 +12,15 @@ use PHPUnit\Framework\TestCase;
 
 final class PartyLeaderPolicyTest extends TestCase
 {
-    public function test_party_leader_can_manage_only_own_group(): void
+    public function test_party_leader_cannot_rename_or_delete_groups(): void
     {
         $user = $this->partyLeader(10);
         $ownGroup = (new GuildGroup())->forceFill(['id' => 10]);
         $otherGroup = (new GuildGroup())->forceFill(['id' => 11]);
         $policy = new GuildGroupPolicy();
 
-        self::assertTrue($policy->update($user, $ownGroup));
-        self::assertTrue($policy->delete($user, $ownGroup));
+        self::assertFalse($policy->update($user, $ownGroup));
+        self::assertFalse($policy->delete($user, $ownGroup));
         self::assertFalse($policy->update($user, $otherGroup));
         self::assertFalse($policy->delete($user, $otherGroup));
         self::assertFalse($policy->create($user));
@@ -59,6 +59,20 @@ final class PartyLeaderPolicyTest extends TestCase
 
         self::assertTrue($user->canManageGuild());
         self::assertTrue($user->canAdministrate());
+    }
+
+    public function test_micro_guild_leader_has_management_but_not_restricted_financial_commands(): void
+    {
+        $user = (new User())->forceFill([
+            'role' => UserRole::MicroGuildLeader,
+            'roles' => [UserRole::MicroGuildLeader->value],
+        ]);
+
+        self::assertTrue($user->canManageGuild());
+        self::assertTrue($user->canAdministrate());
+        self::assertFalse($user->canCreateAuctions());
+        self::assertFalse($user->canHandleTreasuryItems());
+        self::assertFalse($user->canCreatePayouts());
     }
 
     private function partyLeader(int $groupId): User
