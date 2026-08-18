@@ -67,9 +67,9 @@ function editDraft(lot) {
 }
 
 async function loadAll() {
-  const [auctionResponse, treasuryResponse] = await Promise.all([api.get('/api/auctions'), api.get('/api/treasury')])
+  const [auctionResponse, treasuryResponse] = await Promise.all([api.get('/api/auctions'), api.get('/api/treasury/items')])
   auctions.value = auctionResponse.data
-  items.value = treasuryResponse.data.items
+  items.value = treasuryResponse.data
   window.dispatchEvent(new CustomEvent('auction-count-changed', { detail: activeCount.value }))
 }
 

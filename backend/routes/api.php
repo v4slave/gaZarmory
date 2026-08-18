@@ -74,6 +74,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/payouts/{payout}/complete', [PayoutController::class, 'complete']);
     Route::post('/payouts/{payout}/cancel', [PayoutController::class, 'cancel']);
     Route::get('/treasury', TreasuryController::class);
+    Route::get('/treasury/items', [TreasuryController::class, 'items']);
     Route::post('/treasury/transactions', [TreasuryTransactionController::class, 'store']);
     Route::get('/treasury/issue-options', TreasuryIssueOptionsController::class);
     Route::post('/treasury/items/{item}/issue', TreasuryItemIssueController::class);

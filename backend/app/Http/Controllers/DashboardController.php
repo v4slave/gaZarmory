@@ -55,13 +55,14 @@ final class DashboardController extends Controller
             ->values();
 
         $items = TreasuryItem::query()->where('quantity', '>', 0)->get();
+        $currentInventoryValue = (int) $items->sum(fn ($item) => $item->quantity * $item->unit_value);
 
         return [
             'gold' => (int) (DB::table('treasury_transactions')->latest('id')->value('balance_after') ?? 0),
-            'inventory_value' => (int) $items->sum(fn ($item) => $item->quantity * $item->unit_value),
+            'inventory_value' => $currentInventoryValue,
             'pending_payout' => (int) PrimePlayerEarning::query()->where('status', 'pending')->sum('player_share'),
             'active_auctions' => Auction::query()->where('status', 'active')->count(),
-            'treasury_dynamics' => $this->treasuryDynamics(),
+            'treasury_dynamics' => $this->treasuryDynamics($currentInventoryValue),
             'upcoming_events' => $this->upcomingEvents(),
             'attendance_period_days' => 30,
             'attendance_top' => $attendanceTop,
@@ -74,23 +75,55 @@ final class DashboardController extends Controller
         ];
     }
 
-    private function treasuryDynamics(): array
+    private function treasuryDynamics(int $currentInventoryValue): array
     {
-        return collect(range(13, 0))->map(function (int $daysAgo): array {
-            $date = CarbonImmutable::now()->subDays($daysAgo);
-            $endOfDay = $date->endOfDay();
-            $gold = (int) (DB::table('treasury_transactions')
-                ->where('created_at', '<=', $endOfDay)
-                ->latest('id')
-                ->value('balance_after') ?? 0);
-            $inventory = $daysAgo === 0
-                ? (int) TreasuryItem::query()->get()->sum(fn (TreasuryItem $item) => $item->quantity * $item->unit_value)
-                : (int) DB::table('treasury_item_transactions as transactions')
-                    ->join('treasury_items as items', 'items.id', '=', 'transactions.treasury_item_id')
-                    ->where('transactions.created_at', '<=', $endOfDay)
-                    ->sum(DB::raw('transactions.quantity_delta * items.unit_value'));
+        $today = CarbonImmutable::now()->startOfDay();
+        $periodStart = $today->subDays(13);
+        $periodEnd = $today->addDay();
 
-            return ['date' => $date->toDateString(), 'gold' => $gold, 'inventory_value' => max(0, $inventory)];
+        $gold = (int) (DB::table('treasury_transactions')
+            ->where('created_at', '<', $periodStart)
+            ->latest('id')
+            ->value('balance_after') ?? 0);
+        $goldTransactions = DB::table('treasury_transactions')
+            ->whereBetween('created_at', [$periodStart, $periodEnd])
+            ->orderBy('created_at')->orderBy('id')
+            ->get(['created_at', 'balance_after']);
+
+        $inventory = (int) DB::table('treasury_item_transactions as transactions')
+            ->join('treasury_items as items', 'items.id', '=', 'transactions.treasury_item_id')
+            ->where('transactions.created_at', '<', $periodStart)
+            ->sum(DB::raw('transactions.quantity_delta * items.unit_value'));
+        $inventoryTransactions = DB::table('treasury_item_transactions as transactions')
+            ->join('treasury_items as items', 'items.id', '=', 'transactions.treasury_item_id')
+            ->whereBetween('transactions.created_at', [$periodStart, $periodEnd])
+            ->orderBy('transactions.created_at')->orderBy('transactions.id')
+            ->get(['transactions.created_at', 'transactions.quantity_delta', 'items.unit_value']);
+
+        $goldIndex = 0;
+        $inventoryIndex = 0;
+
+        return collect(range(0, 13))->map(function (int $offset) use (
+            $periodStart, $goldTransactions, $inventoryTransactions, &$goldIndex, &$inventoryIndex, &$gold, &$inventory, $currentInventoryValue
+        ): array {
+            $date = $periodStart->addDays($offset);
+            $endOfDay = $date->addDay();
+
+            while (isset($goldTransactions[$goldIndex]) && CarbonImmutable::parse($goldTransactions[$goldIndex]->created_at)->lt($endOfDay)) {
+                $gold = (int) $goldTransactions[$goldIndex]->balance_after;
+                $goldIndex++;
+            }
+            while (isset($inventoryTransactions[$inventoryIndex]) && CarbonImmutable::parse($inventoryTransactions[$inventoryIndex]->created_at)->lt($endOfDay)) {
+                $transaction = $inventoryTransactions[$inventoryIndex];
+                $inventory += (int) $transaction->quantity_delta * (int) $transaction->unit_value;
+                $inventoryIndex++;
+            }
+
+            return [
+                'date' => $date->toDateString(),
+                'gold' => $gold,
+                'inventory_value' => $offset === 13 ? $currentInventoryValue : max(0, $inventory),
+            ];
         })->all();
     }
 

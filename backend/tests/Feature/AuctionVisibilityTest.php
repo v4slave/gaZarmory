@@ -64,6 +64,9 @@ final class AuctionVisibilityTest extends TestCase
         $this->actingAs($manager)->getJson('/api/auctions/active-count')
             ->assertOk()
             ->assertJsonStructure(['count']);
+        $this->actingAs($manager)->getJson('/api/treasury/items')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $item->id, 'item_name' => $item->item_name]);
     }
 
     public function test_finished_auction_disappears_from_list_after_three_days(): void

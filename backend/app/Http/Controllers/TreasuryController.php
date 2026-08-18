@@ -9,12 +9,18 @@ use Illuminate\Support\Facades\DB;
 
 final class TreasuryController extends Controller
 {
+    public function items()
+    {
+        return TreasuryItem::query()->where('quantity', '>', 0)->orderBy('item_name')->get();
+    }
+
     public function __invoke(): array
     {
         $items = TreasuryItem::query()->where('quantity', '>', 0)->orderBy('item_name')->get();
         $tokenSettings = DB::table('treasury_token_settings')->where('id', 1)->first();
-        $tokenCount = (int) ($tokenSettings?->token_count ?? 0);
         $tokenUnitValue = (int) ($tokenSettings?->token_unit_value ?? 0);
+        $gold = (int) (DB::table('treasury_transactions')->latest('id')->value('balance_after') ?? 0);
+        $tokenCount = $tokenUnitValue > 0 ? intdiv($gold, $tokenUnitValue) : 0;
         $transactionQuery = TreasuryItemTransaction::query()->with([
             'item:id,item_name,icon_path,unit_value',
             'recipient:id,nickname',
@@ -54,10 +60,9 @@ final class TreasuryController extends Controller
             ->values();
 
         return [
-            'gold' => (int) (DB::table('treasury_transactions')->latest('id')->value('balance_after') ?? 0),
+            'gold' => $gold,
             'token_count' => $tokenCount,
             'token_unit_value' => $tokenUnitValue,
-            'token_gold_value' => $tokenCount * $tokenUnitValue,
             'inventory_value' => (int) $items->sum(fn ($item) => $item->quantity * $item->unit_value),
             'items' => $items,
             'recent_drops' => $recentDrops,

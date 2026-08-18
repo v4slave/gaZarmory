@@ -79,10 +79,10 @@ CREATE TABLE treasury_transactions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(), CHECK (balance_after >= 0)
 );
 CREATE TABLE treasury_token_settings (
-  id SMALLINT PRIMARY KEY DEFAULT 1, token_count BIGINT NOT NULL DEFAULT 0, token_unit_value BIGINT NOT NULL DEFAULT 0,
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), CHECK (id = 1), CHECK (token_count >= 0), CHECK (token_unit_value >= 0)
+  id SMALLINT PRIMARY KEY DEFAULT 1, token_unit_value BIGINT NOT NULL DEFAULT 0,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(), CHECK (id = 1), CHECK (token_unit_value >= 0)
 );
-INSERT INTO treasury_token_settings (id, token_count, token_unit_value) VALUES (1, 0, 0);
+INSERT INTO treasury_token_settings (id, token_unit_value) VALUES (1, 0);
 
 CREATE TABLE auctions (
   id BIGSERIAL PRIMARY KEY, treasury_item_id BIGINT NOT NULL REFERENCES treasury_items(id), quantity BIGINT NOT NULL,

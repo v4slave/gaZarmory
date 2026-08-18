@@ -64,7 +64,7 @@ async function linkProfile() {
         <button v-if="auth.authenticated" @click="auth.logout">Выйти</button>
         <button v-else-if="!auth.loading" class="primary" @click="auth.login">Войти через Discord</button>
       </header>
-      <RouterView />
+      <RouterView :key="route.fullPath" />
     </main>
   </div>
   <div v-if="showLinker" class="modal" @click.self="showLinker=false">

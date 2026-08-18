@@ -14,11 +14,17 @@ final class TreasuryTokenBalanceTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_treasury_returns_token_gold_equivalent(): void
+    public function test_treasury_calculates_whole_tokens_from_gold_and_unit_value(): void
     {
         DB::table('treasury_token_settings')->where('id', 1)->update([
-            'token_count' => 12,
-            'token_unit_value' => 150,
+            'token_unit_value' => 80,
+        ]);
+        DB::table('treasury_transactions')->insert([
+            'type' => 'adjustment',
+            'amount' => 1000,
+            'balance_after' => 1000,
+            'description' => 'Баланс для проверки жетонов',
+            'created_at' => now(),
         ]);
 
         $user = User::query()->create([
@@ -38,7 +44,7 @@ final class TreasuryTokenBalanceTest extends TestCase
         $this->actingAs($user)->getJson('/api/treasury')
             ->assertOk()
             ->assertJsonPath('token_count', 12)
-            ->assertJsonPath('token_unit_value', 150)
-            ->assertJsonPath('token_gold_value', 1800);
+            ->assertJsonPath('token_unit_value', 80)
+            ->assertJsonMissingPath('token_gold_value');
     }
 }

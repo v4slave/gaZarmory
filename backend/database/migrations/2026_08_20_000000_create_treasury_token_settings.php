@@ -10,7 +10,6 @@ return new class extends Migration {
         DB::statement(<<<'SQL'
             CREATE TABLE treasury_token_settings (
                 id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
-                token_count BIGINT NOT NULL DEFAULT 0 CHECK (token_count >= 0),
                 token_unit_value BIGINT NOT NULL DEFAULT 0 CHECK (token_unit_value >= 0),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
             )
@@ -18,7 +17,6 @@ return new class extends Migration {
 
         DB::table('treasury_token_settings')->insert([
             'id' => 1,
-            'token_count' => 0,
             'token_unit_value' => 0,
         ]);
     }
