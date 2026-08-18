@@ -285,6 +285,7 @@ section { width:100%;max-width:2100px; }
   .dashboard-heading>.muted { font-size:16px; }
   .dashboard-page .stat-card span { font-size:13px; }
   .dashboard-page .stat-card strong { font-size:32px; }
+  .dashboard-page .stat-card strong>span { font:inherit;font-size:inherit; }
   .dashboard-page .stat-card small { font-size:14px; }
   .dashboard-page .panel-title h2 { font-size:19px; }
   .dashboard-page .chart-legend { font-size:13px; }
@@ -325,6 +326,43 @@ section { width:100%;max-width:2100px; }
   .treasury-workspace .activity-drop-items>span { width:40px;height:40px; }
   .treasury-workspace .activity-drop-items b { font-size:11px; }
   .treasury-workspace .activity-drop-list .gold-amount { font-size:18px; }
+
+  /* Treasury journals: preserve density, but make rows readable at 2K. */
+  .treasury-workspace .history-panel .panel-title h2 { font-size:20px; }
+  .treasury-workspace .history-panel .panel-title span { font-size:15px; }
+  .treasury-workspace .history-panel table { font-size:14px; }
+  .treasury-workspace .history-panel th { font-size:12px; }
+  .treasury-workspace .history-panel th,
+  .treasury-workspace .history-panel td { padding:12px; }
+  .treasury-workspace .history-entity { min-width:220px;gap:11px; }
+  .treasury-workspace .history-entity img,
+  .treasury-workspace .history-entity i { width:40px;height:40px; }
+  .treasury-workspace .history-entity.gold img { width:22px;height:22px; }
+  .treasury-workspace .history-note { font-size:12px;line-height:1.45; }
+  .treasury-workspace .history-panel .gold-amount img { width:16px;height:16px; }
+
+  /* Const-party cards remain content-height, with comfortable 2K typography. */
+  .group-grid { grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px; }
+  .group-card { padding:24px; }
+  .group-card h2 { font-size:21px; }
+  .group-card p { font-size:15px; }
+  .group-members a { padding:11px 4px;font-size:16px; }
+  .group-members .class-tag { padding:4px 8px;font-size:13px; }
+  .group-member-meta small { min-width:50px;font-size:13px; }
+  .party-crown { font-size:18px; }
+  .group-card .card-actions button { font-size:15px; }
+
+  /* Activity journal filters and rows. */
+  .activity-toolbar label { gap:8px;font-size:12px; }
+  .activity-toolbar select,
+  .activity-toolbar input { height:50px;padding:0 14px;font-size:16px; }
+  .activity-toolbar + .table-wrap th { padding:13px 18px;font-size:13px; }
+  .activity-toolbar + .table-wrap td { padding:15px 18px;font-size:16px; }
+  .activity-toolbar + .table-wrap .activity-table-link { gap:12px; }
+  .activity-toolbar + .table-wrap .activity-table-link img { width:52px;height:40px; }
+  .activity-toolbar + .table-wrap .activity-table-link strong { font-size:16px; }
+  .activity-toolbar + .table-wrap .event-type,
+  .activity-toolbar + .table-wrap .import-status { font-size:13px; }
 }
 
 @media(min-width:2100px){
