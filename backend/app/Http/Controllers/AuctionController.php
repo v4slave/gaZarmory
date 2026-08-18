@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 final class AuctionController extends Controller
 {
-    public function index(Request $request){$manager=$request->user()->canManageGuild();return Auction::query()->with(['item','winner:id,nickname','topBid.player:id,nickname'])->withCount('bids')->when(!$manager,fn($q)=>$q->where('status','active'))->when($manager&&$request->filled('status'),fn($q)=>$q->where('status',$request->string('status')->toString()))->orderByDesc('id')->get();}
+    public function index(Request $request){$manager=$request->user()->canManageGuild();return Auction::query()->with(['item','winner:id,nickname','topBid.player:id,nickname'])->withCount('bids')->where(fn($q)=>$q->where('status','!=','finished')->orWhere('finished_at','>=',now()->subDays(3)))->when(!$manager,fn($q)=>$q->where('status','active'))->when($manager&&$request->filled('status'),fn($q)=>$q->where('status',$request->string('status')->toString()))->orderByDesc('id')->get();}
     public function activeCount(){return response()->json(['count'=>Auction::query()->where('status','active')->count()]);}
     public function show(Request $request,Auction $auction){abort_if(!$request->user()->canManageGuild()&&$auction->status!=='active',404);return $auction->load(['item','winner:id,nickname','bids'=>fn($q)=>$q->with('player:id,nickname')->orderByDesc('amount')->orderBy('created_at')->orderBy('id')]);}
     public function store(Request $request,AuditService $audit)

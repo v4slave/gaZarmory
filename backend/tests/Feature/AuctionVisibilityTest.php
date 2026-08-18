@@ -58,6 +58,26 @@ final class AuctionVisibilityTest extends TestCase
             ->assertJsonStructure(['count']);
     }
 
+    public function test_finished_auction_disappears_from_list_after_three_days(): void
+    {
+        $manager = $this->user(UserRole::Developer);
+        $item = TreasuryItem::query()->create([
+            'item_name' => 'Expired auction '.uniqid(),
+            'quantity' => 10,
+            'reserved_quantity' => 0,
+            'unit_value' => 100,
+        ]);
+        $recent = $this->auction($item, $manager, 'finished');
+        $recent->forceFill(['finished_at' => now()->subDays(2)])->save();
+        $expired = $this->auction($item, $manager, 'finished');
+        $expired->forceFill(['finished_at' => now()->subDays(4)])->save();
+
+        $ids = collect($this->actingAs($manager)->getJson('/api/auctions')->assertOk()->json())->pluck('id');
+
+        self::assertTrue($ids->contains($recent->id));
+        self::assertFalse($ids->contains($expired->id));
+    }
+
     public function test_auction_must_have_at_least_ten_minutes_remaining(): void
     {
         $manager = $this->user(UserRole::GuildLeader);
