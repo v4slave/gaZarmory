@@ -39,6 +39,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::delete('/admin/users/{managedUser}', [AdminUserController::class, 'destroy']);
     Route::get('/admin/audit-logs', AuditLogController::class);
 
+    Route::delete('/players/{player}/permanent', [PlayerController::class, 'destroyPermanently']);
     Route::apiResource('players', PlayerController::class);
     Route::post('/players/{player}/activate', [PlayerController::class, 'activate']);
     Route::put('/players/{player}/group', [PlayerController::class, 'move']);

@@ -442,3 +442,11 @@ section { width:100%;max-width:2100px; }
   .loot-cards article { grid-template-columns:44px minmax(0,1fr); }.loot-cards b { grid-column:2; }
   .inventory-grid { grid-template-columns:repeat(auto-fill,56px);gap:8px; }.inventory-slot { width:56px;height:56px; }
 }
+
+/* Activity participant colors follow the shared class palette. */
+.player-chip.class-melee,.attendee-picker>button.class-melee { color:#ffaaa1;border-color:#a9453c;background:#3a1511; }
+.player-chip.class-tank,.attendee-picker>button.class-tank { color:#93ddb0;border-color:#3d9160;background:#112f20; }
+.player-chip.class-bard,.attendee-picker>button.class-bard { color:#a9e0a1;border-color:#55934d;background:#183016; }
+.player-chip.class-healer,.attendee-picker>button.class-healer { color:#ffacd9;border-color:#a94e7f;background:#391529; }
+.player-chip.class-archer,.player-chip.class-mage,.attendee-picker>button.class-archer,.attendee-picker>button.class-mage { color:#d1adff;border-color:#7953aa;background:#28183e; }
+.attendee-picker>button.selected { color:#fff;border-color:#d5a34f;box-shadow:0 0 0 1px rgba(213,163,79,.22);filter:brightness(1.18); }

@@ -23,6 +23,7 @@ export const useGuildStore = defineStore('guild', {
     async createPlayer(payload) { await api.post('/api/players', payload); await this.fetchPlayers() },
     async updatePlayer(id, payload) { await api.put(`/api/players/${id}`, payload); await this.fetchPlayers() },
     async movePlayer(id, groupId) { await api.put(`/api/players/${id}/group`, { group_id: groupId }); await this.fetchPlayers() },
+    async deletePlayer(id) { await api.delete(`/api/players/${id}/permanent`); await Promise.all([this.fetchPlayers(), this.fetchGroups()]) },
     async createGroup(name) { await api.post('/api/groups', { name }); await this.fetchGroups() },
     async renameGroup(id, name) { await api.put(`/api/groups/${id}`, { name }); await this.fetchGroups() },
     async deleteGroup(id) { await api.delete(`/api/groups/${id}`); await Promise.all([this.fetchGroups(), this.fetchPlayers()]) },

@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 final class PlayerController extends Controller
 {
@@ -153,6 +154,43 @@ final class PlayerController extends Controller
         $player->update(['is_active' => false]);
         $this->audit->record('player.deactivated', $player, $old, ['is_active' => false]);
         return response()->json(null, 204);
+    }
+
+    public function destroyPermanently(Player $player): JsonResponse
+    {
+        $this->authorize('delete', $player);
+
+        DB::transaction(function () use ($player): void {
+            $lockedPlayer = Player::query()->lockForUpdate()->findOrFail($player->id);
+
+            if ($lockedPlayer->user_id !== null) {
+                throw ValidationException::withMessages([
+                    'player' => ['Сначала отвяжите персонажа от Discord-профиля.'],
+                ]);
+            }
+
+            if ($this->hasHistory($lockedPlayer->id)) {
+                throw ValidationException::withMessages([
+                    'player' => ['У персонажа есть история активностей, выплат, казны или аукционов. Его можно только ликвидировать с сохранением истории.'],
+                ]);
+            }
+
+            $snapshot = $lockedPlayer->getAttributes();
+            $this->audit->record('player.deleted', $lockedPlayer, $snapshot, null);
+            $lockedPlayer->delete();
+        });
+
+        return response()->json(null, 204);
+    }
+
+    private function hasHistory(int $playerId): bool
+    {
+        return DB::table('activity_players')->where('player_id', $playerId)->exists()
+            || DB::table('prime_player_earnings')->where('player_id', $playerId)->exists()
+            || DB::table('treasury_item_transactions')->where('recipient_player_id', $playerId)->exists()
+            || DB::table('auctions')->where('winner_player_id', $playerId)->exists()
+            || DB::table('auction_bids')->where('player_id', $playerId)->exists()
+            || DB::table('payout_players')->where('player_id', $playerId)->exists();
     }
 
     public function activate(Player $player): JsonResponse
