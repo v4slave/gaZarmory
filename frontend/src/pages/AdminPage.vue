@@ -126,7 +126,7 @@ onMounted(async () => { await Promise.all([loadItems(), loadDefinitions(), loadU
 
 <template>
   <section v-if="auth.canAdmin">
-    <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · УПРАВЛЕНИЕ</p><h1>Администрирование</h1><p class="muted">Пользователи, права доступа и справочник предметов</p></div></div>
+    <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · УПРАВЛЕНИЕ</p><h1>Админка</h1><p class="muted">Пользователи, права доступа и справочник предметов</p></div></div>
 
 
     <div class="admin-action-guide">
@@ -160,5 +160,5 @@ onMounted(async () => { await Promise.all([loadItems(), loadDefinitions(), loadU
     <div class="panel activity-definition-icons"><div class="panel-title"><div><h2>Изображения активностей</h2><p class="muted">Одно изображение используется во всех активностях выбранного события</p></div><span class="muted">{{ definitions.length }} событий</span></div><p v-if="error" class="notice error">{{ error }}</p><div class="definition-icon-grid"><article v-for="definition in definitions" :key="definition.id"><div class="definition-icon-preview"><img v-if="definition.icon_url" :src="definition.icon_url" :alt="definition.name"><span v-else>{{ definition.name.slice(0,1) }}</span></div><div><strong>{{ definition.name }}</strong><small>{{ definition.type==='prime'?'Прайм':'Мини-прайм' }}</small></div><label class="definition-upload"><input type="file" accept="image/png,image/jpeg,image/webp,image/gif" :disabled="definitionBusy===definition.id" @change="uploadDefinitionIcon(definition,$event.target.files[0]);$event.target.value=''">{{ definitionBusy===definition.id?'Загрузка…':definition.icon_url?'Заменить':'Загрузить' }}</label><button v-if="definition.icon_url" class="danger" :disabled="definitionBusy===definition.id" @click="deleteDefinitionIcon(definition)">Удалить</button></article></div></div>
     <div class="panel catalog-panel"><div class="panel-title"><h2>Справочник лута</h2><span class="muted">{{ items.length }} предметов</span></div><div v-if="items.length" class="catalog-grid"><article v-for="item in items" :key="item.id"><img :src="item.icon_url" :alt="item.name"><strong>{{ item.name }}</strong><button class="danger" @click="remove(item)">×</button></article></div><p v-else class="empty">Предметы ещё не загружены.</p></div>
   </section>
-  <section v-else><div class="panel"><h1>Доступ запрещён</h1><p class="muted">Администрирование доступно только ГЛ и Разработчику.</p></div></section>
+  <section v-else><div class="panel"><h1>Доступ запрещён</h1><p class="muted">Админка доступна только ГЛ и Разработчику.</p></div></section>
 </template>

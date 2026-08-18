@@ -9,7 +9,7 @@ input:focus, select:focus { border-color: #c72b2b; box-shadow: 0 0 0 3px rgba(19
 button.primary, .primary { color: #fff; border: 1px solid #d22121; background: linear-gradient(135deg, #df2929, #941313); padding: 10px 15px; border-radius: 6px; text-decoration: none; }
 button:disabled { opacity: .55; cursor: wait; }
 .shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
-aside { border-right: 1px solid #321010; padding: 24px 18px; background: rgba(3, 3, 3, .94); display: flex; flex-direction: column; }
+aside { position:sticky;top:0;height:100vh;overflow-y:auto;align-self:start;border-right: 1px solid #321010; padding: 24px 18px; background: rgba(3, 3, 3, .94); display: flex; flex-direction: column; }
 .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .055em; color: #fff; }
 .brand img { width: 50px; height: 50px; object-fit: cover; object-position: 50% 25%; border: 1px solid #7d1414; border-radius: 8px; box-shadow: 0 0 18px rgba(229, 35, 35, .28); }
 .brand small { display: block; margin-top: 4px; color: #ad5656; font-weight: 500; font-size: 9px; text-transform: uppercase; }

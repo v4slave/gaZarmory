@@ -25,7 +25,7 @@ const routes = [
   { path: '/auctions/:id', component: AuctionPage, meta: { title: 'Аукцион' } },
   { path: '/payouts', component: PayoutsPage, meta: { title: 'Нахрюк' } },
   { path: '/payouts/:id', component: PayoutPage, meta: { title: 'Нахрюк' } },
-  { path: '/admin', component: AdminPage, meta: { title: 'Администрирование', roles: ['guild_leader', 'developer'] } },
+  { path: '/admin', component: AdminPage, meta: { title: 'Админка', roles: ['guild_leader', 'developer'] } },
 ]
 
 export default createRouter({ history: createWebHistory(), routes })

@@ -51,7 +51,7 @@ async function linkProfile() {
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
       <nav><RouterLink v-for="link in links" :key="link[0]" :to="link[0]"><span>{{ link[1] }}</span><b v-if="link[0]==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></nav>
-      <RouterLink v-if="auth.canAdmin" class="admin" to="/admin">Администрирование</RouterLink>
+      <RouterLink v-if="auth.canAdmin" class="admin" to="/admin">Админка</RouterLink>
     </aside>
     <button v-if="menuOpen" class="mobile-nav-backdrop" type="button" aria-label="Закрыть меню" @click="menuOpen=false"></button>
     <main>
