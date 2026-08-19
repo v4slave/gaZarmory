@@ -856,3 +856,10 @@ aside nav a.router-link-active{color:#ffd58d;background:linear-gradient(90deg,rg
 .player-profile-page .player-assets>span.owned .profile-asset-copy b{color:#f1e4cf}
 .player-profile-page .player-assets>span.owned .profile-asset-copy small{color:#b88b4d}
 @media(max-width:700px){.profile-asset-image{height:96px}}
+
+/* Keep profile labels readable and readiness rows compact. */
+.player-profile-page .profile-asset-copy b{display:block;width:auto;height:auto;border:0;border-radius:0;background:transparent;line-height:1.3}
+.readiness-player{padding:11px 16px;gap:14px}
+.readiness-equipment{display:grid;gap:8px;min-width:0}
+.readiness-equipment .readiness-missing,.readiness-equipment .readiness-complete{grid-column:auto;margin:0;line-height:1.35}
+@media(max-width:1250px){.readiness-equipment{grid-column:1/-1}}

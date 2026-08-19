@@ -55,8 +55,7 @@ onMounted(load)
       <article v-for="player in data.players" :key="player.id" class="panel readiness-player">
         <RouterLink class="readiness-identity" :to="`/players/${player.id}`"><PlayerAvatar :player="player" size="small"/><span><strong>{{ player.nickname }}</strong><span class="readiness-player-meta"><small>{{ player.group?.name ?? 'Без консты' }}</small><small :class="['class-tag', `class-${player.class}`]">{{ classLabels[player.class] }}</small></span></span></RouterLink>
         <div class="readiness-gear"><span><small>ГС</small><b>{{ Number(player.gear_score).toLocaleString('ru-RU') }}</b></span><span><small>Неделя</small><b :class="Number(player.gear_score_week_delta) >= 0 ? 'positive' : 'negative'">{{ delta(player.gear_score_week_delta) }}</b></span><span><small>Месяц</small><b :class="Number(player.gear_score_month_delta) >= 0 ? 'positive' : 'negative'">{{ delta(player.gear_score_month_delta) }}</b></span></div>
-        <div class="readiness-assets"><span v-for="asset in assets" :key="asset[0]" :class="player[asset[0]] ? 'available' : 'missing'" :title="asset[1]">{{ player[asset[0]] ? '✓' : '×' }} {{ asset[1] }}</span></div>
-        <p v-if="missing(player).length" class="readiness-missing"><b>Не хватает:</b> {{ missing(player).join(', ') }}</p><p v-else class="readiness-complete">✓ Оснащение заполнено полностью</p>
+        <div class="readiness-equipment"><div class="readiness-assets"><span v-for="asset in assets" :key="asset[0]" :class="player[asset[0]] ? 'available' : 'missing'" :title="asset[1]">{{ player[asset[0]] ? '✓' : '×' }} {{ asset[1] }}</span></div><p v-if="missing(player).length" class="readiness-missing"><b>Не хватает:</b> {{ missing(player).join(', ') }}</p><p v-else class="readiness-complete">✓ Оснащение заполнено полностью</p></div>
       </article>
     </div>
     <div v-else class="panel empty">По выбранным условиям игроков не найдено.</div>
