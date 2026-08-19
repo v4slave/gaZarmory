@@ -619,6 +619,57 @@ section { width:100%;max-width:2100px; }
 .player-profile-page .earning-list small,.player-profile-page .visit-list span:last-child { font-size:11px; }
 @media(min-width:1900px){.player-profile-page { font-size:17px; }.profile-showcase .profile-stats .stat-card span { font-size:13px; }.profile-showcase .profile-stats .stat-card strong { font-size:32px; }.profile-showcase .profile-stats .stat-card small { font-size:12px; }.player-profile-page .player-assets>span>b { font-size:16px; }.player-profile-page .player-assets>span>small { font-size:12px; }}
 
+/* Service-wide ornamental frames */
+:where(.panel,.stat-card,.group-card,.toolbar,.table-wrap,.form-card,.auction-lot-v2,.profile-hero,.activity-cover,.access-card,.toast-card) {
+  --frame-cut:9px;
+  position:relative;
+  border-radius:0!important;
+  clip-path:polygon(var(--frame-cut) 0,calc(100% - var(--frame-cut)) 0,100% var(--frame-cut),100% calc(100% - var(--frame-cut)),calc(100% - var(--frame-cut)) 100%,var(--frame-cut) 100%,0 calc(100% - var(--frame-cut)),0 var(--frame-cut));
+}
+:where(.panel,.stat-card,.group-card,.form-card,.auction-lot-v2,.profile-hero,.access-card) {
+  background-image:
+    linear-gradient(#a87435,#a87435),linear-gradient(#a87435,#a87435),
+    linear-gradient(#a87435,#a87435),linear-gradient(#a87435,#a87435),
+    linear-gradient(145deg,rgba(29,19,10,.92),rgba(9,6,3,.95))!important;
+  background-position:left 5px top 5px,left 5px top 5px,right 5px bottom 5px,right 5px bottom 5px,0 0!important;
+  background-size:14px 1px,1px 14px,14px 1px,1px 14px,100% 100%!important;
+  background-repeat:no-repeat!important;
+}
+:where(.toolbar,.table-wrap) { --frame-cut:7px;border-color:#725029!important; }
+.table-wrap { border-top:1px solid #725029; }
+.toolbar + .table-wrap { margin-top:7px; }
+.form-card { --frame-cut:12px; }
+.modal .form-card { box-shadow:0 24px 70px #000,0 0 0 1px rgba(180,116,48,.12); }
+.profile-showcase { --frame-cut:12px;border-radius:0;clip-path:polygon(var(--frame-cut) 0,calc(100% - var(--frame-cut)) 0,100% var(--frame-cut),100% calc(100% - var(--frame-cut)),calc(100% - var(--frame-cut)) 100%,var(--frame-cut) 100%,0 calc(100% - var(--frame-cut)),0 var(--frame-cut)); }
+.inventory-slot,.upcoming-list article,.activity-summary-metrics>div,.auction-modal-item,.auction-modal-prices,.financial-preview>div,.admin-user-row,.definition-icon-grid article,.catalog-grid article {
+  border-radius:0!important;
+  clip-path:polygon(6px 0,calc(100% - 6px) 0,100% 6px,100% calc(100% - 6px),calc(100% - 6px) 100%,6px 100%,0 calc(100% - 6px),0 6px);
+}
+
+/* Profile metric legibility and payout alignment */
+.profile-showcase .profile-stats .stat-card>span:first-child {
+  display:inline-flex;
+  width:max-content;
+  max-width:100%;
+  padding:4px 7px;
+  color:#e7d2b1;
+  border-left:2px solid #c58b43;
+  background:linear-gradient(90deg,rgba(126,79,27,.42),rgba(32,21,11,.2));
+  font-weight:700;
+  letter-spacing:.075em;
+  text-shadow:0 1px 3px #000;
+}
+.player-profile-page .earning-list>div>b {
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  min-width:max-content;
+  white-space:nowrap;
+}
+.player-profile-page .earning-list>div>b .gold-amount { display:inline-flex;flex-wrap:nowrap;min-width:max-content;white-space:nowrap; }
+.player-profile-page .earning-list>div>b .gold-amount img { flex:0 0 14px; }
+@media(max-width:800px){.player-profile-page .earning-list>div>b { grid-column:2;justify-self:start; }}
+
 /* Reference-led shell polish: engraved bronze navigation and layered parchment. */
 :root {
   --ink:#090603;
