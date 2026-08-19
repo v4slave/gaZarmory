@@ -57,7 +57,7 @@ async function linkProfile() {
 </script>
 
 <template>
-  <div class="language-switcher" role="group" aria-label="Язык интерфейса">
+  <div v-if="!auth.authenticated || !auth.user?.player" class="language-switcher language-switcher-floating" role="group" aria-label="Язык интерфейса">
     <button type="button" :class="{ active: locale === 'ru' }" :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
     <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
   </div>
@@ -87,6 +87,10 @@ async function linkProfile() {
         <button class="mobile-menu-button" type="button" :aria-expanded="menuOpen" aria-label="Открыть меню" @click="menuOpen=!menuOpen"><span></span><span></span><span></span></button>
         <RouterLink class="mobile-brand" to="/dashboard">GAZ ARMORY</RouterLink>
         <div class="header-spacer"></div>
+        <div class="language-switcher" role="group" aria-label="Язык интерфейса">
+          <button type="button" :class="{ active: locale === 'ru' }" :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
+          <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
+        </div>
         <div v-if="auth.authenticated" class="notification-center"><button class="notification-bell" type="button" aria-label="Уведомления" @click="notificationOpen=!notificationOpen;loadNotifications()">🔔<b v-if="unreadNotifications">{{ unreadNotifications>99?'99+':unreadNotifications }}</b></button><div v-if="notificationOpen" class="notification-popover"><header><div><h2>Уведомления</h2><small>{{ unreadNotifications }} непрочитанных</small></div><button v-if="unreadNotifications" @click="markAllNotifications">Прочитать все</button></header><div v-if="notificationItems.length" class="notification-list"><component :is="item.data.url?'RouterLink':'div'" v-for="item in notificationItems" :key="item.id" :to="item.data.url||undefined" :class="{unread:!item.read_at}" @click="markNotification(item)"><span>{{ notificationIcon(item.type) }}</span><div><strong>{{ item.data.title }}</strong><p>{{ item.data.message }}</p><small>{{ new Date(item.created_at).toLocaleString('ru-RU') }}</small></div></component></div><p v-else class="empty">Уведомлений пока нет.</p></div></div>
         <RouterLink v-if="auth.user?.player" class="user-link header-user-profile" :to="`/players/${auth.user.player.id}`">{{ auth.user.discord_display_name || auth.user.discord_username }}</RouterLink>
         <button v-else-if="auth.user" class="user-unlinked" title="Привязать игровой профиль" @click="openLinker">{{ auth.user.discord_display_name || auth.user.discord_username }} · привязать профиль</button>
