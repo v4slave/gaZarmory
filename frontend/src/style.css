@@ -776,10 +776,10 @@ main{min-width:0}.catalog-loot-form>*{min-width:0}.catalog-loot-form input,.cata
 .confirmation-card{width:min(560px,calc(100vw - 32px));max-width:560px}.confirmation-card>.muted{line-height:1.65}
 
 /* Unified dark bronze palette: strong contrast without introducing a second theme. */
-:root{--ink:#0c0804;--surface:rgba(25,16,8,.95);--surface-soft:rgba(38,25,12,.88);--border:rgba(196,132,55,.52);--border-soft:rgba(196,132,55,.26);--accent:#d69a48;--accent-bright:#f2bd70;--text:#f3e5cf;--muted:#b9a88f}
-body{background-color:#100a05;background-blend-mode:multiply,normal}
-:where(.panel,.stat-card,.group-card,.form-card,.auction-lot-v2,.profile-hero,.access-card){background-image:linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(145deg,rgba(34,22,11,.97),rgba(12,8,4,.98))!important}
-aside{background:linear-gradient(180deg,rgba(12,8,4,.98),rgba(18,11,6,.97))}
+:root{--ink:#120b05;--surface:rgba(38,24,11,.94);--surface-soft:rgba(52,34,16,.9);--border:rgba(224,158,72,.64);--border-soft:rgba(224,158,72,.34);--accent:#e4a54e;--accent-bright:#ffd083;--text:#fff0d8;--muted:#d0bda1}
+body{background-color:#181006;background-blend-mode:soft-light,normal}
+:where(.panel,.stat-card,.group-card,.form-card,.auction-lot-v2,.profile-hero,.access-card){background-image:linear-gradient(#df9e49,#df9e49),linear-gradient(#df9e49,#df9e49),linear-gradient(#df9e49,#df9e49),linear-gradient(#df9e49,#df9e49),linear-gradient(145deg,rgba(49,32,15,.95),rgba(18,11,5,.97))!important}
+aside{background:linear-gradient(180deg,rgba(19,12,6,.97),rgba(28,17,8,.96))}
 input,select,textarea{color:#f3e7d5;background:#100b06;border-color:#624722}input:focus,select:focus,textarea:focus{border-color:#d69a48;box-shadow:0 0 0 3px rgba(214,154,72,.13)}
 button.primary,.primary{color:#17110a;border-color:#e0a552;background:linear-gradient(135deg,#e4ac5c,#aa6d28);font-weight:700}
 .secondary,.form-actions button{color:#eadcc8;background:#1b1209;border-color:#634523}
@@ -807,6 +807,20 @@ main>header{z-index:100}.notification-popover{z-index:120}.modal{z-index:1000}
 .group-rename-card{width:min(500px,calc(100vw - 32px))}.group-rename-card>.eyebrow,.group-rename-card>.muted{margin:0}
 .manual-loot.picker-open{z-index:300;clip-path:none!important}.manual-loot.picker-open .loot-options{z-index:310;box-shadow:0 22px 48px rgba(0,0,0,.72)}
 .payout-activity-copy{display:grid!important;gap:6px;min-width:0}
+
+/* Notification typography is intentionally larger than compact table text. */
+.notification-popover{width:min(470px,94vw);background:rgba(28,18,9,.99);border-color:rgba(228,165,78,.62)}
+.notification-popover>header{padding:17px 18px}.notification-popover h2{font-size:22px;line-height:1.2}.notification-popover header small{font-size:12px}.notification-popover header button{font-size:13px;padding:10px 13px}
+.notification-list>a,.notification-list>div{grid-template-columns:40px minmax(0,1fr);gap:12px;padding:15px 17px}.notification-list>a>span,.notification-list>div>span{width:36px;height:36px;font-size:16px}
+.notification-list strong{font-size:14px;line-height:1.35}.notification-list p{margin-top:4px;font-size:13px;line-height:1.5}.notification-list small{font-size:11px;line-height:1.4}
+
+/* Brighter shared surfaces and controls while preserving the bronze theme. */
+.toolbar,.table-wrap,table{background-color:rgba(24,15,7,.91)}
+th{color:#cdb795}td{color:#f2e5d2}th,td{border-bottom-color:rgba(202,137,57,.26)}
+.muted,.empty{color:var(--muted)}.eyebrow{color:#efad57}
+main>header{background:rgba(20,12,5,.82);border-bottom-color:rgba(224,158,72,.32)}
+aside nav a,aside .admin{color:#d8c4a5}aside nav a:hover,aside .admin:hover{color:#fff3dd;background:rgba(103,65,23,.34)}
+aside nav a.router-link-active{color:#ffd58d;background:linear-gradient(90deg,rgba(112,70,22,.9),rgba(48,29,11,.76))}
 
 /* Navigation remains comfortably readable on QHD/2K desktop displays. */
 @media(min-width:1900px){
