@@ -24,7 +24,7 @@ const translations = {
   'Свободных активных профилей не найдено.': 'No available active profiles found.',
   'Не удалось загрузить список персонажей.': 'Could not load the character list.',
   'Не удалось привязать игровой профиль.': 'Could not link the game profile.',
-  'Основное': 'Main', 'Экономика': 'Economy', 'Дашборд': 'Dashboard', 'Состав': 'Roster',
+  'Основное': 'Main', 'Экономика': 'Economy', 'Управление': 'Management', 'Дашборд': 'Dashboard', 'Состав': 'Roster',
   'Конст-пати': 'Static parties', 'Активности': 'Activities', 'Казна': 'Treasury', 'Аукционы': 'Auctions',
   'Нахрюк': 'Payouts', 'Готовность состава': 'Roster readiness', 'Посещаемость': 'Attendance',
   'Финансовая сверка': 'Financial reconciliation', 'Админка': 'Admin',

@@ -949,6 +949,9 @@ aside nav a.router-link-active{color:#ffe0a9;background:linear-gradient(90deg,rg
   width:100%;
   margin:0;
 }
+.management-nav{margin-top:auto;padding-top:18px;border-top:1px solid var(--border-soft)}
+.management-nav .admin{margin-top:0}
+.management-nav+.aside-profile{margin-top:18px}
 @media(max-width:760px){
   .groups-page .group-grid{grid-template-columns:1fr}
 }

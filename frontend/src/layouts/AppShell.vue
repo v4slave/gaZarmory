@@ -72,13 +72,15 @@ async function linkProfile() {
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
       <nav><div class="nav-section"><span class="nav-section-title">Основное</span><RouterLink v-for="link in primaryLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span></RouterLink></div><div class="nav-section"><span class="nav-section-title">Экономика</span><RouterLink v-for="link in economyLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></div></nav>
-      <RouterLink v-if="auth.canViewReadiness" class="admin readiness-nav" to="/roster-readiness"><i class="nav-icon" aria-hidden="true">◉</i><span>Готовность состава</span></RouterLink>
-      <RouterLink v-if="auth.canViewReadiness" class="admin" to="/attendance-analytics"><i class="nav-icon" aria-hidden="true">↗</i><span>Посещаемость</span></RouterLink>
-      <RouterLink v-if="auth.canHandleTreasuryItems" class="admin" to="/financial-reconciliation"><i class="nav-icon" aria-hidden="true">✓</i><span>Финансовая сверка</span></RouterLink>
-      <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>Админка</span></RouterLink>
+      <nav class="management-nav"><div class="nav-section"><span class="nav-section-title">Управление</span>
+        <RouterLink v-if="auth.canViewReadiness" class="admin" to="/roster-readiness"><i class="nav-icon" aria-hidden="true">◉</i><span>Готовность состава</span></RouterLink>
+        <RouterLink v-if="auth.canViewReadiness" class="admin" to="/attendance-analytics"><i class="nav-icon" aria-hidden="true">↗</i><span>Посещаемость</span></RouterLink>
+        <RouterLink v-if="auth.canHandleTreasuryItems" class="admin" to="/financial-reconciliation"><i class="nav-icon" aria-hidden="true">✓</i><span>Финансовая сверка</span></RouterLink>
+        <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>Админка</span></RouterLink>
+      </div></nav>
       <RouterLink v-if="auth.user?.player" class="aside-profile" :to="`/players/${auth.user.player.id}`">
         <PlayerAvatar :player="{ nickname: auth.user.player.nickname, user: auth.user }"/>
-        <span><strong>{{ auth.user.discord_display_name || auth.user.discord_username }}</strong><small>{{ auth.canAdmin ? 'Управление гильдией' : 'Участник гильдии' }}</small></span>
+        <span><strong>{{ auth.user.discord_display_name || auth.user.discord_username }}</strong></span>
         <b aria-hidden="true">›</b>
       </RouterLink>
     </aside>
