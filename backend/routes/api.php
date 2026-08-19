@@ -30,11 +30,15 @@ use App\Http\Controllers\FinancialReconciliationController;
 use App\Http\Controllers\PayoutExportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AdminSettingsController;
+use App\Services\DiscordProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/me', fn (Request $request) => $request->user()?->load(['player', 'pendingPlayerLinkRequest.player:id,nickname,class']));
+    Route::post('/me/discord-profile/sync', function (Request $request, DiscordProfileService $discord) {
+        return $discord->sync($request->user())->load(['player', 'pendingPlayerLinkRequest.player:id,nickname,class']);
+    })->middleware('throttle:6,1');
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/me/player', [SelfPlayerController::class, 'link']);
     Route::get('/me/player-options', [SelfPlayerController::class, 'options']);

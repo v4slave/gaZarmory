@@ -22,6 +22,10 @@ export const useAuthStore = defineStore('auth', {
       catch (error) { if (error.response?.status === 401) this.user = null; else throw error }
       finally { this.loading = false }
     },
+    async syncDiscordProfile() {
+      if (!this.user) return
+      try { this.user = (await api.post('/api/me/discord-profile/sync')).data } catch {}
+    },
     login() { window.location.assign(`${api.defaults.baseURL}/auth/discord`) },
     async logout() { await api.post('/api/logout'); this.user = null },
     async requestPlayerLink(playerId) { await api.post('/api/me/player', { player_id: playerId }); await this.fetchMe() },

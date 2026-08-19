@@ -11,9 +11,9 @@ class User extends Authenticatable
 {
     use Notifiable;
 
-    protected $fillable = ['discord_id', 'discord_username', 'discord_display_name', 'discord_avatar'];
-    protected $hidden = ['remember_token'];
-    protected function casts(): array { return ['role' => UserRole::class, 'roles' => 'array']; }
+    protected $fillable = ['discord_id', 'discord_username', 'discord_display_name', 'discord_avatar', 'discord_access_token', 'discord_refresh_token', 'discord_token_expires_at', 'discord_synced_at'];
+    protected $hidden = ['remember_token', 'discord_access_token', 'discord_refresh_token'];
+    protected function casts(): array { return ['role' => UserRole::class, 'roles' => 'array', 'discord_access_token' => 'encrypted', 'discord_refresh_token' => 'encrypted', 'discord_token_expires_at' => 'datetime', 'discord_synced_at' => 'datetime']; }
     public function player(): HasOne { return $this->hasOne(Player::class); }
     public function pendingPlayerLinkRequest(): HasOne
     {

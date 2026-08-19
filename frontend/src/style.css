@@ -868,3 +868,70 @@ aside nav a.router-link-active{color:#ffd58d;background:linear-gradient(90deg,rg
 .profile-discord-card:is(a){text-decoration:none;cursor:pointer;transition:transform .18s ease,border-color .18s ease,filter .18s ease}
 .profile-discord-card:is(a):hover{transform:translateY(-2px);border-color:#8870e8;filter:brightness(1.12)}
 .profile-discord-card:is(a):focus-visible{outline:2px solid #8870e8;outline-offset:3px}
+
+/* 2026 palette pass: separate the page, surfaces and actions by visual role. */
+:root{
+  --app-bg:#090806;
+  --nav-bg:#0a0d11;
+  --surface:#12171d;
+  --surface-raised:#181f27;
+  --surface-inset:#0d1217;
+  --border:rgba(116,139,157,.42);
+  --border-soft:rgba(116,139,157,.23);
+  --accent:#e3a64b;
+  --accent-bright:#ffd287;
+  --info:#59c7bd;
+  --text:#f4eee4;
+  --muted:#aeb8bf;
+}
+body{
+  color:var(--text);
+  background-color:var(--app-bg);
+  background-image:linear-gradient(rgba(8,10,12,.28),rgba(8,10,12,.42)),url('/images/gaz-armory-background.png');
+  background-attachment:fixed;
+  background-position:center;
+  background-size:cover;
+}
+aside{border-right-color:rgba(227,166,75,.3);background:linear-gradient(180deg,rgba(7,10,14,.985),rgba(10,13,17,.97))}
+main>header{border-bottom-color:var(--border-soft);background:rgba(10,13,17,.9);box-shadow:0 8px 28px rgba(0,0,0,.25)}
+.panel,.metrics article,.stat-card,.group-card,.toolbar,.table-wrap,.form-card{
+  border-color:var(--border)!important;
+  background-color:var(--surface)!important;
+  background-image:linear-gradient(145deg,rgba(24,31,39,.97),rgba(14,18,23,.97))!important;
+  box-shadow:0 12px 32px rgba(0,0,0,.25),inset 0 1px rgba(255,255,255,.025);
+}
+.toolbar,.form-card{background-image:linear-gradient(145deg,rgba(27,35,44,.99),rgba(16,21,27,.99))!important}
+table{background:rgba(13,18,23,.95)!important}
+thead{background:rgba(26,34,42,.88)}
+th{color:#c1ccd3}
+td{color:#f0ebe3}
+th,td{border-bottom-color:var(--border-soft)}
+tbody tr{transition:background-color .16s ease}
+tbody tr:hover{background:rgba(89,199,189,.055)}
+input,select,textarea{
+  color:var(--text);
+  border-color:rgba(122,145,163,.52);
+  background:#0b1116;
+}
+input:focus,select:focus,textarea:focus{border-color:var(--info);box-shadow:0 0 0 3px rgba(89,199,189,.14)}
+button.primary,.primary{color:#211506;border-color:#f0bb66;background:linear-gradient(135deg,#f0b95e,#bb7628);box-shadow:0 7px 20px rgba(187,118,40,.2)}
+button.primary:hover,.primary:hover{filter:brightness(1.09)}
+.secondary,.form-actions button:not(.primary):not(.danger),main>header button{
+  color:#dce4e8;
+  border-color:rgba(121,145,163,.5);
+  background:#151c23;
+}
+.secondary:hover,.form-actions button:not(.primary):not(.danger):hover,main>header button:hover{border-color:var(--info);background:#1a2830}
+.eyebrow,.catalog-link{color:var(--accent-bright)}
+.muted,.empty{color:var(--muted)}
+aside nav a,aside .admin{color:#b8c3ca}
+aside nav a:hover,aside .admin:hover{color:#f5f8fa;background:rgba(89,199,189,.09);border-color:rgba(89,199,189,.3)}
+aside nav a.router-link-active{color:#ffe0a9;background:linear-gradient(90deg,rgba(180,113,34,.28),rgba(23,30,37,.88));border-left-color:var(--accent)}
+.count-badge,.auction-count-pill{color:var(--accent-bright);border-color:rgba(227,166,75,.5);background:rgba(70,45,16,.38)}
+.notification-popover{border-color:var(--border);background:rgba(18,23,29,.99)}
+.notification-list>a.unread,.notification-list>div.unread{background:rgba(89,199,189,.08);box-shadow:inset 3px 0 var(--info)}
+.notification-list>a>span,.notification-list>div>span{color:var(--accent-bright);border-color:rgba(227,166,75,.45);background:rgba(74,47,15,.34)}
+.payout-mode button{color:#d1dbe0;border-color:var(--border);background:var(--surface-inset)}
+.payout-mode button.active{color:#211506!important;border-color:#f0bb66!important;background:linear-gradient(135deg,#f0b95e,#bb7628)!important}
+.payout-mode button.active small{color:#5d390f}
+.modal{background:rgba(3,5,7,.78)}

@@ -37,8 +37,9 @@ function notificationIcon(type){return({link_request:'♙',auction_started:'♢'
 function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
 watch(() => route.fullPath, () => { menuOpen.value = false;loadActiveAuctions() })
 watch(() => auth.authenticated, authenticated => { if(authenticated)loadActiveAuctions();else activeAuctions.value=0 })
-onMounted(()=>{loadActiveAuctions();loadNotifications();notificationTicker=window.setInterval(loadNotifications,30000);window.addEventListener('auction-count-changed',updateAuctionCount)})
-onBeforeUnmount(()=>{window.clearInterval(notificationTicker);window.removeEventListener('auction-count-changed',updateAuctionCount)})
+function syncDiscordOnFocus(){if(document.visibilityState==='visible')auth.syncDiscordProfile()}
+onMounted(()=>{loadActiveAuctions();loadNotifications();auth.syncDiscordProfile();notificationTicker=window.setInterval(loadNotifications,30000);window.addEventListener('auction-count-changed',updateAuctionCount);document.addEventListener('visibilitychange',syncDiscordOnFocus)})
+onBeforeUnmount(()=>{window.clearInterval(notificationTicker);window.removeEventListener('auction-count-changed',updateAuctionCount);document.removeEventListener('visibilitychange',syncDiscordOnFocus)})
 async function openLinker() {
   showLinker.value = true
   linkError.value = ''

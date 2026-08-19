@@ -26,6 +26,10 @@ final class AuthController
                 'discord_username' => $discord->getNickname() ?: $discord->getName() ?: (string) $discord->getId(),
                 'discord_display_name' => $discord->getName(),
                 'discord_avatar' => $discord->getAvatar(),
+                'discord_access_token' => $discord->token,
+                'discord_refresh_token' => $discord->refreshToken,
+                'discord_token_expires_at' => now()->addSeconds((int) ($discord->expiresIn ?? 604800)),
+                'discord_synced_at' => now(),
             ],
         );
 
