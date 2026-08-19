@@ -43,7 +43,7 @@ final class PayoutPreviewController extends Controller
             'balance_after' => $balance - $amount,
             'sufficient' => $balance >= $amount,
             'rows' => (clone $earnings)->selectRaw('player_id, MAX(nickname_snapshot) AS nickname, SUM(player_share) AS amount, COUNT(DISTINCT activity_id) AS activities_count')->groupBy('player_id')->orderBy('nickname')->get(),
-            'activity_options' => Activity::query()->whereHas('definition',fn($q)=>$q->where('type','prime'))->whereHas('earnings',fn($q)=>$q->where('status','pending')->whereNull('payout_id'))->with('definition:id,name,type')->latest('occurred_at')->limit(200)->get(['id','activity_definition_id','occurred_at']),
+            'activity_options' => Activity::query()->whereHas('definition',fn($q)=>$q->where('type','prime'))->whereHas('earnings',fn($q)=>$q->where('status','pending')->whereNull('payout_id'))->with('definition:id,name,type,icon_path')->latest('occurred_at')->limit(200)->get(['id','activity_definition_id','occurred_at']),
         ]);
     }
 }

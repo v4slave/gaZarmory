@@ -775,14 +775,14 @@ main{min-width:0}.catalog-loot-form>*{min-width:0}.catalog-loot-form input,.cata
 .groups-page .group-member-meta small{display:none}
 .confirmation-card{width:min(560px,calc(100vw - 32px));max-width:560px}.confirmation-card>.muted{line-height:1.65}
 
-/* Graphite and amber palette with stronger layer separation. */
-:root{--ink:#080a0d;--surface:rgba(17,20,24,.94);--surface-soft:rgba(27,31,36,.86);--border:rgba(201,145,65,.5);--border-soft:rgba(201,145,65,.25);--accent:#d69a48;--accent-bright:#f2bd70;--text:#f1eee8;--muted:#aeb4bc}
-body{background-color:#080a0d;background-blend-mode:multiply,normal}
-:where(.panel,.stat-card,.group-card,.form-card,.auction-lot-v2,.profile-hero,.access-card){background-image:linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(145deg,rgba(25,28,32,.96),rgba(8,10,13,.97))!important}
-aside{background:linear-gradient(180deg,rgba(8,10,13,.98),rgba(12,14,18,.96))}
-input,select,textarea{color:#f2eee7;background:#0b0e12;border-color:#59452e}input:focus,select:focus,textarea:focus{border-color:#d69a48;box-shadow:0 0 0 3px rgba(214,154,72,.13)}
+/* Unified dark bronze palette: strong contrast without introducing a second theme. */
+:root{--ink:#0c0804;--surface:rgba(25,16,8,.95);--surface-soft:rgba(38,25,12,.88);--border:rgba(196,132,55,.52);--border-soft:rgba(196,132,55,.26);--accent:#d69a48;--accent-bright:#f2bd70;--text:#f3e5cf;--muted:#b9a88f}
+body{background-color:#100a05;background-blend-mode:multiply,normal}
+:where(.panel,.stat-card,.group-card,.form-card,.auction-lot-v2,.profile-hero,.access-card){background-image:linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(#c58b43,#c58b43),linear-gradient(145deg,rgba(34,22,11,.97),rgba(12,8,4,.98))!important}
+aside{background:linear-gradient(180deg,rgba(12,8,4,.98),rgba(18,11,6,.97))}
+input,select,textarea{color:#f3e7d5;background:#100b06;border-color:#624722}input:focus,select:focus,textarea:focus{border-color:#d69a48;box-shadow:0 0 0 3px rgba(214,154,72,.13)}
 button.primary,.primary{color:#17110a;border-color:#e0a552;background:linear-gradient(135deg,#e4ac5c,#aa6d28);font-weight:700}
-.secondary,.form-actions button{color:#e1e4e8;background:#14181d;border-color:#4b5159}
+.secondary,.form-actions button{color:#eadcc8;background:#1b1209;border-color:#634523}
 
 /* Keep overlays above the sticky header and keep compact viewports in flow. */
 main>header{z-index:100}.notification-popover{z-index:120}.modal{z-index:1000}
@@ -794,11 +794,16 @@ main>header{z-index:100}.notification-popover{z-index:120}.modal{z-index:1000}
 @media(max-width:760px){.activity-summary{grid-template-columns:1fr}.activity-summary-image{width:100%}.catalog-loot-form{grid-template-columns:1fr}.catalog-loot-form label:first-child{grid-column:auto}}
 
 /* Payout creation is a workspace rather than a narrow stacked dialog. */
-.payout-preview-card{width:min(780px,calc(100vw - 32px));max-height:min(900px,92vh);overflow:auto;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 18px;padding:28px 30px}
-.payout-preview-card>h2,.payout-preview-card>.payout-mode,.payout-preview-card>.payout-activity-options,.payout-preview-card>.preview-loading,.payout-preview-card>.financial-preview,.payout-preview-card>.payout-preview-players,.payout-preview-card>p,.payout-preview-card>.form-actions{grid-column:1/-1}
+.payout-preview-card{width:min(860px,calc(100vw - 32px));max-height:min(920px,94vh);overflow:auto;grid-template-columns:1fr;gap:16px;padding:28px 30px}
+.payout-create-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;padding-bottom:15px;border-bottom:1px solid var(--border-soft)}.payout-create-heading h2{margin:5px 0 0;font-size:24px}.payout-create-heading .eyebrow{margin:0}
+.payout-mode{display:grid;grid-template-columns:1fr 1fr;gap:10px}.payout-mode button{display:grid;gap:4px;padding:13px 16px;color:#cbbba3;border:1px solid #674824;background:#1b1209;text-align:left}.payout-mode button b{font-size:13px}.payout-mode button small{color:#8e7e68;font-size:10px}.payout-mode button.active{color:#1a1006!important;border-color:#edb15c!important;background:linear-gradient(135deg,#efb660,#b8752c)!important;box-shadow:0 8px 24px rgba(187,119,42,.22)}.payout-mode button.active small{color:#573511}
+.payout-period-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}.payout-period-fields label{padding:13px;border:1px solid var(--border-soft);background:rgba(14,9,5,.45)}
+.payout-activity-options{max-height:300px;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:9px}.payout-activity-options label{position:relative;display:grid;grid-template-columns:74px minmax(0,1fr) 24px;gap:12px;align-items:center;min-height:78px;padding:9px;border:1px solid var(--border-soft);background:#140d07;cursor:pointer}.payout-activity-options label.selected{border-color:#dc9d49;background:linear-gradient(135deg,rgba(91,57,20,.75),rgba(24,15,7,.95))}.payout-activity-options input{position:absolute;width:1px;height:1px;opacity:0}.payout-activity-options img,.payout-activity-placeholder{display:grid;place-items:center;width:74px;height:58px;object-fit:cover;border:1px solid #795329;color:#dca756;background:#281908}.payout-activity-options label span:nth-of-type(2){display:grid;gap:6px}.payout-activity-options strong{color:#f1dfc4;font-size:14px}.payout-activity-options small{color:#ad9b81;font-size:11px}.payout-activity-options i{display:grid;place-items:center;width:23px;height:23px;border:1px solid #745029;border-radius:50%;color:#e2aa57;font-style:normal}.payout-activity-options label.selected i{color:#1c1106;background:#e0a651}
 .payout-preview-card .financial-preview{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.payout-preview-card .financial-preview>div{min-height:76px;padding:13px}
 .payout-preview-card .payout-preview-players{grid-template-columns:repeat(3,minmax(0,1fr));max-height:220px;gap:7px}.payout-preview-card .payout-preview-players span{padding:10px 12px;border:1px solid var(--border-soft);background:rgba(214,154,72,.07)}
-.payout-preview-card>.muted{margin:2px 0;line-height:1.55}.payout-preview-card>.form-actions{padding-top:14px;border-top:1px solid var(--border-soft)}
-@media(max-width:700px){.payout-preview-card{grid-template-columns:1fr;padding:20px 16px}.payout-preview-card>*{grid-column:1!important}.payout-preview-card .financial-preview,.payout-preview-card .payout-preview-players{grid-template-columns:1fr 1fr}}
+.payout-create-note{margin:0;padding:13px 15px;color:#c8b79d;border-left:3px solid #c88b3e;background:rgba(100,62,21,.16);font-size:12px;line-height:1.6}.payout-preview-card>.form-actions{padding-top:14px;border-top:1px solid var(--border-soft)}
+@media(max-width:700px){.payout-preview-card{padding:20px 16px}.payout-mode,.payout-period-fields,.payout-activity-options{grid-template-columns:1fr}.payout-preview-card .financial-preview,.payout-preview-card .payout-preview-players{grid-template-columns:1fr 1fr}}
 @media(max-width:430px){.payout-preview-card .financial-preview,.payout-preview-card .payout-preview-players{grid-template-columns:1fr}}
 .group-rename-card{width:min(500px,calc(100vw - 32px))}.group-rename-card>.eyebrow,.group-rename-card>.muted{margin:0}
+.manual-loot.picker-open{z-index:300;clip-path:none!important}.manual-loot.picker-open .loot-options{z-index:310;box-shadow:0 22px 48px rgba(0,0,0,.72)}
+.payout-activity-copy{display:grid!important;gap:6px;min-width:0}
