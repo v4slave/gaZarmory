@@ -32,6 +32,7 @@ final class TreasuryController extends Controller
         $recentDrops = (clone $transactionQuery)
             ->where('quantity_delta', '>', 0)
             ->whereNotNull('source_activity_id')
+            ->whereHas('sourceActivity.definition', fn ($definition) => $definition->where('type', 'prime'))
             ->latest('id')
             ->limit(150)
             ->get()

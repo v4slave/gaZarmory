@@ -30,13 +30,9 @@ final class DashboardController extends Controller
                     ->where('occurred_at', '>=', $periodStart)
                     ->countedInStatistics()
                     ->whereHas('definition', fn ($definition) => $definition->where('type', 'prime')),
-                'activities as mini_activities_count' => fn ($query) => $query
-                    ->where('occurred_at', '>=', $periodStart)
-                    ->whereNotNull('completed_at')
-                    ->whereHas('definition', fn ($definition) => $definition->where('type', 'mini_activity')),
             ])
             ->get(['id', 'user_id', 'nickname', 'class'])
-            ->filter(fn (Player $player) => $player->primes_count + $player->mini_activities_count > 0)
+            ->filter(fn (Player $player) => $player->primes_count > 0)
             ->map(function (Player $player) use ($totalPrimes): array {
                 return [
                     'id' => $player->id,
@@ -44,7 +40,6 @@ final class DashboardController extends Controller
                     'class' => $player->class->value,
                     'user' => $player->user,
                     'primes_count' => $player->primes_count,
-                    'mini_activities_count' => $player->mini_activities_count,
                     'attendance_percentage' => $totalPrimes > 0
                         ? round($player->primes_count / $totalPrimes * 100, 2)
                         : 0,
@@ -53,7 +48,6 @@ final class DashboardController extends Controller
             ->sort(fn (array $left, array $right) =>
                 ($right['attendance_percentage'] <=> $left['attendance_percentage'])
                 ?: ($right['primes_count'] <=> $left['primes_count'])
-                ?: ($right['mini_activities_count'] <=> $left['mini_activities_count'])
                 ?: strcasecmp($left['nickname'], $right['nickname']))
             ->take(5)
             ->values();
@@ -91,6 +85,7 @@ final class DashboardController extends Controller
             'attendance_top' => $attendanceTop,
             'recent_activities' => Activity::query()
                 ->with('definition:id,name,type,icon_path')
+                ->whereHas('definition', fn ($definition) => $definition->where('type', 'prime'))
                 ->withCount('players')
                 ->latest('occurred_at')
                 ->limit(5)

@@ -67,6 +67,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::apiResource('activities', ActivityController::class);
     Route::post('/activities/{activity}/players', [ActivityController::class, 'addPlayers']);
     Route::delete('/activities/{activity}/players/{playerId}', [ActivityController::class, 'removePlayer']);
+    // Compatibility for records created before the mini-activity removal migration.
     Route::post('/activities/{activity}/complete', [ActivityController::class, 'complete']);
     Route::post('/activities/{activity}/reopen', [ActivityController::class, 'reopen']);
     Route::post('/activities/{activity}/loot', [ActivityLootController::class, 'store']);

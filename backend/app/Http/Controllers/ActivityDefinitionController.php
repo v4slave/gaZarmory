@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\ActivityType;
 use App\Models\ActivityDefinition;
 use App\Services\AuditService;
 use Illuminate\Http\Request;
@@ -11,19 +10,19 @@ use Illuminate\Validation\Rule;
 
 final class ActivityDefinitionController extends Controller
 {
-    public function index() { return ActivityDefinition::query()->orderBy('type')->orderBy('name')->get(); }
+    public function index() { return ActivityDefinition::query()->where('type', 'prime')->orderBy('name')->get(); }
 
     public function store(Request $request)
     {
         abort_unless($request->user()->canManageGuild(), 403);
-        $data = $request->validate(['name' => ['required','string','max:160'], 'type' => ['required', Rule::enum(ActivityType::class)], 'is_active' => ['sometimes','boolean']]);
+        $data = $request->validate(['name' => ['required','string','max:160'], 'type' => ['required', Rule::in(['prime'])], 'is_active' => ['sometimes','boolean']]);
         return response()->json(ActivityDefinition::query()->create($data), 201);
     }
 
     public function update(Request $request, ActivityDefinition $activityDefinition)
     {
         abort_unless($request->user()->canManageGuild(), 403);
-        $activityDefinition->update($request->validate(['name' => ['sometimes','required','string','max:160'], 'type' => ['sometimes', Rule::enum(ActivityType::class)], 'is_active' => ['sometimes','boolean']]));
+        $activityDefinition->update($request->validate(['name' => ['sometimes','required','string','max:160'], 'type' => ['sometimes', Rule::in(['prime'])], 'is_active' => ['sometimes','boolean']]));
         return $activityDefinition->refresh();
     }
 

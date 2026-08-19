@@ -19,11 +19,11 @@ final class ActivityController extends Controller
     public function index(Request $request)
     {
         $this->authorize('viewAny', Activity::class);
-        $data = $request->validate(['date_from'=>['nullable','date'],'date_to'=>['nullable','date'],'type'=>['nullable','in:prime,mini_activity'],'definition_id'=>['nullable','integer'],'player_id'=>['nullable','integer'],'per_page'=>['nullable','integer','min:10','max:100']]);
+        $data = $request->validate(['date_from'=>['nullable','date'],'date_to'=>['nullable','date'],'definition_id'=>['nullable','integer'],'player_id'=>['nullable','integer'],'per_page'=>['nullable','integer','min:10','max:100']]);
         return Activity::query()->with('definition:id,name,type,icon_path')->withCount(['players','earnings'])
+            ->whereHas('definition', fn($definition) => $definition->where('type', 'prime'))
             ->when($data['date_from']??null, fn($q,$v)=>$q->whereDate('occurred_at','>=',$v))
             ->when($data['date_to']??null, fn($q,$v)=>$q->whereDate('occurred_at','<=',$v))
-            ->when($data['type']??null, fn($q,$v)=>$q->whereHas('definition',fn($d)=>$d->where('type',$v)))
             ->when($data['definition_id']??null, fn($q,$v)=>$q->where('activity_definition_id',$v))
             ->when($data['player_id']??null, fn($q,$v)=>$q->whereHas('players',fn($p)=>$p->whereKey($v)))
             ->orderByDesc('occurred_at')->paginate($data['per_page']??25);
@@ -34,6 +34,7 @@ final class ActivityController extends Controller
         $this->authorize('create', Activity::class);
         $data=$request->validate(['activity_definition_id'=>['required','exists:activity_definitions,id'],'occurred_at'=>['required','date'],'gold_value'=>['nullable','integer','min:0']]);
         $definition=ActivityDefinition::query()->findOrFail($data['activity_definition_id']);
+        abort_unless($definition->type->value === 'prime', 422, 'Можно создавать только основные праймы.');
         if($definition->type->value !== 'prime' && array_key_exists('gold_value',$data) && $data['gold_value']!==null) throw ValidationException::withMessages(['gold_value'=>'Золото допустимо только для прайма.']);
         $activity=Activity::query()->create($data+['created_by'=>$request->user()->id]);
         $this->audit->record('activity.created',$activity,null,$activity->getAttributes());

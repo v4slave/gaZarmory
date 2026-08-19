@@ -10,6 +10,10 @@ const locale = ref(initial)
 // Longer phrases are replaced first. This keeps the existing Russian templates as
 // the source of truth while giving every current and future view a translation.
 const translations = {
+  'Т2 Левиафан': 'Leviathan T2', 'Т2 Кракен': 'Kraken T2', 'Т2 АГЛ': 'JMG T2',
+  'АГЛ': 'JMG', 'Месания': 'Mesania', 'Ксанатос': 'Black dragon', 'Анталлон': 'Anthalon',
+  'Калидис': 'Charybdis', 'Авиара': 'Thunderwing Titan', 'Калеиль': 'Nehiliya',
+  'Кракен': 'Kraken', 'Левиафан': 'Leviathan', 'Кошка': 'Hanure',
   'Проверяем авторизацию…': 'Checking authentication…', 'Войти через Discord': 'Sign in with Discord',
   'ПЕРВЫЙ ВХОД': 'FIRST SIGN-IN', 'Заявка отправлена': 'Request sent',
   'Дождитесь подтверждения ГЛ или администратора.': 'Wait for approval from the guild leader or an administrator.',
@@ -90,6 +94,31 @@ const translations = {
   'золота': 'gold', 'предметов': 'items', 'позиций': 'entries', 'игроков': 'players',
   'шт.': 'pcs.', 'за единицу': 'per unit', 'Создано': 'Created', 'Обновлено': 'Updated',
   'Успешно': 'Success', 'Ошибка': 'Error', 'Не удалось': 'Failed to', 'Пока ничего нет.': 'Nothing here yet.'
+  ,'Аукцион гильдии': 'Guild auction', 'Архив побед': 'Winner archive', 'Добавить лот': 'Add lot',
+  'активных лотов': 'active lots', 'Стартовая цена': 'Starting price', 'Цена выкупа': 'Buyout price',
+  'Завершение:': 'Ends:', 'Ставок:': 'Bids:', 'Завершён': 'Completed', 'История ставок': 'Bid history',
+  'Ставок пока нет.': 'No bids yet.', 'Минимальная ставка': 'Minimum bid', 'Ваша максимальная ставка, жетоны': 'Your maximum bid, tokens',
+  'Система автоматически повышает цену только на необходимый шаг. Ваш максимум другим игрокам не показывается.': 'The system raises the price only by the required increment. Your maximum is hidden from other players.',
+  'Подтвердить ставку': 'Confirm bid', 'Выберите предмет из справочника и укажите цену': 'Choose an item from the catalog and set its price',
+  'Цена за единицу, золото': 'Unit price, gold', 'Выберите предмет': 'Choose item', 'Поиск предмета…': 'Search items…',
+  'Полученный дроп': 'Loot received', 'Дроп ещё не добавлен.': 'No loot added yet.',
+  'Импорт лута': 'Loot import', 'черновик до подтверждения': 'draft until confirmation',
+  'Выберите таблицу лута': 'Choose a loot spreadsheet', 'Участники ещё не отмечены.': 'No participants selected yet.',
+  'Событие': 'Event', 'Все события': 'All events', 'С даты': 'From date', 'По дату': 'To date',
+  'Создать событие': 'Create event', 'Основные праймы гильдии': 'Guild main primes',
+  'Тип': 'Type', 'Рассчитана': 'Calculated', 'Основной прайм': 'Main prime',
+  'Игроки, классы и распределение по конст-пати': 'Players, classes, and static-party assignments',
+  'Добавить игрока': 'Add player', 'Поиск по никнейму': 'Search by nickname', 'Игроки гильдии': 'Guild players',
+  'Посещено праймов': 'Primes attended', 'Выплачено всего': 'Total paid', 'Сольники': 'Solo players',
+  'Переименовать': 'Rename', 'Средний ГС': 'Average GS', 'Профиль игрока': 'Player profile',
+  'Редактировать профиль': 'Edit profile', 'Праймы · 30 дней': 'Primes · 30 days',
+  'Посещение праймов · 30 дней': 'Prime attendance · 30 days', 'Выплачено': 'Paid', 'Ожидается': 'Pending',
+  'В наличии': 'Available', 'История начислений': 'Earnings history', 'Последние посещения': 'Recent attendance',
+  'Новая платёжная ведомость': 'New payout statement', 'По периоду': 'By period',
+  'Конкретные активности': 'Specific activities', 'Период с': 'Period from', 'Период по': 'Period to',
+  'К выдаче': 'To pay', 'Баланс до': 'Balance before', 'Баланс после': 'Balance after',
+  'Создать ведомость': 'Create statement', 'Подтвердить расчёт': 'Confirm calculation',
+  'Зафиксировать прайм': 'Finalize prime', 'КОНТРОЛИРУЕМАЯ ОПЕРАЦИЯ': 'CONTROLLED OPERATION'
 }
 
 const entries = Object.entries(translations).sort((a, b) => b[0].length - a[0].length)

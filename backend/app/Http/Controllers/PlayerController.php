@@ -48,9 +48,6 @@ final class PlayerController extends Controller
                 'activities as primes_count' => fn ($activityQuery) => $activityQuery
                     ->countedInStatistics()
                     ->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'prime')),
-                'activities as mini_activities_count' => fn ($activityQuery) => $activityQuery
-                    ->whereNotNull('completed_at')
-                    ->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'mini_activity')),
             ]);
         $query->when($filters['search'] ?? null, function ($query, string $value): void {
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $value);

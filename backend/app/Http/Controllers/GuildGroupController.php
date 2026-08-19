@@ -27,7 +27,6 @@ final class GuildGroupController extends Controller
                 ->select(['id', 'user_id', 'group_id', 'nickname', 'class'])
                 ->withCount([
                     'activities as primes_count' => fn ($activityQuery) => $activityQuery->where('occurred_at', '>=', $periodStart)->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'prime')),
-                    'activities as mini_activities_count' => fn ($activityQuery) => $activityQuery->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'mini_activity')),
                 ])
                 ->orderBy('nickname')])
             ->withCount(['players' => fn ($query) => $query->where('is_active', true)])

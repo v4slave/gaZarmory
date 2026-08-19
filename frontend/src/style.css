@@ -540,6 +540,14 @@ section { width:100%;max-width:2100px; }
 .class-distribution>div:last-child>span { display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #51371e;border-radius:6px;background:#120d08; }
 .class-distribution small { color:#9f8d74;font-size:10px; }
 .class-distribution b { color:#edc17d;font-size:18px; }
+.class-distribution>div:last-child>span.class-melee{border-color:#a9453c;background:linear-gradient(135deg,#3a1511,#160b08)}
+.class-distribution>div:last-child>span.class-archer{border-color:#5f8dbc;background:linear-gradient(135deg,#122a42,#0c1017)}
+.class-distribution>div:last-child>span.class-mage{border-color:#7953aa;background:linear-gradient(135deg,#28183e,#110b19)}
+.class-distribution>div:last-child>span.class-healer{border-color:#a94e7f;background:linear-gradient(135deg,#391529,#160b12)}
+.class-distribution>div:last-child>span.class-bard{border-color:#55934d;background:linear-gradient(135deg,#183016,#0b140a)}
+.class-distribution>div:last-child>span.class-tank{border-color:#3d9160;background:linear-gradient(135deg,#112f20,#09150e)}
+.class-distribution .class-melee small{color:#ffaaa1}.class-distribution .class-archer small{color:#9fcaff}.class-distribution .class-mage small{color:#d1adff}.class-distribution .class-healer small{color:#ffacd9}.class-distribution .class-bard small{color:#a9e0a1}.class-distribution .class-tank small{color:#93ddb0}
+.class-distribution>div:last-child>span{box-shadow:inset 0 0 18px rgba(255,255,255,.025),0 5px 16px rgba(0,0,0,.24)}
 .group-card-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:14px; }
 .group-averages { display:flex;gap:6px;flex:none; }
 .group-averages>span { display:grid;gap:3px;min-width:82px;padding:7px 9px;border:1px solid #5a3d1d;border-radius:6px;text-align:right;background:#130d07; }
@@ -762,3 +770,7 @@ button.primary:active,.primary:active { transform:translateY(1px); }
 .language-switcher button{min-width:34px;padding:5px 7px;border:0;border-radius:6px;background:transparent;color:#928b7d;font:700 11px/1 'JetBrains Mono',monospace;letter-spacing:.08em;cursor:pointer}
 .language-switcher button:hover{color:#f0d58b}.language-switcher button.active{background:#c89432;color:#171109}
 @media(max-width:720px){.language-switcher-floating{top:10px;right:10px}main>header .language-switcher button{min-width:30px;padding-inline:5px}}
+
+main{min-width:0}.catalog-loot-form>*{min-width:0}.catalog-loot-form input,.catalog-loot-form select{width:100%}
+.groups-page .group-member-meta small{display:none}
+.confirmation-card{width:min(560px,calc(100vw - 32px));max-width:560px}.confirmation-card>.muted{line-height:1.65}
