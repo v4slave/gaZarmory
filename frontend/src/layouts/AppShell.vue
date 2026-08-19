@@ -14,11 +14,13 @@ const linkError = ref('')
 const activeAuctions = ref(0)
 const freePlayers = ref([])
 const playerOptionsLoading = ref(false)
-const links = [
+const primaryLinks = [
   { to: '/dashboard', label: 'Дашборд', icon: '⌂' },
   { to: '/roster', label: 'Состав', icon: '♙' },
   { to: '/groups', label: 'Конст-пати', icon: '♜' },
   { to: '/activities', label: 'Активности', icon: '⚔' },
+]
+const economyLinks = [
   { to: '/treasury', label: 'Казна', icon: '▣' },
   { to: '/auctions', label: 'Аукционы', icon: '♢' },
   { to: '/payouts', label: 'Нахрюк', icon: '◫' },
@@ -56,7 +58,7 @@ async function linkProfile() {
         <img src="/gaz-armory-logo.png" alt="GAZ ARMORY">
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
-      <nav><RouterLink v-for="link in links" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></nav>
+      <nav><div class="nav-section"><span class="nav-section-title">Основное</span><RouterLink v-for="link in primaryLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span></RouterLink></div><div class="nav-section"><span class="nav-section-title">Экономика</span><RouterLink v-for="link in economyLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></div></nav>
       <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>Админка</span></RouterLink>
       <RouterLink v-if="auth.user?.player" class="aside-profile" :to="`/players/${auth.user.player.id}`">
         <PlayerAvatar :player="{ nickname: auth.user.player.nickname, user: auth.user }"/>

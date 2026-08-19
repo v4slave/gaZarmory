@@ -670,6 +670,13 @@ section { width:100%;max-width:2100px; }
 .player-profile-page .earning-list>div>b .gold-amount img { flex:0 0 14px; }
 @media(max-width:800px){.player-profile-page .earning-list>div>b { grid-column:2;justify-self:start; }}
 
+/* Sidebar navigation groups */
+aside nav { display:grid;gap:24px; }
+.nav-section { display:grid;gap:4px; }
+.nav-section-title { display:block;padding:0 12px 7px;color:#806e56;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.18em; }
+.nav-section + .nav-section { padding-top:18px;border-top:1px solid rgba(144,96,39,.2); }
+@media(min-width:1900px){.nav-section-title { font-size:11px; }}
+
 /* Reference-led shell polish: engraved bronze navigation and layered parchment. */
 :root {
   --ink:#090603;

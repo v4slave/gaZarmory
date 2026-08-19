@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration {
     private const PRIME = ['Кракен','Т2 Кракен','Ксанатос','Месания','Кошка','Анталлон','Калеиль','Калидис','Левиафан','Т2 Левиафан','Авиара','АГЛ','Т2 АГЛ','Морф'];
-    private const MINI = ['Марля','Т2 Марля','Жук'];
+    private const MINI = ['Жук'];
 
     public function up(): void
     {

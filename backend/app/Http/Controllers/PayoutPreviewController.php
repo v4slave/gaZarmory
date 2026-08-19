@@ -22,6 +22,7 @@ final class PayoutPreviewController extends Controller
         $earnings = PrimePlayerEarning::query()
             ->where('status', 'pending')
             ->whereNull('payout_id')
+            ->whereHas('activity.definition', fn ($query) => $query->where('type', 'prime'))
             ->whereHas('activity', fn ($query) => $query->whereBetween('occurred_at', [$from, $to]));
         $amount = (int) (clone $earnings)->sum('player_share');
         $balance = (int) (TreasuryTransaction::query()->latest('id')->value('balance_after') ?? 0);

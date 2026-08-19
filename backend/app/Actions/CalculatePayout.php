@@ -25,6 +25,7 @@ final class CalculatePayout
             $earnings = PrimePlayerEarning::query()
                 ->where('status', 'pending')
                 ->whereNull('payout_id')
+                ->whereHas('activity.definition', fn ($query) => $query->where('type', 'prime'))
                 ->whereHas('activity', fn ($query) => $query
                     ->whereDate('occurred_at', '>=', $locked->period_from)
                     ->whereDate('occurred_at', '<=', $locked->period_to))
@@ -58,21 +59,13 @@ final class CalculatePayout
                     ->whereDate('occurred_at', '>=', $locked->period_from)
                     ->whereDate('occurred_at', '<=', $locked->period_to)
                     ->count();
-                $miniActivities = Activity::query()
-                    ->whereNotNull('completed_at')
-                    ->whereHas('definition', fn ($query) => $query->where('type', 'mini_activity'))
-                    ->whereHas('players', fn ($query) => $query->where('players.id', $playerId))
-                    ->whereDate('occurred_at', '>=', $locked->period_from)
-                    ->whereDate('occurred_at', '<=', $locked->period_to)
-                    ->count();
-
                 PayoutPlayer::query()->create([
                     'payout_id' => $locked->id,
                     'player_id' => $playerId,
                     'nickname_snapshot' => $earning->nickname_snapshot,
                     'prime_attendance_percentage_snapshot' => $totalPrimes ? round($visited / $totalPrimes * 100, 2) : 0,
                     'primes_count' => $visited,
-                    'mini_activities_count' => $miniActivities,
+                    'mini_activities_count' => 0,
                     'amount' => $rows->sum('player_share'),
                     'status' => 'pending',
                 ]);

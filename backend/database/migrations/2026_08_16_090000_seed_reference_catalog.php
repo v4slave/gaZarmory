@@ -67,14 +67,6 @@ return new class extends Migration
             "icon_path": "activity-definitions/ujJUNi5YSpq2vcgMPqxw1O7wDYWc8FM0Xw8Tv2Ga.png"
         },
         {
-            "name": "Марля",
-            "icon_path": "activity-definitions/MKKYxC1IGnPFH28Axia1Ln7OkBM01w5TvcUdljVL.png"
-        },
-        {
-            "name": "Т2 Марля",
-            "icon_path": "activity-definitions/TYL2qeefFfiK37QiYHW5tsRcJF1hbTyxX18n8Q8C.png"
-        },
-        {
             "name": "Жук",
             "icon_path": "activity-definitions/fERL4AQDdexh5uWVHZsxQY4edxQpthSjo55pCcdR.png"
         }
@@ -434,4 +426,3 @@ JSON, true, 512, JSON_THROW_ON_ERROR);
         // A rollback must not delete or detach it.
     }
 };
-
