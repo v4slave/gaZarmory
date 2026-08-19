@@ -18,7 +18,13 @@ async function load() {
 }
 async function download(format){exporting.value=format;try{const response=await api.get('/api/attendance-analytics/export',{params:{...params(),format},responseType:'blob'});const url=URL.createObjectURL(response.data);const anchor=document.createElement('a');anchor.href=url;anchor.download=`attendance-${filters.period}.${format}`;anchor.click();URL.revokeObjectURL(url)}catch{error.value='Не удалось сформировать экспорт.'}finally{exporting.value=''}}
 function date(value){return value?new Date(value).toLocaleDateString('ru-RU'):'Никогда'}
-function periodLabel(label){if(label.includes('-W')){const [year,week]=label.split('-W');return `${week} нед. ${year}`}return new Date(`${label}T00:00:00`).toLocaleDateString('ru-RU',{day:'2-digit',month:'short'})}
+function periodLabel(label){
+  const value=String(label??'')
+  const week=value.match(/^(\d{4})-W?(\d{1,2})$/)
+  if(week)return `${Number(week[2])} нед. ${week[1]}`
+  const parsed=new Date(`${value}T00:00:00`)
+  return Number.isNaN(parsed.getTime())?'—':parsed.toLocaleDateString('ru-RU',{day:'2-digit',month:'short'})
+}
 watch(filters,()=>{clearTimeout(timer);timer=setTimeout(load,250)})
 onMounted(load)
 </script>

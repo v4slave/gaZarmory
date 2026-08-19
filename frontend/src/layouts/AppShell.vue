@@ -27,13 +27,13 @@ const primaryLinks = [
 const economyLinks = [
   { to: '/treasury', label: 'Казна', icon: '▣' },
   { to: '/auctions', label: 'Аукционы', icon: '♢' },
-  { to: '/payouts', label: 'Нахрюк', icon: '◫' },
+  { to: '/payouts', label: 'Нахрюк', icon: '🐷' },
 ]
 async function loadActiveAuctions(){if(!auth.user?.player)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
 async function loadNotifications(){if(!auth.authenticated)return;try{const data=(await api.get('/api/notifications')).data;notificationItems.value=data.items;unreadNotifications.value=data.unread_count}catch{}}
 async function markNotification(item){if(!item.read_at){await api.post(`/api/notifications/${item.id}/read`);item.read_at=new Date().toISOString();unreadNotifications.value=Math.max(0,unreadNotifications.value-1)}notificationOpen.value=false}
 async function markAllNotifications(){await api.post('/api/notifications/read-all');notificationItems.value.forEach(item=>item.read_at??=new Date().toISOString());unreadNotifications.value=0}
-function notificationIcon(type){return({link_request:'♙',auction_started:'♢',auction_finished:'◆',auction_outbid:'!',payout_calculated:'◫',insufficient_gold:'▣',activity_upcoming:'⚔'})[type]??'•'}
+function notificationIcon(type){return({link_request:'♙',auction_started:'♢',auction_finished:'◆',auction_outbid:'!',payout_calculated:'🐷',insufficient_gold:'▣',activity_upcoming:'⚔'})[type]??'•'}
 function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
 watch(() => route.fullPath, () => { menuOpen.value = false;loadActiveAuctions() })
 watch(() => auth.authenticated, authenticated => { if(authenticated)loadActiveAuctions();else activeAuctions.value=0 })
