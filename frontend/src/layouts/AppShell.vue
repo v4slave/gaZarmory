@@ -14,8 +14,13 @@ const activeAuctions = ref(0)
 const freePlayers = ref([])
 const playerOptionsLoading = ref(false)
 const links = [
-  ['/dashboard', 'Дашборд'], ['/roster', 'Состав'], ['/groups', 'Конст-пати'],
-  ['/activities', 'Активности'], ['/treasury', 'Казна'], ['/auctions', 'Аукционы'], ['/payouts', 'Нахрюк'],
+  { to: '/dashboard', label: 'Дашборд', icon: '⌂' },
+  { to: '/roster', label: 'Состав', icon: '♙' },
+  { to: '/groups', label: 'Конст-пати', icon: '♜' },
+  { to: '/activities', label: 'Активности', icon: '⚔' },
+  { to: '/treasury', label: 'Казна', icon: '▣' },
+  { to: '/auctions', label: 'Аукционы', icon: '♢' },
+  { to: '/payouts', label: 'Нахрюк', icon: '◫' },
 ]
 async function loadActiveAuctions(){if(!auth.user?.player)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
 function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
@@ -50,8 +55,13 @@ async function linkProfile() {
         <img src="/gaz-armory-logo.png" alt="GAZ ARMORY">
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
-      <nav><RouterLink v-for="link in links" :key="link[0]" :to="link[0]"><span>{{ link[1] }}</span><b v-if="link[0]==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></nav>
-      <RouterLink v-if="auth.canAdmin" class="admin" to="/admin">Админка</RouterLink>
+      <nav><RouterLink v-for="link in links" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></nav>
+      <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>Настройки</span></RouterLink>
+      <RouterLink v-if="auth.user?.player" class="aside-profile" :to="`/players/${auth.user.player.id}`">
+        <span class="aside-avatar">{{ (auth.user.discord_display_name || auth.user.discord_username || '?').slice(0, 1).toUpperCase() }}</span>
+        <span><strong>{{ auth.user.discord_display_name || auth.user.discord_username }}</strong><small>{{ auth.canAdmin ? 'Управление гильдией' : 'Участник гильдии' }}</small></span>
+        <b aria-hidden="true">›</b>
+      </RouterLink>
     </aside>
     <button v-if="menuOpen" class="mobile-nav-backdrop" type="button" aria-label="Закрыть меню" @click="menuOpen=false"></button>
     <main>
