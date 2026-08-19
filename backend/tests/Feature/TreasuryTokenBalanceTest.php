@@ -46,5 +46,11 @@ final class TreasuryTokenBalanceTest extends TestCase
             ->assertJsonPath('token_count', 12)
             ->assertJsonPath('token_unit_value', 80)
             ->assertJsonMissingPath('token_gold_value');
+
+        $this->actingAs($user)->getJson('/api/dashboard')
+            ->assertOk()
+            ->assertJsonPath('gold_token_count', 12)
+            ->assertJsonPath('token_unit_value', 80)
+            ->assertJsonStructure(['inventory_token_count', 'pending_payout_token_count']);
     }
 }

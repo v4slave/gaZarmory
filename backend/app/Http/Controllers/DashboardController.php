@@ -18,6 +18,7 @@ final class DashboardController extends Controller
         $periodStart = now()->subDays(30);
         $totalPrimes = Activity::query()
             ->where('occurred_at', '>=', $periodStart)
+            ->countedInStatistics()
             ->whereHas('definition', fn ($query) => $query->where('type', 'prime'))
             ->count();
 
@@ -27,6 +28,7 @@ final class DashboardController extends Controller
             ->withCount([
                 'activities as primes_count' => fn ($query) => $query
                     ->where('occurred_at', '>=', $periodStart)
+                    ->countedInStatistics()
                     ->whereHas('definition', fn ($definition) => $definition->where('type', 'prime')),
                 'activities as mini_activities_count' => fn ($query) => $query
                     ->where('occurred_at', '>=', $periodStart)
@@ -58,13 +60,28 @@ final class DashboardController extends Controller
 
         $items = TreasuryItem::query()->where('quantity', '>', 0)->get();
         $currentInventoryValue = (int) $items->sum(fn ($item) => $item->quantity * $item->unit_value);
+        $economy = DB::table('treasury_token_settings')
+            ->where('id', 1)
+            ->select('token_unit_value')
+            ->selectSub(
+                DB::table('treasury_transactions')->select('balance_after')->latest('id')->limit(1),
+                'gold'
+            )->first();
+        $gold = (int) ($economy?->gold ?? 0);
+        $pendingPayout = (int) PrimePlayerEarning::query()->where('status', 'pending')->sum('player_share');
+        $tokenUnitValue = (int) ($economy?->token_unit_value ?? 0);
+        $tokens = fn (int $value): int => $tokenUnitValue > 0 ? intdiv($value, $tokenUnitValue) : 0;
         $activePlayers = Player::query()->where('is_active', true);
         $classDistribution = (clone $activePlayers)->select('class', DB::raw('COUNT(*) as total'))->groupBy('class')->pluck('total', 'class');
 
         return [
-            'gold' => (int) (DB::table('treasury_transactions')->latest('id')->value('balance_after') ?? 0),
+            'gold' => $gold,
+            'gold_token_count' => $tokens($gold),
             'inventory_value' => $currentInventoryValue,
-            'pending_payout' => (int) PrimePlayerEarning::query()->where('status', 'pending')->sum('player_share'),
+            'inventory_token_count' => $tokens($currentInventoryValue),
+            'pending_payout' => $pendingPayout,
+            'pending_payout_token_count' => $tokens($pendingPayout),
+            'token_unit_value' => $tokenUnitValue,
             'active_auctions' => Auction::query()->where('status', 'active')->count(),
             'average_gear_score' => (int) round((clone $activePlayers)->avg('gear_score') ?? 0),
             'class_distribution' => $classDistribution,

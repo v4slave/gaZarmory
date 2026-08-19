@@ -9,6 +9,7 @@ use App\Models\Activity;
 use App\Models\ActivityDefinition;
 use App\Models\GuildGroup;
 use App\Models\Player;
+use App\Models\PrimePlayerEarning;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -47,6 +48,27 @@ final class AttendanceAnalyticsTest extends TestCase
             ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
         $this->actingAs($manager)->get('/api/attendance-analytics/export?period=7&format=xlsx')
             ->assertOk()->assertDownload();
+    }
+
+    public function test_legacy_calculated_prime_without_completed_at_is_included(): void
+    {
+        [$manager] = $this->userWithPlayer(UserRole::GuildLeader, false);
+        $group = GuildGroup::query()->create(['name' => 'Legacy'.uniqid()]);
+        $player = Player::query()->create(['nickname'=>'Legacyprime','class'=>PlayerClass::Tank,'is_active'=>true,'group_id'=>$group->id]);
+        $player->forceFill(['created_at'=>now()->subDays(60)])->save();
+        $definition = ActivityDefinition::query()->create(['name'=>'Legacy prime'.uniqid(),'type'=>ActivityType::Prime,'is_active'=>true]);
+        $activity = Activity::query()->create(['activity_definition_id'=>$definition->id,'occurred_at'=>now()->subDays(2),'created_by'=>$manager->id]);
+        $activity->players()->attach($player->id, ['created_at'=>now()->subDays(2)]);
+        PrimePlayerEarning::query()->create([
+            'activity_id'=>$activity->id,'player_id'=>$player->id,'nickname_snapshot'=>$player->nickname,
+            'prime_gold_value_snapshot'=>100,'participants_count_snapshot'=>1,'player_share'=>100,'status'=>'pending',
+        ]);
+
+        $this->actingAs($manager)->getJson('/api/attendance-analytics?period=30&group_id='.$group->id)
+            ->assertOk()
+            ->assertJsonPath('players.0.attended', 1)
+            ->assertJsonPath('players.0.available', 1)
+            ->assertJsonPath('players.0.percentage', 100);
     }
 
     public function test_member_cannot_open_attendance_analytics(): void

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -16,4 +17,10 @@ class Activity extends Model
     public function loot(): HasMany { return $this->hasMany(ActivityLoot::class); }
     public function earnings(): HasMany { return $this->hasMany(PrimePlayerEarning::class); }
     public function lootImports(): HasMany { return $this->hasMany(LootImport::class)->latest('id'); }
+    public function scopeCountedInStatistics(Builder $query): Builder
+    {
+        return $query->where(fn (Builder $activity) => $activity
+            ->whereNotNull('completed_at')
+            ->orWhereHas('earnings'));
+    }
 }

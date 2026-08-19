@@ -89,7 +89,8 @@ final class AttendanceAnalyticsController extends Controller
             ->when($groupId, fn ($query) => $query->where('group_id', $groupId))
             ->with(['group:id,name','user:id,discord_id,discord_username,discord_display_name,discord_avatar'])
             ->orderBy('nickname')->get();
-        $activities = Activity::query()->whereNotNull('completed_at')
+        $activities = Activity::query()
+            ->countedInStatistics()
             ->whereHas('definition', fn ($query) => $query->where('type', 'prime'))
             ->when($from, fn ($query) => $query->where('occurred_at', '>=', $from))
             ->when($filters['definition_id'] ?? null, fn ($query, $id) => $query->where('activity_definition_id', $id))

@@ -46,6 +46,7 @@ final class PlayerController extends Controller
             ->with(['group:id,name', 'user:id,discord_id,discord_username,discord_display_name,discord_avatar'])
             ->withCount([
                 'activities as primes_count' => fn ($activityQuery) => $activityQuery
+                    ->countedInStatistics()
                     ->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'prime')),
                 'activities as mini_activities_count' => fn ($activityQuery) => $activityQuery
                     ->whereNotNull('completed_at')

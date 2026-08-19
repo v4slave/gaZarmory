@@ -53,7 +53,7 @@ onMounted(load)
     <div v-if="loading" class="panel empty">Загружаем данные…</div>
     <div v-else-if="data.players.length" class="readiness-list">
       <article v-for="player in data.players" :key="player.id" class="panel readiness-player">
-        <RouterLink class="readiness-identity" :to="`/players/${player.id}`"><PlayerAvatar :player="player" size="small"/><span><strong>{{ player.nickname }}</strong><small>{{ player.group?.name ?? 'Без консты' }} · {{ classLabels[player.class] }}</small></span></RouterLink>
+        <RouterLink class="readiness-identity" :to="`/players/${player.id}`"><PlayerAvatar :player="player" size="small"/><span><strong>{{ player.nickname }}</strong><span class="readiness-player-meta"><small>{{ player.group?.name ?? 'Без консты' }}</small><small :class="['class-tag', `class-${player.class}`]">{{ classLabels[player.class] }}</small></span></span></RouterLink>
         <div class="readiness-gear"><span><small>ГС</small><b>{{ Number(player.gear_score).toLocaleString('ru-RU') }}</b></span><span><small>Неделя</small><b :class="Number(player.gear_score_week_delta) >= 0 ? 'positive' : 'negative'">{{ delta(player.gear_score_week_delta) }}</b></span><span><small>Месяц</small><b :class="Number(player.gear_score_month_delta) >= 0 ? 'positive' : 'negative'">{{ delta(player.gear_score_month_delta) }}</b></span></div>
         <div class="readiness-assets"><span v-for="asset in assets" :key="asset[0]" :class="player[asset[0]] ? 'available' : 'missing'" :title="asset[1]">{{ player[asset[0]] ? '✓' : '×' }} {{ asset[1] }}</span></div>
         <p v-if="missing(player).length" class="readiness-missing"><b>Не хватает:</b> {{ missing(player).join(', ') }}</p><p v-else class="readiness-complete">✓ Оснащение заполнено полностью</p>
