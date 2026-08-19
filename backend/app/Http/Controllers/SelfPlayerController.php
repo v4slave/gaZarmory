@@ -62,6 +62,10 @@ final class SelfPlayerController extends Controller
         $rules = ['gear_score' => ['required', 'integer', 'min:0', 'max:100000']];
         foreach ($fields as $field) $rules[$field] = ['required', 'boolean'];
         $data = $request->validate($rules);
+        if ((int) $data['gear_score'] !== (int) $player->gear_score) {
+            $data['previous_gear_score'] = $player->gear_score;
+            $data['gear_score_updated_at'] = now();
+        }
         $old = $player->only(array_keys($data));
         $player->update($data);
         $audit->record('player.self_profile_updated', $player, $old, $data);

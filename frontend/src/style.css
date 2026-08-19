@@ -588,6 +588,37 @@ section { width:100%;max-width:2100px; }
 @media(max-width:760px){.profile-showcase { padding:22px 15px 16px; }.profile-showcase-identity { align-items:flex-start; }.player-avatar-hero { width:84px;height:84px; }.profile-showcase-identity h1 { font-size:29px; }.profile-showcase .profile-stats { grid-template-columns:1fr 1fr; }.profile-showcase .profile-stats .stat-card { border-left:0;border-top:1px solid #49321d; }.profile-showcase>.profile-edit-button { grid-row:auto;width:100%;margin:0; }.player-profile-page .player-assets { grid-template-columns:1fr 1fr; }.profile-history-grid { grid-template-columns:1fr; }}
 @media(max-width:430px){.profile-showcase-identity { flex-direction:column; }.player-profile-page .player-assets,.profile-showcase .profile-stats { grid-template-columns:1fr; }}
 
+/* Readable ornamental profile details */
+.player-profile-page { font-size:15px; }
+.player-profile-page .eyebrow { font-size:12px; }
+.profile-showcase-identity h1 .class-tag { padding:5px 9px;font-size:13px; }
+.profile-showcase-identity>div>p:last-of-type { font-size:19px; }
+.profile-discord-card { display:inline-flex;align-items:center;gap:11px;margin-top:17px;padding:8px 13px 8px 9px;border:1px solid #68502e;border-radius:7px;color:#e8ddff;background:linear-gradient(135deg,rgba(76,61,126,.3),rgba(18,13,28,.82));box-shadow:inset 0 1px rgba(255,255,255,.04); }
+.profile-discord-card>i { display:grid;place-items:center;width:36px;height:36px;border-radius:6px;color:#fff;background:#5865f2;box-shadow:0 0 15px rgba(88,101,242,.22); }
+.profile-discord-card svg { width:23px;height:23px; }
+.profile-discord-card>span { display:grid;gap:3px; }
+.profile-discord-card small { color:#a9a3bc;font-size:10px;text-transform:uppercase;letter-spacing:.09em; }
+.profile-discord-card b { color:#f2ecff;font-size:13px; }
+.profile-showcase .profile-stats { overflow:visible;border:0;border-radius:0;background:transparent;gap:7px; }
+.profile-showcase .profile-stats .stat-card { position:relative;min-height:128px;padding:20px 17px;border:1px solid #6c4c25!important;clip-path:polygon(10px 0,calc(100% - 10px) 0,100% 10px,100% calc(100% - 10px),calc(100% - 10px) 100%,10px 100%,0 calc(100% - 10px),0 10px);background:linear-gradient(145deg,rgba(30,20,10,.93),rgba(9,6,3,.9)); }
+.profile-showcase .profile-stats .stat-card::before { content:'';position:absolute;z-index:2;inset:5px;pointer-events:none;background:linear-gradient(#b47a31,#b47a31) left top/13px 1px no-repeat,linear-gradient(#b47a31,#b47a31) left top/1px 13px no-repeat,linear-gradient(#b47a31,#b47a31) right bottom/13px 1px no-repeat,linear-gradient(#b47a31,#b47a31) right bottom/1px 13px no-repeat;opacity:.55; }
+.profile-showcase .profile-stats .stat-card span { color:#b6a48a;font-size:11px;line-height:1.45; }
+.profile-showcase .profile-stats .stat-card strong { margin-top:12px;color:#f1c47f;font-size:29px; }
+.profile-showcase .profile-stats .stat-card small { margin-top:9px;color:#9d8e78;font-size:10px;line-height:1.35; }
+.profile-showcase .profile-stats .profile-gear-stat small.positive { color:#86c475; }
+.profile-showcase .profile-stats .profile-gear-stat small.negative { color:#df8b76; }
+.player-profile-page .panel-title h2,.player-profile-page .panel>h2 { font-size:20px; }
+.player-profile-page .panel-title .muted { font-size:14px; }
+.player-profile-page .player-assets { gap:10px; }
+.player-profile-page .player-assets>span { min-height:88px;padding:15px 14px;border-color:#735025;clip-path:polygon(8px 0,calc(100% - 8px) 0,100% 8px,100% calc(100% - 8px),calc(100% - 8px) 100%,8px 100%,0 calc(100% - 8px),0 8px);box-shadow:inset 0 0 0 1px rgba(224,169,91,.025); }
+.player-profile-page .player-assets>span::after { content:'';position:absolute;top:5px;right:5px;width:12px;height:12px;border-top:1px solid #9b6a2d;border-right:1px solid #9b6a2d;opacity:.55; }
+.player-profile-page .player-assets>span>i { width:36px;height:36px;font-size:14px; }
+.player-profile-page .player-assets>span>b { font-size:14px; }
+.player-profile-page .player-assets>span>small { font-size:10px; }
+.player-profile-page .earning-list strong,.player-profile-page .visit-list strong { font-size:14px; }
+.player-profile-page .earning-list small,.player-profile-page .visit-list span:last-child { font-size:11px; }
+@media(min-width:1900px){.player-profile-page { font-size:17px; }.profile-showcase .profile-stats .stat-card span { font-size:13px; }.profile-showcase .profile-stats .stat-card strong { font-size:32px; }.profile-showcase .profile-stats .stat-card small { font-size:12px; }.player-profile-page .player-assets>span>b { font-size:16px; }.player-profile-page .player-assets>span>small { font-size:12px; }}
+
 /* Reference-led shell polish: engraved bronze navigation and layered parchment. */
 :root {
   --ink:#090603;

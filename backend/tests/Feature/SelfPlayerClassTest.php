@@ -82,8 +82,11 @@ final class SelfPlayerClassTest extends TestCase
         ];
 
         $this->actingAs($user)->patchJson('/api/me/player/profile', $payload)
-            ->assertOk()->assertJsonPath('gear_score', 14321)->assertJsonPath('has_ship', true);
+            ->assertOk()->assertJsonPath('gear_score', 14321)->assertJsonPath('previous_gear_score', 0)->assertJsonPath('has_ship', true);
 
-        $this->assertDatabaseHas('players', ['id' => $player->id, 'gear_score' => 14321, 'has_ship' => true]);
+        $this->actingAs($user)->patchJson('/api/me/player/profile', array_merge($payload, ['gear_score' => 15000]))
+            ->assertOk()->assertJsonPath('gear_score', 15000)->assertJsonPath('previous_gear_score', 14321);
+
+        $this->assertDatabaseHas('players', ['id' => $player->id, 'gear_score' => 15000, 'previous_gear_score' => 14321, 'has_ship' => true]);
     }
 }
