@@ -12,7 +12,7 @@ const route = useRoute(); const player = ref(null); const error = ref('')
 const auth = useAuthStore(); const showEditor = ref(false); const savingProfile = ref(false); const nickname = ref(''); const selectedClass = ref(''); const gearScore = ref(0)
 const notifications = useNotificationsStore()
 const labels = { melee:'Милик', archer:'Лучник', mage:'Маг', healer:'Хил', bard:'Бард', tank:'Танк' }
-const assetLabels = { has_ship:'Корабль', has_tank:'Танк', has_fuchsias:'Фуксория', has_clouds:'Облачко', has_machaon:'Махаон', has_tare:'Таре', has_deer:'Олень', has_invulnerable_pet:'Пет на неуяз', has_shield_swap:'Свап на щит', has_flippers:'Ласты' }
+const assetLabels = { has_ship:'Корабль', has_tank:'Танк', has_fuchsias:'Фуксория', has_clouds:'Облачко', has_machaon:'Махаон', has_tare:'Таре', has_deer:'Олень', has_invulnerable_pet:'Пет на неуяз', has_shield_swap:'Щит на свап', has_flippers:'Ласты' }
 const assets = reactive(Object.fromEntries(Object.keys(assetLabels).map(key => [key, false])))
 const activities = computed(() => (player.value?.activities ?? []).filter(item => item.definition?.type !== 'mini_activity'))
 const statistics = computed(() => player.value?.statistics ?? {})

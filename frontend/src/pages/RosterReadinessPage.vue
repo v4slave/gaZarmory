@@ -11,7 +11,7 @@ const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг
 const assets = [
   ['has_ship','Корабль'], ['has_tank','Танк'], ['has_fuchsias','Фуксория'], ['has_clouds','Облачко'],
   ['has_machaon','Махаон'], ['has_tare','Таре'], ['has_deer','Олень'], ['has_invulnerable_pet','Пет на неуяз'],
-  ['has_shield_swap','Свап на щит'], ['has_flippers','Ласты'],
+  ['has_shield_swap','Щит на свап'], ['has_flippers','Ласты'],
 ]
 const activeFilterCount = computed(() => Object.values(filters).filter(value => String(value).trim() !== '').length)
 let timer
