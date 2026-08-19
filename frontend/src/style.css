@@ -935,3 +935,94 @@ aside nav a.router-link-active{color:#ffe0a9;background:linear-gradient(90deg,rg
 .payout-mode button.active{color:#211506!important;border-color:#f0bb66!important;background:linear-gradient(135deg,#f0b95e,#bb7628)!important}
 .payout-mode button.active small{color:#5d390f}
 .modal{background:rgba(3,5,7,.78)}
+
+/* Masonry layout for static-party cards: short cards no longer reserve a full grid row. */
+.groups-page .group-grid{
+  display:block;
+  columns:340px;
+  column-gap:16px;
+}
+.groups-page .group-card{
+  display:inline-flex;
+  width:100%;
+  margin:0 0 16px;
+  break-inside:avoid;
+  page-break-inside:avoid;
+  vertical-align:top;
+}
+@media(max-width:760px){
+  .groups-page .group-grid{columns:1}
+  .groups-page .group-card{margin-bottom:12px}
+}
+
+/* Noir-gold artwork palette. Dark neutral surfaces preserve the background without hurting readability. */
+:root{
+  --app-bg:#060504;
+  --nav-bg:#080706;
+  --surface:#131313;
+  --surface-raised:#1a1815;
+  --surface-inset:#0d0d0d;
+  --border:rgba(193,139,57,.48);
+  --border-soft:rgba(193,139,57,.25);
+  --accent:#d99a3e;
+  --accent-bright:#f6c66f;
+  --info:#7db8c8;
+  --text:#f3ede3;
+  --muted:#b6aa9a;
+}
+body{
+  background-color:var(--app-bg);
+  background-image:
+    linear-gradient(90deg,rgba(4,4,4,.54),rgba(6,5,4,.38) 45%,rgba(4,4,4,.5)),
+    linear-gradient(rgba(0,0,0,.18),rgba(0,0,0,.42)),
+    url('/images/gaz-armory-noir-background.png');
+  background-position:center top;
+  background-size:cover;
+  background-attachment:fixed;
+}
+main::before{background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(0,0,0,.2))}
+aside{background:linear-gradient(180deg,rgba(7,7,7,.985),rgba(10,8,6,.98));border-right-color:rgba(217,154,62,.38)}
+main>header{background:rgba(8,7,6,.91);border-bottom-color:rgba(217,154,62,.3)}
+.panel,.metrics article,.stat-card,.group-card,.toolbar,.table-wrap,.form-card{
+  border-color:var(--border)!important;
+  background-color:rgba(17,17,17,.95)!important;
+  background-image:linear-gradient(145deg,rgba(25,24,22,.965),rgba(12,12,12,.975))!important;
+  box-shadow:0 14px 36px rgba(0,0,0,.42),inset 0 1px rgba(255,224,170,.025);
+  backdrop-filter:blur(7px);
+}
+table{background:rgba(11,11,11,.95)!important}
+thead{background:rgba(32,28,22,.9)}
+tbody tr:hover{background:rgba(217,154,62,.065)}
+input,select,textarea{border-color:rgba(167,126,68,.5);background:#0c0c0c}
+input:focus,select:focus,textarea:focus{border-color:#dba34e;box-shadow:0 0 0 3px rgba(219,163,78,.14)}
+.modal{background:rgba(0,0,0,.82);backdrop-filter:blur(7px)}
+
+/* Clear, independent class colors across roster, activities, groups and dashboard. */
+.class-tag.class-melee,.player-chip.class-melee,.attendee-picker>button.class-melee{
+  color:#ffb0a6;border-color:#b74b3e;background:#3a1612;
+}
+.class-tag.class-archer,.player-chip.class-archer,.attendee-picker>button.class-archer{
+  color:#d8bdff;border-color:#845eb5;background:#291a3c;
+}
+.class-tag.class-mage,.player-chip.class-mage,.attendee-picker>button.class-mage{
+  color:#a9ddff;border-color:#438eb8;background:#102b3d;
+  box-shadow:inset 0 0 0 1px rgba(169,221,255,.07),0 0 11px rgba(55,142,190,.16);
+}
+.class-tag.class-healer,.player-chip.class-healer,.attendee-picker>button.class-healer{
+  color:#ffb5dc;border-color:#b65388;background:#3b172b;
+}
+.class-tag.class-bard,.player-chip.class-bard,.attendee-picker>button.class-bard{
+  color:#e6e89a;border-color:#858d3d;background:#292c10;
+}
+.class-tag.class-tank,.player-chip.class-tank,.attendee-picker>button.class-tank{
+  color:#9ce2b7;border-color:#409367;background:#102f20;
+}
+.class-distribution>div:last-child>span.class-melee{border-color:#b74b3e;background:linear-gradient(135deg,#3a1612,#150a08)}
+.class-distribution>div:last-child>span.class-archer{border-color:#845eb5;background:linear-gradient(135deg,#291a3c,#100b18)}
+.class-distribution>div:last-child>span.class-mage{border-color:#438eb8;background:linear-gradient(135deg,#102b3d,#08131c)}
+.class-distribution>div:last-child>span.class-healer{border-color:#b65388;background:linear-gradient(135deg,#3b172b,#160b12)}
+.class-distribution>div:last-child>span.class-bard{border-color:#858d3d;background:linear-gradient(135deg,#292c10,#101207)}
+.class-distribution>div:last-child>span.class-tank{border-color:#409367;background:linear-gradient(135deg,#102f20,#08150e)}
+.class-distribution .class-melee small{color:#ffb0a6}.class-distribution .class-archer small{color:#d8bdff}
+.class-distribution .class-mage small{color:#a9ddff}.class-distribution .class-healer small{color:#ffb5dc}
+.class-distribution .class-bard small{color:#e6e89a}.class-distribution .class-tank small{color:#9ce2b7}
