@@ -14,7 +14,7 @@ final class PlaceAuctionBid
    $previous=AuctionBid::query()->with('player.user:id,discord_id')->where('auction_id',$locked->id)->orderByDesc('id')->lockForUpdate()->first();
    if($previous&&!AuctionAutoBid::query()->where('auction_id',$locked->id)->exists())AuctionAutoBid::query()->create(['auction_id'=>$locked->id,'player_id'=>$previous->player_id,'max_amount'=>$previous->amount]);
    $minimum=$previous?(int)$previous->amount+(int)$locked->minimum_step:(int)$locked->starting_bid;
-   if($amount<$minimum)throw ValidationException::withMessages(['amount'=>'Минимальная максимальная ставка: '.$minimum.' золота.']);
+   if($amount<$minimum)throw ValidationException::withMessages(['amount'=>'Минимальная максимальная ставка: '.$minimum.' жетонов.']);
    $own=AuctionAutoBid::query()->where('auction_id',$locked->id)->where('player_id',$player->id)->lockForUpdate()->first();
    if($own&&$amount<=(int)$own->max_amount)throw ValidationException::withMessages(['amount'=>'Новый максимум должен быть выше предыдущего: '.$own->max_amount.'.']);
    if($own)$own->update(['max_amount'=>$amount]);else AuctionAutoBid::query()->create(['auction_id'=>$locked->id,'player_id'=>$player->id,'max_amount'=>$amount]);
@@ -26,8 +26,8 @@ final class PlaceAuctionBid
    if($locked->ends_at->diffInSeconds(now())<=$locked->extension_minutes*60){$locked->update(['ends_at'=>now()->addMinutes($locked->extension_minutes),'extensions_count'=>$locked->extensions_count+1]);$extended=true;}
    $this->audit->record('auction.proxy_bid_placed',$bid,null,['auction_id'=>$locked->id,'player_id'=>$player->id,'visible_amount'=>$visible,'maximum_updated'=>true,'extended'=>$extended,'old_ends_at'=>$oldEnds->toISOString(),'new_ends_at'=>$locked->fresh()->ends_at->toISOString()]);
    $notify=[];
-   if($previous&&$previous->player_id!==$winner->player_id&&$previous->player?->user?->discord_id)$notify[(string)$previous->player->user->discord_id]='Вашу ставку на «'.$locked->item->item_name.'» перебили. Текущая цена: **'.number_format($visible,0,'',' ').' золота**.';
-   if($winner->player_id!==$player->id&&$player->user?->discord_id)$notify[(string)$player->user->discord_id]='Ваш максимум на «'.$locked->item->item_name.'» автоматически перебит. Текущая цена: **'.number_format($visible,0,'',' ').' золота**.';
+   if($previous&&$previous->player_id!==$winner->player_id&&$previous->player?->user?->discord_id)$notify[(string)$previous->player->user->discord_id]='Вашу ставку на «'.$locked->item->item_name.'» перебили. Текущая цена: **'.number_format($visible,0,'',' ').' жетонов**.';
+   if($winner->player_id!==$player->id&&$player->user?->discord_id)$notify[(string)$player->user->discord_id]='Ваш максимум на «'.$locked->item->item_name.'» автоматически перебит. Текущая цена: **'.number_format($visible,0,'',' ').' жетонов**.';
    foreach($notify as $discordId=>$message)DB::afterCommit(function()use($discordId,$message,$locked){SendDiscordUserNotification::dispatch($discordId,'Ставка перебита',$message);$user=\App\Models\User::query()->where('discord_id',$discordId)->first();if($user)$this->notifications->notify($user,'auction_outbid','Ставка перебита',str_replace('**','',$message),'/auctions/'.$locked->id);});
    return $bid->load('player.user:id,discord_id,discord_username,discord_display_name,discord_avatar');
   });

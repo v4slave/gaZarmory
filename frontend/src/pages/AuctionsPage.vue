@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
-import GoldAmount from '../components/GoldAmount.vue'
+import TokenAmount from '../components/TokenAmount.vue'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 
 const auth = useAuthStore()
@@ -43,7 +43,7 @@ function currentPrice(auction) { return Number(topBid(auction)?.amount ?? auctio
 function finalPrice(auction) { return Number(auction.winning_bid ?? currentPrice(auction)) }
 function winnerName(auction) { return topBid(auction)?.player?.nickname ?? auction.winner?.nickname ?? '—' }
 function statusLabel(status) { return ({ active: 'Активен', draft: 'Черновик', finished: 'Завершён', cancelled: 'Отменён' })[status] ?? status }
-function statusDescription(status) { return ({ active: 'Участники могут делать ставки до указанного времени', draft: 'Лот виден только управляющим и ещё не принимает ставки', finished: 'Победитель определён, предмет и золото проведены по казне', cancelled: 'Лот отменён, резерв предмета освобождён' })[status] ?? '' }
+function statusDescription(status) { return ({ active: 'Участники могут делать ставки до указанного времени', draft: 'Лот виден только управляющим и ещё не принимает ставки', finished: 'Победитель определён, предмет списан, эквивалент жетонов зачислен в казну', cancelled: 'Лот отменён, резерв предмета освобождён' })[status] ?? '' }
 
 function countdown(endsAt) {
   const distance = Math.max(0, new Date(endsAt).getTime() - clock.value)
@@ -159,9 +159,9 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
         </div>
 
         <div class="auction-price-grid">
-          <div class="auction-price-cell"><small>Стартовая цена</small><GoldAmount :value="auction.starting_bid" /></div>
-          <div v-if="auction.status !== 'finished'" class="auction-price-cell"><small>Текущая цена</small><GoldAmount :value="currentPrice(auction)" /></div>
-          <div v-else class="auction-price-cell auction-final-price"><small>Цена выкупа</small><GoldAmount :value="finalPrice(auction)" /></div>
+          <div class="auction-price-cell"><small>Стартовая цена</small><TokenAmount :value="auction.starting_bid" /></div>
+          <div v-if="auction.status !== 'finished'" class="auction-price-cell"><small>Текущая цена</small><TokenAmount :value="currentPrice(auction)" /></div>
+          <div v-else class="auction-price-cell auction-final-price"><small>Цена выкупа</small><TokenAmount :value="finalPrice(auction)" /></div>
         </div>
 
         <div class="auction-card-meta">
@@ -193,10 +193,10 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
           <strong>{{ selectedAuction.item?.item_name }}</strong>
         </div>
         <div class="auction-modal-prices">
-          <div><span>Текущая ставка</span><GoldAmount :value="selectedTopBid?.amount ?? selectedAuction.starting_bid" /></div>
-          <div><span>Минимальная ставка</span><GoldAmount :value="minimumBid" /></div>
+          <div><span>Текущая ставка</span><TokenAmount :value="selectedTopBid?.amount ?? selectedAuction.starting_bid" /></div>
+          <div><span>Минимальная ставка</span><TokenAmount :value="minimumBid" /></div>
         </div>
-        <label>Ваша максимальная ставка, золото<input v-model.number="bidAmount" type="number" :min="minimumBid" step="1" required></label><p class="muted auction-proxy-note">Система автоматически повышает цену только на необходимый шаг. Ваш максимум другим игрокам не показывается.</p>
+        <label>Ваша максимальная ставка, жетоны<input v-model.number="bidAmount" type="number" :min="minimumBid" step="1" required></label><p class="muted auction-proxy-note">Система автоматически повышает цену только на необходимый шаг. Ваш максимум другим игрокам не показывается.</p>
         <p v-if="modalError" class="error-banner">{{ modalError }}</p>
         <div class="form-actions"><button type="button" class="secondary" @click="closeAuctionModal">Отмена</button><button class="primary" :disabled="modalBusy">Подтвердить ставку</button></div>
       </form>
@@ -205,7 +205,7 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
         <header class="auction-modal-head"><div><h2>История ставок</h2><small>{{ selectedAuction.item?.item_name }}</small></div><button type="button" class="modal-close" @click="closeAuctionModal">×</button></header>
         <p v-if="modalBusy">Загрузка…</p>
         <div v-else-if="selectedAuction.bids?.length" class="auction-bid-list">
-          <div v-for="(bid, index) in selectedAuction.bids" :key="bid.id" :class="{ 'top-bid-row': index === 0 }"><span class="bid-player"><b>#{{ index + 1 }}</b><PlayerAvatar :player="bid.player" size="tiny"/><span>{{ bid.player?.nickname ?? '—' }}</span><em v-if="index === 0">♛ лидер</em><small v-if="bid.is_auto">авто</small></span><GoldAmount :value="bid.amount" /></div>
+          <div v-for="(bid, index) in selectedAuction.bids" :key="bid.id" :class="{ 'top-bid-row': index === 0 }"><span class="bid-player"><b>#{{ index + 1 }}</b><PlayerAvatar :player="bid.player" size="tiny"/><span>{{ bid.player?.nickname ?? '—' }}</span><em v-if="index === 0">♛ лидер</em><small v-if="bid.is_auto">авто</small></span><TokenAmount :value="bid.amount" /></div>
         </div>
         <p v-else class="muted">Ставок пока нет.</p>
       </section>
@@ -216,14 +216,14 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
         <h2>{{ editingId ? 'Редактировать лот' : 'Новый лот' }}</h2>
         <label>Предмет<select v-model="form.treasury_item_id" required><option disabled value="">Выберите предмет</option><option v-for="item in items" :key="item.id" :value="item.id">{{ item.item_name }} · доступно {{ item.available_quantity }}</option></select></label>
         <label>Количество<input v-model.number="form.quantity" type="number" min="1" required></label>
-        <label>Стартовая цена<input v-model.number="form.starting_bid" type="number" min="0" required></label>
-        <label>Минимальный шаг<input v-model.number="form.minimum_step" type="number" min="1" required></label>
+        <label>Стартовая цена, жетоны<input v-model.number="form.starting_bid" type="number" min="0" required></label>
+        <label>Минимальный шаг, жетоны<input v-model.number="form.minimum_step" type="number" min="1" required></label>
         <label>Автопродление<input v-model.number="form.extension_minutes" type="number" min="2" max="5" required><small>На 2–5 минут при ставке перед закрытием</small></label>
         <label>Завершение<input v-model="form.ends_at" type="datetime-local" :min="minimumEndsAt()" required></label>
         <p v-if="error" class="error-banner">{{ error }}</p>
         <div class="form-actions"><button type="button" class="secondary" @click="showForm = false">Отмена</button><button class="primary" :disabled="busy">{{ busy ? 'Сохранение…' : editingId ? 'Сохранить' : 'Создать черновик' }}</button></div>
       </form>
     </div>
-    <div v-if="archive" class="modal" @click.self="archive=null"><section class="form-card auction-archive"><header class="auction-modal-head"><h2>Архив побед и расходов</h2><button class="modal-close" @click="archive=null">×</button></header><div class="auction-archive-leaders"><article v-for="row in archive.players" :key="row.player_id"><strong>{{ row.nickname }}</strong><span>{{ row.wins }} побед</span><GoldAmount :value="Number(row.spent).toLocaleString('ru-RU')"/></article></div><div class="table-wrap flat"><table><thead><tr><th>Лот</th><th>Победитель</th><th>Итог</th><th>Дата</th></tr></thead><tbody><tr v-for="lot in archive.lots" :key="lot.id"><td>{{ lot.item?.item_name }}</td><td>{{ lot.winner?.nickname??'Без ставок' }}</td><td><GoldAmount v-if="lot.winning_bid!==null" :value="Number(lot.winning_bid).toLocaleString('ru-RU')"/><span v-else>—</span></td><td>{{ displayDateTime(lot.finished_at) }}</td></tr></tbody></table></div></section></div>
+    <div v-if="archive" class="modal" @click.self="archive=null"><section class="form-card auction-archive"><header class="auction-modal-head"><h2>Архив побед и расходов</h2><button class="modal-close" @click="archive=null">×</button></header><div class="auction-archive-leaders"><article v-for="row in archive.players" :key="row.player_id"><strong>{{ row.nickname }}</strong><span>{{ row.wins }} побед</span><TokenAmount :value="Number(row.spent).toLocaleString('ru-RU')"/></article></div><div class="table-wrap flat"><table><thead><tr><th>Лот</th><th>Победитель</th><th>Итог</th><th>Дата</th></tr></thead><tbody><tr v-for="lot in archive.lots" :key="lot.id"><td>{{ lot.item?.item_name }}</td><td>{{ lot.winner?.nickname??'Без ставок' }}</td><td><TokenAmount v-if="lot.winning_bid!==null" :value="Number(lot.winning_bid).toLocaleString('ru-RU')"/><span v-else>—</span></td><td>{{ displayDateTime(lot.finished_at) }}</td></tr></tbody></table></div></section></div>
   </section>
 </template>

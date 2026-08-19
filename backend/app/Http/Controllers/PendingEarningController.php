@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 use App\Models\PrimePlayerEarning;
 use App\Models\PayoutPlayer;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 final class PendingEarningController extends Controller
 {
     public function __invoke(Request $request):array
@@ -17,6 +18,7 @@ final class PendingEarningController extends Controller
         $primes=(clone $query)->whereHas('activity.definition',fn($q)=>$q->where('type','prime'))->distinct('activity_id')->count('activity_id');
         $paid=PayoutPlayer::query()->where('status','paid');
         if(!$request->user()->canManageGuild()){$paid->where('player_id',$request->user()->player->id);}
-        return ['summary'=>['gold'=>(int)$rows->sum('amount'),'primes'=>(int)$primes,'participants'=>$rows->count(),'paid_gold'=>(int)$paid->sum('amount')],'players'=>$rows];
+        $tokenUnitValue=(int)(DB::table('treasury_token_settings')->where('id',1)->value('token_unit_value')??0);
+        return ['summary'=>['gold'=>(int)$rows->sum('amount'),'primes'=>(int)$primes,'participants'=>$rows->count(),'paid_gold'=>(int)$paid->sum('amount'),'token_unit_value'=>$tokenUnitValue],'players'=>$rows];
     }
 }

@@ -8,6 +8,7 @@ use App\Models\Activity;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 final class PayoutPreviewController extends Controller
 {
@@ -31,9 +32,11 @@ final class PayoutPreviewController extends Controller
                 ->when($data['activity_ids']??null,fn($q,$ids)=>$q->whereIn('id',$ids)));
         $amount = (int) (clone $earnings)->sum('player_share');
         $balance = (int) (TreasuryTransaction::query()->latest('id')->value('balance_after') ?? 0);
+        $tokenUnitValue = (int) (DB::table('treasury_token_settings')->where('id', 1)->value('token_unit_value') ?? 0);
 
         return response()->json([
             'amount' => $amount,
+            'token_unit_value' => $tokenUnitValue,
             'players' => (clone $earnings)->distinct()->count('player_id'),
             'activities' => (clone $earnings)->distinct()->count('activity_id'),
             'balance_before' => $balance,

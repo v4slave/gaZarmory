@@ -1,15 +1,17 @@
 <?php
 namespace Tests\Feature;
-use App\Enums\PlayerClass;use App\Enums\UserRole;use App\Models\Auction;use App\Models\Player;use App\Models\TreasuryItem;use App\Models\User;use Illuminate\Foundation\Testing\DatabaseTransactions;use Tests\TestCase;
+use App\Enums\PlayerClass;use App\Enums\UserRole;use App\Models\Auction;use App\Models\AuctionBid;use App\Models\Player;use App\Models\TreasuryItem;use App\Models\TreasuryTransaction;use App\Models\User;use Illuminate\Foundation\Testing\DatabaseTransactions;use Illuminate\Support\Facades\DB;use Tests\TestCase;
 final class AuctionProxyBidTest extends TestCase
 {
  use DatabaseTransactions;
  public function test_reservation_proxy_bids_and_auto_extension():void
  {
   [$leader]=$this->user(UserRole::GuildLeader);[$first,$firstPlayer]=$this->user(UserRole::Member);[$second,$secondPlayer]=$this->user(UserRole::Member);
+  DB::table('treasury_token_settings')->where('id',1)->update(['token_unit_value'=>80]);
   $item=TreasuryItem::query()->create(['item_name'=>'Proxy '.uniqid(),'quantity'=>5,'reserved_quantity'=>0,'unit_value'=>100]);
   $auction=Auction::query()->create(['treasury_item_id'=>$item->id,'quantity'=>2,'starting_bid'=>100,'minimum_step'=>10,'extension_minutes'=>3,'ends_at'=>now()->addMinutes(11),'status'=>'draft','created_by'=>$leader->id]);
   $this->actingAs($leader)->postJson('/api/auctions/'.$auction->id.'/start')->assertOk();
+  self::assertSame(80,(int)$auction->fresh()->token_unit_value_snapshot);
   self::assertSame(2,(int)$item->fresh()->reserved_quantity);
   $auction->update(['ends_at'=>now()->addMinutes(2)]);$oldEnd=$auction->fresh()->ends_at;
   $this->actingAs($first)->postJson('/api/auctions/'.$auction->id.'/bid',['amount'=>500])->assertCreated()->assertJsonPath('amount',100);
@@ -24,6 +26,17 @@ final class AuctionProxyBidTest extends TestCase
   [$leader]=$this->user(UserRole::GuildLeader);$item=TreasuryItem::query()->create(['item_name'=>'No bids '.uniqid(),'quantity'=>2,'reserved_quantity'=>1,'unit_value'=>100]);$auction=Auction::query()->create(['treasury_item_id'=>$item->id,'quantity'=>1,'starting_bid'=>100,'minimum_step'=>10,'extension_minutes'=>3,'ends_at'=>now()->subMinute(),'status'=>'active','created_by'=>$leader->id]);
   $this->actingAs($leader)->postJson('/api/auctions/'.$auction->id.'/finish')->assertOk()->assertJsonPath('status','finished')->assertJsonPath('winner_player_id',null);
   self::assertSame(0,(int)$item->fresh()->reserved_quantity);
+ }
+ public function test_winning_tokens_are_converted_to_gold_using_start_rate():void
+ {
+  [$leader]=$this->user(UserRole::GuildLeader);[, $winner]=$this->user(UserRole::Member);
+  $item=TreasuryItem::query()->create(['item_name'=>'Token sale '.uniqid(),'quantity'=>1,'reserved_quantity'=>1,'unit_value'=>100]);
+  $auction=Auction::query()->create(['treasury_item_id'=>$item->id,'quantity'=>1,'starting_bid'=>2,'minimum_step'=>1,'token_unit_value_snapshot'=>80,'ends_at'=>now()->subMinute(),'status'=>'active','created_by'=>$leader->id]);
+  AuctionBid::query()->create(['auction_id'=>$auction->id,'player_id'=>$winner->id,'amount'=>5,'is_auto'=>false]);
+
+  $this->actingAs($leader)->postJson('/api/auctions/'.$auction->id.'/finish')->assertOk()->assertJsonPath('winning_bid',5);
+  $transaction=TreasuryTransaction::query()->where('related_entity_type',Auction::class)->where('related_entity_id',$auction->id)->firstOrFail();
+  self::assertSame(400,(int)$transaction->amount);
  }
  public function test_archive_summarizes_wins_and_spending():void
  {
