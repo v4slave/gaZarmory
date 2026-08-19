@@ -120,7 +120,7 @@ final class PlayerController extends Controller
         ];
         $profile['earnings_history'] = PrimePlayerEarning::query()
             ->where('player_id', $player->id)
-            ->with(['activity.definition:id,name,type','payout:id,status,paid_at'])
+            ->with(['activity.definition:id,name,type,icon_path','payout:id,status,paid_at'])
             ->latest('id')
             ->get();
 
