@@ -863,3 +863,8 @@ aside nav a.router-link-active{color:#ffd58d;background:linear-gradient(90deg,rg
 .readiness-equipment{display:grid;gap:8px;min-width:0}
 .readiness-equipment .readiness-missing,.readiness-equipment .readiness-complete{grid-column:auto;margin:0;line-height:1.35}
 @media(max-width:1250px){.readiness-equipment{grid-column:1/-1}}
+.readiness-list{width:min(1600px,100%);margin-inline:auto}
+.profile-avatar-message-link{display:block;flex:0 0 auto;border-radius:50%;text-decoration:none;transition:transform .18s ease,filter .18s ease}
+.profile-avatar-message-link:hover{transform:translateY(-2px) scale(1.025);filter:brightness(1.12)}
+.profile-avatar-message-link:focus-visible{outline:2px solid #d39745;outline-offset:8px}
+.profile-avatar-message-link .player-avatar{cursor:pointer}
