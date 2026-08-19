@@ -168,7 +168,7 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
           <span v-if="auction.status === 'active'">До конца: <b>{{ countdown(auction.ends_at) }}</b></span>
           <span v-else>Завершение: {{ displayDateTime(auction.ends_at) }}</span>
           <span>Ставок: {{ auction.bids_count ?? 0 }}</span>
-          <span v-if="topBid(auction)" class="auction-leader-badge"><span aria-hidden="true">♛</span><PlayerAvatar :player="topBid(auction).player" size="tiny"/><small>Лидер</small><b>{{ winnerName(auction) }}</b></span>
+          <span v-if="topBid(auction)" class="auction-leader-badge"><span aria-hidden="true">♛</span><PlayerAvatar :player="topBid(auction).player" size="small"/><small>Лидер</small><b>{{ winnerName(auction) }}</b></span>
         </div>
 
         <div v-if="auction.status === 'active'" class="auction-card-actions">

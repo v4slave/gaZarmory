@@ -834,3 +834,9 @@ aside nav a.router-link-active{color:#ffd58d;background:linear-gradient(90deg,rg
   .aside-profile{grid-template-columns:42px minmax(0,1fr) auto;padding:15px 9px}
   .aside-profile strong{font-size:14px}.aside-profile small{font-size:10px}
 }
+/* Larger auction leader and left-aligned party nicknames. */
+.auction-leader-badge { gap:9px!important;padding:7px 13px 7px 8px!important; }
+.auction-leader-badge>span:first-child { font-size:19px!important; }
+.auction-leader-badge small { font-size:11px!important; }
+.auction-leader-badge b { font-size:15px!important; }
+.group-members a>strong { flex:1;text-align:left; }
