@@ -926,6 +926,30 @@ button.primary:hover,.primary:hover{filter:brightness(1.09)}
   background:#151c23;
 }
 .secondary:hover,.form-actions button:not(.primary):not(.danger):hover,main>header button:hover{border-color:var(--info);background:#1a2830}
+.admin-actions-menu summary{
+  color:#f2d39b;
+  border-color:rgba(227,166,75,.55);
+  background:linear-gradient(135deg,rgba(77,49,18,.88),rgba(32,26,20,.96));
+}
+.admin-actions-menu summary:hover,.admin-actions-menu[open] summary{
+  color:#fff0cf;
+  border-color:var(--accent-bright);
+  background:linear-gradient(135deg,rgba(111,69,23,.94),rgba(42,31,21,.98));
+}
+.admin-actions-menu>div button:not(.danger){
+  color:#dce4e8;
+  border:1px solid rgba(121,145,163,.5);
+  border-radius:5px;
+  background:#151c23;
+}
+.admin-actions-menu>div button:not(.danger):hover{color:#f5fbfc;border-color:var(--info);background:#1a2830}
+.admin-actions-menu>div button.danger,.role-transfer-modal button.danger{
+  color:#f1b3a5;
+  border:1px solid rgba(180,76,58,.68);
+  border-radius:5px;
+  background:linear-gradient(145deg,#3a1913,#25110e);
+}
+.admin-actions-menu>div button.danger:hover,.role-transfer-modal button.danger:hover{color:#ffd4c9;border-color:#d06f5b;background:linear-gradient(145deg,#542219,#321510)}
 .eyebrow,.catalog-link{color:var(--accent-bright)}
 .muted,.empty{color:var(--muted)}
 aside nav a,aside .admin{color:#b8c3ca}
