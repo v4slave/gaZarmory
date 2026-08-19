@@ -34,8 +34,10 @@ export const useActivitiesStore = defineStore('activities', {
       await this.fetchActivity(id)
     },
     async removeLoot(id, lootId) { await api.delete(`/api/activities/${id}/loot/${lootId}`); await this.fetchActivity(id) },
+    async updateLootPrice(id, lootId, unitPrice) { await api.patch(`/api/activities/${id}/loot/${lootId}`, { unit_price: unitPrice }); await this.fetchActivity(id) },
     async calculatePrime(id) { this.current = (await api.post(`/api/activities/${id}/calculate-prime`)).data },
     async completeActivity(id) { this.current = (await api.post(`/api/activities/${id}/complete`)).data },
+    async reopenActivity(id, reason) { this.current = (await api.post(`/api/activities/${id}/reopen`, { reason })).data },
     async uploadLootTable(activityId, file) {
       const body = new FormData(); body.append('file', file)
       this.lootImport = (await api.post(`/api/activities/${activityId}/loot-imports`, body, { timeout: 30000 })).data

@@ -24,6 +24,12 @@ use App\Http\Controllers\TreasuryTransactionController;
 use App\Http\Controllers\SelfPlayerController;
 use App\Http\Controllers\AdminUserController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\RosterReadinessController;
+use App\Http\Controllers\AttendanceAnalyticsController;
+use App\Http\Controllers\FinancialReconciliationController;
+use App\Http\Controllers\PayoutExportController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\AdminSettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,12 +41,16 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::patch('/me/player/nickname', [SelfPlayerController::class, 'rename']);
     Route::patch('/me/player/class', [SelfPlayerController::class, 'changeClass']);
     Route::patch('/me/player/profile', [SelfPlayerController::class, 'updateProfile']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/read-all', [NotificationController::class, 'readAll']);
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'read']);
 
     Route::middleware('player.linked')->group(function (): void {
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::patch('/admin/users/{managedUser}/roles', [AdminUserController::class, 'updateRole']);
     Route::delete('/admin/users/{managedUser}', [AdminUserController::class, 'destroy']);
     Route::get('/admin/audit-logs', AuditLogController::class);
+    Route::get('/admin/settings', AdminSettingsController::class);
     Route::get('/admin/player-link-requests', [PlayerLinkRequestController::class, 'index']);
     Route::post('/admin/player-link-requests/{playerLinkRequest}/approve', [PlayerLinkRequestController::class, 'approve']);
     Route::post('/admin/player-link-requests/{playerLinkRequest}/reject', [PlayerLinkRequestController::class, 'reject']);
@@ -58,7 +68,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/activities/{activity}/players', [ActivityController::class, 'addPlayers']);
     Route::delete('/activities/{activity}/players/{playerId}', [ActivityController::class, 'removePlayer']);
     Route::post('/activities/{activity}/complete', [ActivityController::class, 'complete']);
+    Route::post('/activities/{activity}/reopen', [ActivityController::class, 'reopen']);
     Route::post('/activities/{activity}/loot', [ActivityLootController::class, 'store']);
+    Route::patch('/activities/{activity}/loot/{loot}', [ActivityLootController::class, 'update']);
     Route::delete('/activities/{activity}/loot/{loot}', [ActivityLootController::class, 'destroy']);
     Route::post('/activities/{activity}/calculate-prime', PrimeCalculationController::class);
     Route::post('/activities/{activity}/loot-imports', [LootImportController::class, 'store']);
@@ -70,9 +82,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/payouts-preview', PayoutPreviewController::class);
     Route::post('/payouts', [PayoutController::class, 'store']);
     Route::get('/payouts/{payout}', [PayoutController::class, 'show']);
+    Route::get('/payouts/{payout}/export', PayoutExportController::class);
     Route::delete('/payouts/{payout}', [PayoutController::class, 'destroy']);
     Route::post('/payouts/{payout}/calculate', [PayoutController::class, 'calculate']);
     Route::post('/payouts/{payout}/complete', [PayoutController::class, 'complete']);
+    Route::post('/payouts/{payout}/pay-players', [PayoutController::class, 'payPlayers']);
     Route::post('/payouts/{payout}/cancel', [PayoutController::class, 'cancel']);
     Route::get('/treasury', TreasuryController::class);
     Route::get('/treasury/items', [TreasuryController::class, 'items']);
@@ -81,8 +95,13 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/treasury/items/{item}/issue', TreasuryItemIssueController::class);
     Route::post('/treasury/items/{item}/sell', TreasuryItemSaleController::class);
     Route::get('/dashboard', DashboardController::class);
+    Route::get('/roster-readiness', RosterReadinessController::class);
+    Route::get('/attendance-analytics', [AttendanceAnalyticsController::class, 'index']);
+    Route::get('/attendance-analytics/export', [AttendanceAnalyticsController::class, 'export']);
+    Route::get('/financial-reconciliation', FinancialReconciliationController::class);
     Route::get('/auctions', [AuctionController::class, 'index']);
     Route::get('/auctions/active-count', [AuctionController::class, 'activeCount']);
+    Route::get('/auctions/archive', [AuctionController::class, 'archive']);
     Route::post('/auctions', [AuctionController::class, 'store']);
     Route::get('/auctions/{auction}', [AuctionController::class, 'show']);
     Route::put('/auctions/{auction}', [AuctionController::class, 'update']);

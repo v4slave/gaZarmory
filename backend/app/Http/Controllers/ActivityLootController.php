@@ -94,4 +94,23 @@ final class ActivityLootController extends Controller
 
         return response()->json(null, 204);
     }
+
+    public function update(Request $request, Activity $activity, ActivityLoot $loot, AuditService $audit): ActivityLoot
+    {
+        abort_unless($request->user()->canManageGuild(), 403);
+        abort_unless($loot->activity_id === $activity->id, 404);
+        $data = $request->validate(['unit_price' => ['required','integer','min:0']]);
+
+        return DB::transaction(function () use ($activity, $loot, $data, $audit): ActivityLoot {
+            $lockedActivity = Activity::query()->lockForUpdate()->findOrFail($activity->id);
+            abort_if($lockedActivity->completed_at, 409, 'Сначала откройте активность для исправления.');
+            abort_if($lockedActivity->earnings()->exists(), 409, 'Сначала отмените рассчитанные начисления.');
+            $lockedLoot = ActivityLoot::query()->lockForUpdate()->findOrFail($loot->id);
+            $old = ['unit_price' => $lockedLoot->unit_price];
+            $lockedLoot->update($data);
+            TreasuryItem::query()->where('item_name', $lockedLoot->item_name)->update(['unit_value' => $data['unit_price']]);
+            $audit->record('activity_loot.price_corrected', $lockedLoot, $old, $data);
+            return $lockedLoot->refresh();
+        });
+    }
 }

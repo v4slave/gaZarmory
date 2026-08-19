@@ -7,16 +7,17 @@ use App\Models\Payout;
 use App\Models\PayoutPlayer;
 use App\Models\PrimePlayerEarning;
 use App\Services\AuditService;
+use App\Services\ArmoryNotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 final class CalculatePayout
 {
-    public function __construct(private readonly AuditService $audit) {}
+    public function __construct(private readonly AuditService $audit,private readonly ArmoryNotificationService $notifications) {}
 
-    public function execute(Payout $payout): Payout
+    public function execute(Payout $payout, ?array $activityIds = null): Payout
     {
-        return DB::transaction(function () use ($payout): Payout {
+        return DB::transaction(function () use ($payout, $activityIds): Payout {
             $locked = Payout::query()->lockForUpdate()->findOrFail($payout->id);
             if ($locked->status !== 'draft') {
                 throw ValidationException::withMessages(['payout' => 'Рассчитать можно только черновик.']);
@@ -28,7 +29,8 @@ final class CalculatePayout
                 ->whereHas('activity.definition', fn ($query) => $query->where('type', 'prime'))
                 ->whereHas('activity', fn ($query) => $query
                     ->whereDate('occurred_at', '>=', $locked->period_from)
-                    ->whereDate('occurred_at', '<=', $locked->period_to))
+                    ->whereDate('occurred_at', '<=', $locked->period_to)
+                    ->when($activityIds, fn ($activityQuery) => $activityQuery->whereIn('id', $activityIds)))
                 ->lockForUpdate()
                 ->get();
 
@@ -75,6 +77,8 @@ final class CalculatePayout
             $total = (int) $earnings->sum('player_share');
             $locked->update(['status' => 'calculated', 'total_amount' => $total, 'calculated_at' => now()]);
             $this->audit->record('payout.calculated', $locked, ['status' => 'draft'], ['status' => 'calculated', 'total_amount' => $total]);
+            $recipientIds=$locked->players()->pluck('player_id');
+            DB::afterCommit(function()use($locked,$recipientIds){$users=\App\Models\User::query()->whereHas('player',fn($q)=>$q->whereIn('id',$recipientIds))->get();$this->notifications->notify($users,'payout_calculated','Выплата рассчитана','Нахрюк #'.$locked->id.' рассчитан и ожидает фактической выдачи.','/payouts/'.$locked->id,'payout-calculated-'.$locked->id);});
 
             return $locked->refresh()->load(['players', 'activities.definition']);
         });

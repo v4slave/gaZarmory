@@ -52,6 +52,16 @@ final class PayoutDetailTest extends TestCase
         self::assertSame(100, (int) $row->fresh()->amount);
     }
 
+    public function test_payment_statement_can_be_exported_with_filters(): void
+    {
+        $leader=$this->user(UserRole::GuildLeader);
+        [, $player]=$this->memberWithPlayer('Exported');
+        $payout=Payout::query()->create(['period_from'=>'2026-08-01','period_to'=>'2026-08-16','status'=>'calculated','total_amount'=>250,'created_by'=>$leader->id]);
+        $payout->players()->create(['player_id'=>$player->id,'nickname_snapshot'=>$player->nickname,'prime_attendance_percentage_snapshot'=>100,'primes_count'=>1,'mini_activities_count'=>0,'amount'=>250,'status'=>'pending']);
+        $this->actingAs($leader)->get('/api/payouts/'.$payout->id.'/export?format=csv&status=pending')->assertOk()->assertDownload();
+        $this->actingAs($leader)->get('/api/payouts/'.$payout->id.'/export?format=xlsx&search=Exported')->assertOk()->assertDownload();
+    }
+
     public function test_empty_draft_can_be_deleted(): void
     {
         $developer=$this->user(UserRole::Developer);
@@ -76,7 +86,7 @@ final class PayoutDetailTest extends TestCase
         self::assertSame($auditLogsBefore, \App\Models\AuditLog::query()->count());
     }
 
-    public function test_creation_calculates_and_pays_earnings_atomically(): void
+    public function test_creation_calculates_then_actual_issue_marks_earnings_paid(): void
     {
         $leader = $this->user(UserRole::GuildLeader);
         [, $player] = $this->memberWithPlayer('PaidOnCreate');
@@ -111,11 +121,14 @@ final class PayoutDetailTest extends TestCase
         ]);
 
         $response = $this->actingAs($leader)->postJson('/api/payouts', [
-            'period_from' => '2026-08-16',
-            'period_to' => '2026-08-16',
-        ])->assertCreated()->assertJsonPath('status', 'paid')->assertJsonPath('total_amount', 400);
+            'activity_ids' => [$activity->id],
+        ])->assertCreated()->assertJsonPath('status', 'calculated')->assertJsonPath('total_amount', 400);
 
         $payoutId = $response->json('id');
+        $this->assertDatabaseHas('prime_player_earnings', ['id' => $earning->id, 'payout_id' => $payoutId, 'status' => 'pending']);
+        self::assertSame(1000, (int) TreasuryTransaction::query()->latest('id')->value('balance_after'));
+        $this->actingAs($leader)->postJson('/api/payouts/'.$payoutId.'/pay-players',['player_ids'=>[$player->id]])
+            ->assertOk()->assertJsonPath('status','paid');
         $this->assertDatabaseHas('prime_player_earnings', ['id' => $earning->id, 'payout_id' => $payoutId, 'status' => 'paid']);
         $this->assertDatabaseHas('payout_players', ['payout_id' => $payoutId, 'player_id' => $player->id, 'status' => 'paid', 'amount' => 400]);
         self::assertSame(600, (int) TreasuryTransaction::query()->latest('id')->value('balance_after'));

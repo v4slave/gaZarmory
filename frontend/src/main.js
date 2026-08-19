@@ -14,6 +14,7 @@ import '@fontsource/jetbrains-mono/latin-600.css'
 import '@fontsource/jetbrains-mono/latin-700.css'
 import '@fontsource/jetbrains-mono/latin-800.css'
 import './style.css'
+import './admin.css'
 
 const pinia = createPinia()
 const app = createApp(App)

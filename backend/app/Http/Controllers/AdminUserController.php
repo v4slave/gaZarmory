@@ -18,11 +18,23 @@ final class AdminUserController extends Controller
     {
         $this->authorizeAdministrator($request);
 
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:120'],
+            'page' => ['nullable', 'integer', 'min:1'],
+        ]);
+
         $users = User::query()
             ->with(['player.group:id,name'])
+            ->when($filters['search'] ?? null, function ($query, string $search): void {
+                $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+                $query->where(fn ($nested) => $nested
+                    ->where('discord_username', 'ilike', '%'.$escaped.'%')
+                    ->orWhere('discord_display_name', 'ilike', '%'.$escaped.'%')
+                    ->orWhereHas('player', fn ($player) => $player->where('nickname', 'ilike', '%'.$escaped.'%')));
+            })
             ->orderByRaw("CASE WHEN roles @> '[\"guild_leader\"]'::jsonb THEN 1 WHEN roles @> '[\"micro_guild_leader\"]'::jsonb THEN 2 WHEN roles @> '[\"developer\"]'::jsonb THEN 3 WHEN roles @> '[\"party_leader\"]'::jsonb THEN 4 ELSE 5 END")
             ->orderBy('discord_username')
-            ->get();
+            ->paginate(25);
 
         return response()->json($users);
     }
@@ -37,6 +49,7 @@ final class AdminUserController extends Controller
         $data = $request->validate([
             'roles' => ['required', 'array', 'min:1'],
             'roles.*' => ['required', 'distinct', Rule::enum(UserRole::class)],
+            'updated_at' => ['nullable', 'date'],
         ]);
         $newRoles = array_values($data['roles']);
         $actorCanAssignElevatedRoles = $request->user()->hasRole(UserRole::GuildLeader)
@@ -47,8 +60,11 @@ final class AdminUserController extends Controller
             throw ValidationException::withMessages(['roles' => 'Микро-ГЛ не может назначать или изменять роли ГЛ и Разработчик.']);
         }
 
-        $updated = DB::transaction(function () use ($managedUser, $newRoles, $audit, $roleManager): User {
+        $updated = DB::transaction(function () use ($managedUser, $newRoles, $data, $audit, $roleManager): User {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($managedUser->id);
+            if (isset($data['updated_at']) && ! $lockedUser->updated_at->equalTo($data['updated_at'])) {
+                throw ValidationException::withMessages(['updated_at' => 'Данные пользователя уже изменены другим администратором. Обновите страницу.']);
+            }
             $oldRoles = $lockedUser->roles ?: [$lockedUser->role->value];
 
             sort($oldRoles); $sortedNewRoles = $newRoles; sort($sortedNewRoles);

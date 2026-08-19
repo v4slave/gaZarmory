@@ -14,6 +14,8 @@ const linkError = ref('')
 const activeAuctions = ref(0)
 const freePlayers = ref([])
 const playerOptionsLoading = ref(false)
+const notificationOpen=ref(false),notificationItems=ref([]),unreadNotifications=ref(0)
+let notificationTicker
 const primaryLinks = [
   { to: '/dashboard', label: 'Дашборд', icon: '⌂' },
   { to: '/roster', label: 'Состав', icon: '♙' },
@@ -26,11 +28,15 @@ const economyLinks = [
   { to: '/payouts', label: 'Нахрюк', icon: '◫' },
 ]
 async function loadActiveAuctions(){if(!auth.user?.player)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
+async function loadNotifications(){if(!auth.authenticated)return;try{const data=(await api.get('/api/notifications')).data;notificationItems.value=data.items;unreadNotifications.value=data.unread_count}catch{}}
+async function markNotification(item){if(!item.read_at){await api.post(`/api/notifications/${item.id}/read`);item.read_at=new Date().toISOString();unreadNotifications.value=Math.max(0,unreadNotifications.value-1)}notificationOpen.value=false}
+async function markAllNotifications(){await api.post('/api/notifications/read-all');notificationItems.value.forEach(item=>item.read_at??=new Date().toISOString());unreadNotifications.value=0}
+function notificationIcon(type){return({link_request:'♙',auction_started:'♢',auction_finished:'◆',auction_outbid:'!',payout_calculated:'◫',insufficient_gold:'▣',activity_upcoming:'⚔'})[type]??'•'}
 function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
 watch(() => route.fullPath, () => { menuOpen.value = false;loadActiveAuctions() })
 watch(() => auth.authenticated, authenticated => { if(authenticated)loadActiveAuctions();else activeAuctions.value=0 })
-onMounted(()=>{loadActiveAuctions();window.addEventListener('auction-count-changed',updateAuctionCount)})
-onBeforeUnmount(()=>window.removeEventListener('auction-count-changed',updateAuctionCount))
+onMounted(()=>{loadActiveAuctions();loadNotifications();notificationTicker=window.setInterval(loadNotifications,30000);window.addEventListener('auction-count-changed',updateAuctionCount)})
+onBeforeUnmount(()=>{window.clearInterval(notificationTicker);window.removeEventListener('auction-count-changed',updateAuctionCount)})
 async function openLinker() {
   showLinker.value = true
   linkError.value = ''
@@ -59,6 +65,9 @@ async function linkProfile() {
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
       <nav><div class="nav-section"><span class="nav-section-title">Основное</span><RouterLink v-for="link in primaryLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span></RouterLink></div><div class="nav-section"><span class="nav-section-title">Экономика</span><RouterLink v-for="link in economyLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></div></nav>
+      <RouterLink v-if="auth.canViewReadiness" class="admin readiness-nav" to="/roster-readiness"><i class="nav-icon" aria-hidden="true">◉</i><span>Готовность состава</span></RouterLink>
+      <RouterLink v-if="auth.canViewReadiness" class="admin" to="/attendance-analytics"><i class="nav-icon" aria-hidden="true">↗</i><span>Посещаемость</span></RouterLink>
+      <RouterLink v-if="auth.canHandleTreasuryItems" class="admin" to="/financial-reconciliation"><i class="nav-icon" aria-hidden="true">✓</i><span>Финансовая сверка</span></RouterLink>
       <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>Админка</span></RouterLink>
       <RouterLink v-if="auth.user?.player" class="aside-profile" :to="`/players/${auth.user.player.id}`">
         <PlayerAvatar :player="{ nickname: auth.user.player.nickname, user: auth.user }"/>
@@ -72,6 +81,7 @@ async function linkProfile() {
         <button class="mobile-menu-button" type="button" :aria-expanded="menuOpen" aria-label="Открыть меню" @click="menuOpen=!menuOpen"><span></span><span></span><span></span></button>
         <RouterLink class="mobile-brand" to="/dashboard">GAZ ARMORY</RouterLink>
         <div class="header-spacer"></div>
+        <div v-if="auth.authenticated" class="notification-center"><button class="notification-bell" type="button" aria-label="Уведомления" @click="notificationOpen=!notificationOpen;loadNotifications()">🔔<b v-if="unreadNotifications">{{ unreadNotifications>99?'99+':unreadNotifications }}</b></button><div v-if="notificationOpen" class="notification-popover"><header><div><h2>Уведомления</h2><small>{{ unreadNotifications }} непрочитанных</small></div><button v-if="unreadNotifications" @click="markAllNotifications">Прочитать все</button></header><div v-if="notificationItems.length" class="notification-list"><component :is="item.data.url?'RouterLink':'div'" v-for="item in notificationItems" :key="item.id" :to="item.data.url||undefined" :class="{unread:!item.read_at}" @click="markNotification(item)"><span>{{ notificationIcon(item.type) }}</span><div><strong>{{ item.data.title }}</strong><p>{{ item.data.message }}</p><small>{{ new Date(item.created_at).toLocaleString('ru-RU') }}</small></div></component></div><p v-else class="empty">Уведомлений пока нет.</p></div></div>
         <RouterLink v-if="auth.user?.player" class="user-link header-user-profile" :to="`/players/${auth.user.player.id}`">{{ auth.user.discord_display_name || auth.user.discord_username }}</RouterLink>
         <button v-else-if="auth.user" class="user-unlinked" title="Привязать игровой профиль" @click="openLinker">{{ auth.user.discord_display_name || auth.user.discord_username }} · привязать профиль</button>
         <button v-if="auth.authenticated" @click="auth.logout">Выйти</button>

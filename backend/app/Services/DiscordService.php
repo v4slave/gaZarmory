@@ -25,4 +25,22 @@ final class DiscordService
 
         return true;
     }
+
+    public function sendToUser(string $discordUserId, string $title, string $message): bool
+    {
+        $webhookUrl = config('services.discord.webhook_url');
+        if (!$webhookUrl) return false;
+        Http::timeout(5)->retry(2, 250)->post($webhookUrl, [
+            'username' => 'GAZ ARMORY',
+            'content' => '<@'.$discordUserId.'>',
+            'allowed_mentions' => ['users' => [(string)$discordUserId]],
+            'embeds' => [[
+                'title' => $title,
+                'description' => $message,
+                'color' => 0x3BA55D,
+                'timestamp' => now()->toIso8601String(),
+            ]],
+        ])->throw();
+        return true;
+    }
 }

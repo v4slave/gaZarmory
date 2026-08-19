@@ -103,4 +103,36 @@ final class ActivityController extends Controller
 
         return $action->execute($activity);
     }
+
+    public function reopen(Request $request, Activity $activity)
+    {
+        $this->authorize('update', $activity);
+        $data = $request->validate(['reason' => ['required','string','min:10','max:1000']]);
+
+        return DB::transaction(function () use ($request, $activity, $data): Activity {
+            $locked = Activity::query()->lockForUpdate()->findOrFail($activity->id);
+            $earnings = $locked->earnings()->lockForUpdate()->get();
+            abort_if($earnings->isEmpty(), 409, 'У активности нет рассчитанных начислений для отмены.');
+            abort_if($earnings->contains(fn ($earning) => $earning->status !== 'pending'), 409, 'Исправление запрещено: хотя бы одно начисление уже выплачено или отменено.');
+            abort_if($earnings->contains(fn ($earning) => $earning->payout_id !== null), 409, 'Исправление запрещено: начисления уже включены в нахрюк. Сначала отмените невыплаченный нахрюк.');
+
+            $snapshot = [
+                'reason' => $data['reason'],
+                'earnings_count' => $earnings->count(),
+                'earnings_total' => (int) $earnings->sum('player_share'),
+                'earning_ids' => $earnings->modelKeys(),
+                'previous_gold_value' => $locked->gold_value,
+                'previous_completed_at' => $locked->completed_at?->toISOString(),
+            ];
+            $earnings->each->delete();
+            $locked->update(['completed_at' => null, 'gold_value' => null]);
+            $this->audit->record('activity.reopened_for_correction', $locked, $snapshot, [
+                'reason' => $data['reason'],
+                'status' => 'editing',
+                'author_id' => $request->user()->id,
+            ]);
+
+            return $locked->refresh()->load(['definition','players.group','loot','earnings','lootImports.rows']);
+        });
+    }
 }

@@ -18,9 +18,10 @@ const modalMode = ref('bid')
 const bidAmount = ref(0)
 const modalError = ref('')
 const modalBusy = ref(false)
-let ticker
+const archive = ref(null)
+let ticker, liveTicker
 
-const form = reactive({ treasury_item_id: '', quantity: 1, starting_bid: 0, minimum_step: 1, ends_at: '' })
+const form = reactive({ treasury_item_id: '', quantity: 1, starting_bid: 0, minimum_step: 1, extension_minutes: 3, ends_at: '' })
 const activeCount = computed(() => auctions.value.filter((auction) => auction.status === 'active').length)
 const selectedTopBid = computed(() => selectedAuction.value?.bids?.[0] ?? null)
 const minimumBid = computed(() => selectedTopBid.value
@@ -55,14 +56,14 @@ function countdown(endsAt) {
 
 function openForm() {
   editingId.value = null
-  Object.assign(form, { treasury_item_id: '', quantity: 1, starting_bid: 0, minimum_step: 1, ends_at: localDateTime(new Date(Date.now() + 60 * 60 * 1000)) })
+  Object.assign(form, { treasury_item_id: '', quantity: 1, starting_bid: 0, minimum_step: 1, extension_minutes: 3, ends_at: localDateTime(new Date(Date.now() + 60 * 60 * 1000)) })
   error.value = ''
   showForm.value = true
 }
 
 function editDraft(lot) {
   editingId.value = lot.id
-  Object.assign(form, { treasury_item_id: lot.treasury_item_id, quantity: Number(lot.quantity), starting_bid: Number(lot.starting_bid), minimum_step: Number(lot.minimum_step), ends_at: localDateTime(new Date(lot.ends_at) > new Date() ? lot.ends_at : new Date(Date.now() + 60 * 60 * 1000)) })
+  Object.assign(form, { treasury_item_id: lot.treasury_item_id, quantity: Number(lot.quantity), starting_bid: Number(lot.starting_bid), minimum_step: Number(lot.minimum_step), extension_minutes:Number(lot.extension_minutes??3), ends_at: localDateTime(new Date(lot.ends_at) > new Date() ? lot.ends_at : new Date(Date.now() + 60 * 60 * 1000)) })
   error.value = ''
   showForm.value = true
 }
@@ -119,7 +120,8 @@ async function placeBid() {
   modalError.value = ''
   try {
     await api.post(`/api/auctions/${selectedAuction.value.id}/bid`, { amount: Number(bidAmount.value) })
-    closeAuctionModal()
+    selectedAuction.value=(await api.get(`/api/auctions/${selectedAuction.value.id}`)).data
+    bidAmount.value=minimumBid.value
     await loadAll()
   } catch (exception) {
     modalError.value = Object.values(exception.response?.data?.errors ?? {}).flat()[0] ?? exception.response?.data?.message ?? 'Не удалось сделать ставку.'
@@ -129,15 +131,17 @@ async function placeBid() {
 onMounted(async () => {
   await loadAll()
   ticker = window.setInterval(() => { clock.value = Date.now() }, 1000)
+  liveTicker=window.setInterval(async()=>{try{await loadAll();if(selectedAuction.value)selectedAuction.value=(await api.get(`/api/auctions/${selectedAuction.value.id}`)).data}catch{}},5000)
 })
-onUnmounted(() => window.clearInterval(ticker))
+onUnmounted(() => {window.clearInterval(ticker);window.clearInterval(liveTicker)})
+async function openArchive(){archive.value=(await api.get('/api/auctions/archive')).data}
 </script>
 
 <template>
   <section class="page auctions-page">
     <header class="page-heading split-heading">
       <div><p class="eyebrow">Экономика · аукцион</p><h1>Аукцион гильдии</h1></div>
-      <button v-if="auth.canCreateAuctions" class="primary" @click="openForm">Добавить лот</button>
+      <div class="page-actions"><button @click="openArchive">Архив побед</button><button v-if="auth.canCreateAuctions" class="primary" @click="openForm">Добавить лот</button></div>
     </header>
 
     <p v-if="error" class="error-banner">{{ error }}</p>
@@ -192,7 +196,7 @@ onUnmounted(() => window.clearInterval(ticker))
           <div><span>Текущая ставка</span><GoldAmount :value="selectedTopBid?.amount ?? selectedAuction.starting_bid" /></div>
           <div><span>Минимальная ставка</span><GoldAmount :value="minimumBid" /></div>
         </div>
-        <label>Ваша ставка, золото<input v-model.number="bidAmount" type="number" :min="minimumBid" step="1" required></label>
+        <label>Ваша максимальная ставка, золото<input v-model.number="bidAmount" type="number" :min="minimumBid" step="1" required></label><p class="muted auction-proxy-note">Система автоматически повышает цену только на необходимый шаг. Ваш максимум другим игрокам не показывается.</p>
         <p v-if="modalError" class="error-banner">{{ modalError }}</p>
         <div class="form-actions"><button type="button" class="secondary" @click="closeAuctionModal">Отмена</button><button class="primary" :disabled="modalBusy">Подтвердить ставку</button></div>
       </form>
@@ -201,7 +205,7 @@ onUnmounted(() => window.clearInterval(ticker))
         <header class="auction-modal-head"><div><h2>История ставок</h2><small>{{ selectedAuction.item?.item_name }}</small></div><button type="button" class="modal-close" @click="closeAuctionModal">×</button></header>
         <p v-if="modalBusy">Загрузка…</p>
         <div v-else-if="selectedAuction.bids?.length" class="auction-bid-list">
-          <div v-for="(bid, index) in selectedAuction.bids" :key="bid.id" :class="{ 'top-bid-row': index === 0 }"><span class="bid-player"><b>#{{ index + 1 }}</b><PlayerAvatar :player="bid.player" size="tiny"/><span>{{ bid.player?.nickname ?? '—' }}</span><em v-if="index === 0">♛ лидер</em></span><GoldAmount :value="bid.amount" /></div>
+          <div v-for="(bid, index) in selectedAuction.bids" :key="bid.id" :class="{ 'top-bid-row': index === 0 }"><span class="bid-player"><b>#{{ index + 1 }}</b><PlayerAvatar :player="bid.player" size="tiny"/><span>{{ bid.player?.nickname ?? '—' }}</span><em v-if="index === 0">♛ лидер</em><small v-if="bid.is_auto">авто</small></span><GoldAmount :value="bid.amount" /></div>
         </div>
         <p v-else class="muted">Ставок пока нет.</p>
       </section>
@@ -214,10 +218,12 @@ onUnmounted(() => window.clearInterval(ticker))
         <label>Количество<input v-model.number="form.quantity" type="number" min="1" required></label>
         <label>Стартовая цена<input v-model.number="form.starting_bid" type="number" min="0" required></label>
         <label>Минимальный шаг<input v-model.number="form.minimum_step" type="number" min="1" required></label>
+        <label>Автопродление<input v-model.number="form.extension_minutes" type="number" min="2" max="5" required><small>На 2–5 минут при ставке перед закрытием</small></label>
         <label>Завершение<input v-model="form.ends_at" type="datetime-local" :min="minimumEndsAt()" required></label>
         <p v-if="error" class="error-banner">{{ error }}</p>
         <div class="form-actions"><button type="button" class="secondary" @click="showForm = false">Отмена</button><button class="primary" :disabled="busy">{{ busy ? 'Сохранение…' : editingId ? 'Сохранить' : 'Создать черновик' }}</button></div>
       </form>
     </div>
+    <div v-if="archive" class="modal" @click.self="archive=null"><section class="form-card auction-archive"><header class="auction-modal-head"><h2>Архив побед и расходов</h2><button class="modal-close" @click="archive=null">×</button></header><div class="auction-archive-leaders"><article v-for="row in archive.players" :key="row.player_id"><strong>{{ row.nickname }}</strong><span>{{ row.wins }} побед</span><GoldAmount :value="Number(row.spent).toLocaleString('ru-RU')"/></article></div><div class="table-wrap flat"><table><thead><tr><th>Лот</th><th>Победитель</th><th>Итог</th><th>Дата</th></tr></thead><tbody><tr v-for="lot in archive.lots" :key="lot.id"><td>{{ lot.item?.item_name }}</td><td>{{ lot.winner?.nickname??'Без ставок' }}</td><td><GoldAmount v-if="lot.winning_bid!==null" :value="Number(lot.winning_bid).toLocaleString('ru-RU')"/><span v-else>—</span></td><td>{{ displayDateTime(lot.finished_at) }}</td></tr></tbody></table></div></section></div>
   </section>
 </template>
