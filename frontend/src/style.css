@@ -841,3 +841,18 @@ aside nav a.router-link-active{color:#ffd58d;background:linear-gradient(90deg,rg
 .auction-leader-badge small { font-size:11px!important; }
 .auction-leader-badge b { font-size:15px!important; }
 .group-members a>strong { flex:1;text-align:left; }
+
+/* Profile equipment artwork */
+.player-profile-page .player-assets>span{display:block;min-height:0;padding:0;overflow:hidden}
+.profile-asset-image{display:block;width:100%;height:112px;object-fit:cover;border-bottom:1px solid rgba(174,119,42,.35);filter:saturate(.55) brightness(.52);transition:filter .2s ease,transform .2s ease}
+.player-assets>span:hover .profile-asset-image{transform:scale(1.02)}
+.player-assets>span.owned .profile-asset-image{filter:saturate(1) brightness(.9)}
+.player-profile-page .profile-asset-copy{position:relative;display:grid;grid-template-columns:34px minmax(0,1fr);align-items:center;gap:9px;padding:10px 12px 12px}
+.player-profile-page .profile-asset-copy>i{display:grid;place-items:center;width:34px;height:34px;border:1px solid #4a3d2d;border-radius:50%;color:#766c5d;font-style:normal;font-weight:800}
+.player-profile-page .profile-asset-copy>span{display:grid;gap:3px;min-width:0}
+.player-profile-page .profile-asset-copy b{overflow:hidden;color:#aaa092;font-size:.83rem;text-overflow:ellipsis;white-space:nowrap}
+.player-profile-page .profile-asset-copy small{color:#71695e;font-size:.66rem;text-transform:uppercase;letter-spacing:.06em}
+.player-profile-page .player-assets>span.owned .profile-asset-copy>i{border-color:#b47a24;background:rgba(180,122,36,.14);color:#e2ab51}
+.player-profile-page .player-assets>span.owned .profile-asset-copy b{color:#f1e4cf}
+.player-profile-page .player-assets>span.owned .profile-asset-copy small{color:#b88b4d}
+@media(max-width:700px){.profile-asset-image{height:96px}}
