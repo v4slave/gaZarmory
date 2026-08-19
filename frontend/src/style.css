@@ -786,7 +786,8 @@ button.primary,.primary{color:#17110a;border-color:#e0a552;background:linear-gra
 .secondary,.form-actions button{color:#eadcc8;background:#1b1209;border-color:#634523}
 
 /* Keep overlays above the sticky header and keep compact viewports in flow. */
-main>header{z-index:100}.notification-popover{z-index:120}.modal{z-index:1000}
+main>header{z-index:100}.notification-popover{z-index:120}.modal{z-index:10000}
+main>section:has(.modal){z-index:9999}
 .activity-summary-actions{flex-wrap:wrap;justify-content:flex-end;max-width:260px}.activity-summary-actions button{white-space:normal}
 .participant-picker,.activity-content-grid,.manual-loot,.catalog-loot-form{min-width:0;max-width:100%}
 .catalog-loot-form{grid-template-columns:minmax(240px,2fr) minmax(150px,1fr) minmax(90px,.55fr) auto}
@@ -864,7 +865,6 @@ aside nav a.router-link-active{color:#ffd58d;background:linear-gradient(90deg,rg
 .readiness-equipment .readiness-missing,.readiness-equipment .readiness-complete{grid-column:auto;margin:0;line-height:1.35}
 @media(max-width:1250px){.readiness-equipment{grid-column:1/-1}}
 .readiness-list{width:min(1600px,100%);margin-inline:auto}
-.profile-avatar-message-link{display:block;flex:0 0 auto;border-radius:50%;text-decoration:none;transition:transform .18s ease,filter .18s ease}
-.profile-avatar-message-link:hover{transform:translateY(-2px) scale(1.025);filter:brightness(1.12)}
-.profile-avatar-message-link:focus-visible{outline:2px solid #d39745;outline-offset:8px}
-.profile-avatar-message-link .player-avatar{cursor:pointer}
+.profile-discord-card:is(a){text-decoration:none;cursor:pointer;transition:transform .18s ease,border-color .18s ease,filter .18s ease}
+.profile-discord-card:is(a):hover{transform:translateY(-2px);border-color:#8870e8;filter:brightness(1.12)}
+.profile-discord-card:is(a):focus-visible{outline:2px solid #8870e8;outline-offset:3px}
