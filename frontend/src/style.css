@@ -1038,3 +1038,8 @@ input:focus,select:focus,textarea:focus{border-color:#dba34e;box-shadow:0 0 0 3p
 .class-distribution .class-melee small{color:#ffb0a6}.class-distribution .class-archer small{color:#d8bdff}
 .class-distribution .class-mage small{color:#a9ddff}.class-distribution .class-healer small{color:#ffb5dc}
 .class-distribution .class-bard small{color:#e6e89a}.class-distribution .class-tank small{color:#9ce2b7}
+
+.roster-pagination{display:flex;justify-content:center;gap:7px;margin-top:16px}
+.roster-pagination button{display:grid;place-items:center;min-width:39px;height:39px;padding:0 10px;color:#d6ccc0;border:1px solid var(--border);border-radius:6px;background:rgba(15,15,15,.94)}
+.roster-pagination button:hover:not(:disabled){color:#ffe0a6;border-color:var(--accent);background:rgba(94,59,18,.5)}
+.roster-pagination button.active{color:#211506;border-color:#f0bb66;background:linear-gradient(135deg,#f0b95e,#bb7628);font-weight:800}

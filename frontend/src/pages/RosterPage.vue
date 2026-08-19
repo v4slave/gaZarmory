@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useAuthStore } from '../stores/auth.js'
 import { useGuildStore } from '../stores/guild.js'
 import PlayerForm from '../components/PlayerForm.vue'
@@ -12,8 +12,10 @@ const deleting = ref(null)
 const classes = [['', 'Все классы'], ['melee', 'Милик'], ['archer', 'Лучник'], ['mage', 'Маг'], ['healer', 'Хил'], ['bard', 'Бард'], ['tank', 'Танк']]
 const labels = Object.fromEntries(classes)
 let timer
-watch(() => [guild.filters.search, guild.filters.class], () => { clearTimeout(timer); timer = setTimeout(guild.fetchPlayers, 250) })
+const pages = computed(() => Array.from({ length: guild.pagination?.last_page ?? 1 }, (_, index) => index + 1))
+watch(() => [guild.filters.search, guild.filters.class], () => { clearTimeout(timer);guild.filters.page=1;timer=setTimeout(()=>guild.fetchPlayers(),250) })
 onMounted(() => Promise.all([guild.fetchGroups(), guild.fetchPlayers()]))
+function goToPage(page) { if(page===guild.pagination?.current_page||guild.loading)return;guild.filters.page=page;guild.fetchPlayers() }
 async function movePlayer(player, value) {
   moving.value = player.id
   try { await guild.movePlayer(player.id, value === '' ? null : Number(value)); await guild.fetchGroups() }
@@ -53,6 +55,11 @@ async function deletePlayer(player) {
       <tr v-else-if="!guild.players.length"><td :colspan="auth.canManage ? 7 : 6" class="empty">Игроки не найдены</td></tr>
       <tr v-for="player in guild.players" :key="player.id"><td><RouterLink class="player-identity" :to="`/players/${player.id}`"><PlayerAvatar :player="player" size="small"/><span>{{ player.nickname }}</span></RouterLink></td><td><span :class="['class-tag',`class-${player.class}`]">{{ labels[player.class] }}</span></td><td><select v-if="canMovePlayer(player)" class="group-select" :value="player.group_id ?? ''" :disabled="moving===player.id" @change="movePlayer(player,$event.target.value)"><option value="">Сольники</option><option v-for="group in availableGroups()" :key="group.id" :value="group.id">{{ group.name }}</option></select><span v-else>{{ player.group?.name ?? 'Сольники' }}</span></td><td><strong class="attendance-count">{{ player.primes_count ?? 0 }}</strong></td><td class="right"><GoldAmount :value="Number(player.paid_total ?? 0).toLocaleString('ru-RU')" /></td><td v-if="auth.canManage" class="right"><button v-if="!player.user" class="roster-delete-button" :disabled="deleting === player.id" title="Навсегда удалить непривязанного персонажа" @click="deletePlayer(player)">{{ deleting === player.id ? 'Удаление…' : 'Удалить' }}</button><span v-else class="muted">—</span></td></tr>
     </tbody></table></div>
+    <nav v-if="(guild.pagination?.last_page ?? 1)>1" class="roster-pagination" aria-label="Страницы состава">
+      <button type="button" :disabled="guild.loading||guild.pagination.current_page<=1" @click="goToPage(guild.pagination.current_page-1)">‹</button>
+      <button v-for="page in pages" :key="page" type="button" :class="{active:page===guild.pagination.current_page}" :aria-current="page===guild.pagination.current_page?'page':undefined" :disabled="guild.loading" @click="goToPage(page)">{{ page }}</button>
+      <button type="button" :disabled="guild.loading||guild.pagination.current_page>=guild.pagination.last_page" @click="goToPage(guild.pagination.current_page+1)">›</button>
+    </nav>
     <div v-if="showForm" class="modal"><PlayerForm @saved="showForm = false" @cancel="showForm = false" /></div>
   </section>
 </template>
