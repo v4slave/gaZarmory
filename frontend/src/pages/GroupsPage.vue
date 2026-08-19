@@ -1,10 +1,11 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useAuthStore } from '../stores/auth.js'
 import { useGuildStore } from '../stores/guild.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 
 const auth = useAuthStore(); const guild = useGuildStore(); const name = ref(''); const busy = ref(false); const renameTarget = ref(null); const renameName = ref('')
+let masonryObserver
 const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг', healer: 'Хил', bard: 'Бард', tank: 'Танк' }
 async function create() { if (!name.value.trim()) return; busy.value = true; try { await guild.createGroup(name.value.trim()); name.value = '' } finally { busy.value = false } }
 function rename(group) { renameTarget.value = group; renameName.value = group.name }
@@ -21,7 +22,27 @@ function sortedPlayers(group) { return [...(group.players ?? [])].sort((left, ri
 const soloPlayers = computed(() => guild.players
   .filter(player => player.is_active && player.group_id === null)
   .sort((left, right) => comparePlayers(left, right)))
-onMounted(() => Promise.all([guild.fetchGroups(), guild.fetchPlayers({ active: true, per_page: 100 })]))
+function layoutMasonry() {
+  const grid = document.querySelector('.groups-page .group-grid')
+  if (!grid) return
+  for (const card of grid.children) {
+    card.style.gridRowEnd = `span ${Math.ceil((card.getBoundingClientRect().height + 8) / 16)}`
+  }
+}
+async function observeMasonry() {
+  await nextTick()
+  const grid = document.querySelector('.groups-page .group-grid')
+  masonryObserver?.disconnect()
+  masonryObserver = new ResizeObserver(layoutMasonry)
+  if (grid) {
+    masonryObserver.observe(grid)
+    for (const card of grid.children) masonryObserver.observe(card)
+  }
+  layoutMasonry()
+}
+watch(() => [guild.groups.map(group => `${group.id}:${group.players?.length ?? 0}`).join(','), soloPlayers.value.length], observeMasonry)
+onMounted(async () => { await Promise.all([guild.fetchGroups(), guild.fetchPlayers({ active: true, per_page: 100 })]);await observeMasonry() })
+onBeforeUnmount(() => masonryObserver?.disconnect())
 </script>
 
 <template><section class="groups-page"><div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · ГИЛЬДИЯ</p><h1>Конст-пати</h1></div></div>
