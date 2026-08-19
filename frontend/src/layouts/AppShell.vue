@@ -4,8 +4,10 @@ import { useRoute } from 'vue-router'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
+import { useLocale } from '../i18n.js'
 const auth = useAuthStore()
 const route = useRoute()
+const { locale, setLocale } = useLocale()
 const menuOpen = ref(false)
 const showLinker = ref(false)
 const selectedPlayerId = ref('')
@@ -55,6 +57,10 @@ async function linkProfile() {
 </script>
 
 <template>
+  <div class="language-switcher" role="group" aria-label="Язык интерфейса">
+    <button type="button" :class="{ active: locale === 'ru' }" :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
+    <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
+  </div>
   <div v-if="auth.loading" class="access-gate"><div class="access-card"><span class="access-loader"></span><p>Проверяем авторизацию…</p></div></div>
   <div v-else-if="!auth.authenticated" class="access-gate"><div class="access-card guest-card"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><p class="eyebrow">ARCHEAGE GUILD MANAGEMENT</p><h1>GAZ ARMORY</h1><button class="primary access-primary" @click="auth.login">Войти через Discord</button></div></div>
   <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><p class="eyebrow">ПЕРВЫЙ ВХОД</p><template v-if="auth.user?.pending_player_link_request"><h1>Заявка отправлена</h1><p class="muted">Персонаж «{{ auth.user.pending_player_link_request.player?.nickname }}». Дождитесь подтверждения ГЛ или администратора.</p></template><template v-else><h1>Привяжите персонажа</h1><p class="muted">Выберите персонажа и отправьте заявку. Разделы гильдии откроются после подтверждения.</p><button class="primary access-primary" @click="openLinker">Выбрать персонажа</button></template><button class="access-logout" @click="auth.logout">Выйти</button></div></div>
