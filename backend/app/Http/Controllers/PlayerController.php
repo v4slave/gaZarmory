@@ -89,12 +89,6 @@ final class PlayerController extends Controller
             ->whereHas('players', fn ($query) => $query->where('players.id', $player->id))
             ->count();
 
-        $miniActivities = (clone $activitiesInPeriod)
-            ->whereNotNull('completed_at')
-            ->whereHas('definition', fn ($query) => $query->where('type', 'mini_activity'))
-            ->whereHas('players', fn ($query) => $query->where('players.id', $player->id))
-            ->count();
-
         $earnings = PrimePlayerEarning::query()->where('player_id', $player->id);
 
         $profile = $player
@@ -103,6 +97,7 @@ final class PlayerController extends Controller
                 'user',
                 'activities' => fn ($query) => $query
                     ->with('definition')
+                    ->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'prime'))
                     ->latest('occurred_at'),
             ])
             ->toArray();
@@ -110,7 +105,6 @@ final class PlayerController extends Controller
         $profile['statistics'] = [
             'period_days' => 30,
             'primes_count' => $visitedPrimes,
-            'mini_activities_count' => $miniActivities,
             'activities_count' => count($profile['activities']),
             'prime_attendance_percentage' => $totalPrimes > 0
                 ? round($visitedPrimes / $totalPrimes * 100, 2)
@@ -120,6 +114,7 @@ final class PlayerController extends Controller
         ];
         $profile['earnings_history'] = PrimePlayerEarning::query()
             ->where('player_id', $player->id)
+            ->whereHas('activity.definition', fn ($query) => $query->where('type', 'prime'))
             ->with(['activity.definition:id,name,type,icon_path','payout:id,status,paid_at'])
             ->latest('id')
             ->get();

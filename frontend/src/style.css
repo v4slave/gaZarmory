@@ -553,6 +553,41 @@ section { width:100%;max-width:2100px; }
 @media(max-width:760px){.dashboard-main-stats,.class-distribution>div:last-child,.player-assets { grid-template-columns:repeat(2,minmax(0,1fr)); }.group-card-heading { flex-direction:column; }.group-averages { width:100%; }.group-averages>span { flex:1;text-align:left; }.profile-asset-editor { grid-template-columns:1fr; }}
 @media(max-width:430px){.dashboard-main-stats,.class-distribution>div:last-child,.player-assets { grid-template-columns:1fr; }}
 
+/* Character profile showcase */
+.player-profile-page { max-width:1800px;padding-top:28px; }
+.profile-showcase { position:relative;display:grid;grid-template-columns:minmax(330px,.72fr) minmax(620px,1.7fr);align-items:center;gap:22px;min-height:245px;padding:28px 24px 22px;border:1px solid #684822;border-radius:10px;background:linear-gradient(100deg,rgba(16,10,5,.96),rgba(30,19,9,.78)),url('/images/gaz-armory-background.png') center 43%/cover;box-shadow:0 18px 45px rgba(0,0,0,.35); }
+.profile-showcase::after { content:'';position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:linear-gradient(90deg,rgba(9,6,3,.18),transparent 55%,rgba(9,6,3,.3)); }
+.profile-showcase>* { position:relative;z-index:1; }
+.profile-showcase-identity { display:flex;align-items:center;gap:20px;min-width:0; }
+.player-avatar-hero { width:126px;height:126px;border:3px solid #9e7138;box-shadow:0 0 0 7px rgba(29,18,7,.8),0 0 0 8px rgba(177,122,52,.42),0 14px 34px #000; }
+.player-avatar-hero>span { font-size:35px; }
+.profile-showcase-identity>div { min-width:0; }
+.profile-showcase-identity h1 { display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:5px 0 8px;font-size:39px; }
+.profile-showcase-identity h1 .class-tag { font-family:'JetBrains Mono',monospace;font-size:11px; }
+.profile-showcase-identity>div>p:last-of-type { margin:0;color:#d1a264;font:600 16px Georgia,serif; }
+.profile-discord-line { display:inline-flex;align-items:center;gap:7px;margin-top:17px;padding:7px 10px;border:1px solid #593d21;border-radius:6px;color:#cdb99a;background:rgba(13,9,5,.72);font-size:10px; }
+.profile-discord-line b { color:#e3ad65; }
+.profile-showcase>.profile-edit-button { position:absolute;top:0;right:0;transform:translateY(-1px); }
+.profile-showcase .profile-stats { grid-template-columns:repeat(5,minmax(105px,1fr));align-self:end;border:1px solid #654721;border-radius:8px;overflow:hidden;background:rgba(9,6,3,.68); }
+.profile-showcase .profile-stats .stat-card { min-height:118px;padding:18px 15px;border:0;border-left:1px solid #49321d;border-radius:0;background:transparent;box-shadow:none;backdrop-filter:none; }
+.profile-showcase .profile-stats .stat-card:first-child { border-left:0; }
+.profile-showcase .profile-stats .stat-card span { font-size:9px; }
+.profile-showcase .profile-stats .stat-card strong { font-size:24px; }
+.player-profile-page .player-assets-panel { margin-top:14px;padding:21px 23px; }
+.player-profile-page .player-assets { grid-template-columns:repeat(5,minmax(120px,1fr)); }
+.player-profile-page .player-assets>span { position:relative;display:grid;grid-template-columns:30px minmax(0,1fr);align-items:center;gap:2px 9px;min-height:72px;padding:11px;border-color:#3e3021;background:linear-gradient(145deg,#100c08,#0b0805); }
+.player-profile-page .player-assets>span>i { grid-row:1/3;display:grid;place-items:center;width:30px;height:30px;border:1px solid #4a3d2d;border-radius:50%;color:#695f52;font-style:normal; }
+.player-profile-page .player-assets>span>b { display:block;width:auto;height:auto;border:0;border-radius:0;color:#817566;background:transparent;font-size:11px; }
+.player-profile-page .player-assets>span>small { color:#625a50;font-size:8px;text-transform:uppercase;letter-spacing:.06em; }
+.player-profile-page .player-assets>span.owned { border-color:#74552b;background:linear-gradient(145deg,#24180b,#110c07);box-shadow:inset 0 1px rgba(255,218,151,.035); }
+.player-profile-page .player-assets>span.owned>i { color:#9ed18e;border-color:#4f7041;background:#172412; }
+.player-profile-page .player-assets>span.owned>b { color:#e8d5b6; }
+.player-profile-page .player-assets>span.owned>small { color:#8fa67a; }
+.profile-history-grid { grid-template-columns:minmax(0,1.3fr) minmax(330px,.7fr);margin-top:14px; }
+@media(max-width:1250px){.profile-showcase { grid-template-columns:1fr; }.profile-showcase>.profile-edit-button { position:relative;grid-row:1;justify-self:end;margin-bottom:-55px; }.profile-showcase .profile-stats { width:100%; }.player-profile-page .player-assets { grid-template-columns:repeat(3,minmax(0,1fr)); }}
+@media(max-width:760px){.profile-showcase { padding:22px 15px 16px; }.profile-showcase-identity { align-items:flex-start; }.player-avatar-hero { width:84px;height:84px; }.profile-showcase-identity h1 { font-size:29px; }.profile-showcase .profile-stats { grid-template-columns:1fr 1fr; }.profile-showcase .profile-stats .stat-card { border-left:0;border-top:1px solid #49321d; }.profile-showcase>.profile-edit-button { grid-row:auto;width:100%;margin:0; }.player-profile-page .player-assets { grid-template-columns:1fr 1fr; }.profile-history-grid { grid-template-columns:1fr; }}
+@media(max-width:430px){.profile-showcase-identity { flex-direction:column; }.player-profile-page .player-assets,.profile-showcase .profile-stats { grid-template-columns:1fr; }}
+
 /* Reference-led shell polish: engraved bronze navigation and layered parchment. */
 :root {
   --ink:#090603;
