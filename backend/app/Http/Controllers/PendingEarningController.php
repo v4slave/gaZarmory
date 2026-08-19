@@ -9,7 +9,7 @@ final class PendingEarningController extends Controller
     public function __invoke(Request $request):array
     {
         $query=PrimePlayerEarning::query()->where('status','pending')->whereHas('activity.definition',fn($q)=>$q->where('type','prime'));
-        if(!$request->user()->canManageGuild()){abort_unless($request->user()->player,403);$query->where('player_id',$request->user()->player->id);}
+        if(!$request->user()->canCreatePayouts()){abort_unless($request->user()->player,403);$query->where('player_id',$request->user()->player->id);}
         $rows=(clone $query)
             ->selectRaw("player_id, MAX(nickname_snapshot) AS nickname, COUNT(*) AS primes_count, SUM(player_share) AS amount")
             ->join('activities','activities.id','=','prime_player_earnings.activity_id')
@@ -17,7 +17,7 @@ final class PendingEarningController extends Controller
             ->groupBy('player_id')->orderByDesc('amount')->get();
         $primes=(clone $query)->whereHas('activity.definition',fn($q)=>$q->where('type','prime'))->distinct('activity_id')->count('activity_id');
         $paid=PayoutPlayer::query()->where('status','paid');
-        if(!$request->user()->canManageGuild()){$paid->where('player_id',$request->user()->player->id);}
+        if(!$request->user()->canCreatePayouts()){$paid->where('player_id',$request->user()->player->id);}
         $tokenUnitValue=(int)(DB::table('treasury_token_settings')->where('id',1)->value('token_unit_value')??0);
         return ['summary'=>['gold'=>(int)$rows->sum('amount'),'primes'=>(int)$primes,'participants'=>$rows->count(),'paid_gold'=>(int)$paid->sum('amount'),'token_unit_value'=>$tokenUnitValue],'players'=>$rows];
     }

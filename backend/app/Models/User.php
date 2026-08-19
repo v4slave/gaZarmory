@@ -36,7 +36,7 @@ class User extends Authenticatable
 
     public function canAdministrate(): bool
     {
-        return $this->canManageGuild();
+        return $this->hasRole(UserRole::GuildLeader) || $this->hasRole(UserRole::Developer);
     }
 
     public function canCreateAuctions(): bool

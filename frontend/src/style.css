@@ -178,6 +178,10 @@ td a:hover,.user-link:hover,.catalog-link { color:#e5ae62; }
 .admin-actions-menu summary::-webkit-details-marker { display:none; }
 .admin-actions-menu[open] summary { border-color:#a76e28;color:#f0c27d; }
 .admin-actions-menu>div { position:absolute;z-index:30;top:calc(100% + 5px);right:0;display:grid;gap:4px;width:205px;padding:6px;border:1px solid #61431f;border-radius:5px;background:#130d07;box-shadow:0 12px 28px #000c; }
+.admin-actions-menu[open] { grid-column:1/-1;grid-row:auto;justify-self:stretch;display:grid;grid-template-columns:1fr auto;width:100%; }
+.admin-actions-menu[open] summary { grid-column:2; }
+.admin-actions-menu[open]>div { position:static;grid-column:1/-1;display:flex;flex-wrap:wrap;width:auto;margin-top:6px; }
+.admin-actions-menu[open]>div button { width:auto;flex:1 1 180px; }
 .admin-actions-menu button { width:100%;padding:7px 8px;text-align:left;font-size:10px; }
 .admin-actions-menu .danger { color:#ef9b8b;border-color:#6b3028;background:#24100c; }
 .admin-actions-menu button:disabled { opacity:.38;cursor:not-allowed; }
@@ -185,7 +189,7 @@ td a:hover,.user-link:hover,.catalog-link { color:#e5ae62; }
 .admin-user-list,.admin-user-row { overflow:visible; }
 .admin-user-row { position:relative; }
 .admin-user-row:has(.admin-actions-menu[open]) { z-index:40;border-color:#765127; }
-.admin-user-row:nth-last-child(-n+2) .admin-actions-menu>div { top:auto;bottom:calc(100% + 5px); }
+.admin-user-row:nth-last-child(-n+2) .admin-actions-menu:not([open])>div { top:auto;bottom:calc(100% + 5px); }
 .audit-panel { position:relative;z-index:1; }
 @media (max-width:1100px) { .payout-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }.admin-user-row { grid-template-columns:34px 1fr 1fr 92px; }.admin-role-select { grid-column:2/4; }.admin-actions-menu { grid-column:4;grid-row:1/3; } }
 @media (max-width:700px) { .payout-stats,.admin-action-guide { grid-template-columns:1fr; }.admin-user-row { grid-template-columns:34px 1fr 82px; }.admin-user-player,.admin-role-select { grid-column:2/4; }.admin-actions-menu { grid-column:3;grid-row:1; }.payout-toolbar .search-field { width:100%; } }

@@ -69,7 +69,7 @@ final class PartyLeaderPolicyTest extends TestCase
         ]);
 
         self::assertTrue($user->canManageGuild());
-        self::assertTrue($user->canAdministrate());
+        self::assertFalse($user->canAdministrate());
         self::assertFalse($user->canCreateAuctions());
         self::assertFalse($user->canHandleTreasuryItems());
         self::assertFalse($user->canCreatePayouts());

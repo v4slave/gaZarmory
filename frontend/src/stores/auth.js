@@ -6,11 +6,11 @@ export const useAuthStore = defineStore('auth', {
   getters: {
     authenticated: (state) => Boolean(state.user),
     canManage: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'micro_guild_leader', 'developer'].includes(role)),
-    canAdmin: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'micro_guild_leader', 'developer'].includes(role)),
+    canAdmin: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'developer'].includes(role)),
     canCreateAuctions: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'developer'].includes(role)),
     canHandleTreasuryItems: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'developer'].includes(role)),
     canCreatePayouts: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'developer'].includes(role)),
-    canAssignElevatedRoles: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'developer'].includes(role)),
+    canAssignElevatedRoles: (state) => (state.user?.roles ?? [state.user?.role]).includes('guild_leader'),
     isGuildLeader: (state) => (state.user?.roles ?? [state.user?.role]).includes('guild_leader'),
     isPartyLeader: (state) => (state.user?.roles ?? [state.user?.role]).includes('party_leader'),
     canViewReadiness: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'].includes(role)),

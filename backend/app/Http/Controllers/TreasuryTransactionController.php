@@ -11,7 +11,7 @@ final class TreasuryTransactionController extends Controller
 {
     public function store(Request $request, CreateManualTreasuryTransaction $action): JsonResponse
     {
-        abort_unless($request->user()->canManageGuild(), 403);
+        abort_unless($request->user()->canHandleTreasuryItems(), 403);
         $data = $request->validate([
             'operation' => ['required', Rule::in(['income', 'expense'])],
             'amount' => ['required', 'integer', 'min:1'],

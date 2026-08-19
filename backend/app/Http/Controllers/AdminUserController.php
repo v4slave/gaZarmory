@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Services\AuditService;
-use App\Services\UserRoleManager;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -43,7 +42,6 @@ final class AdminUserController extends Controller
         Request $request,
         User $managedUser,
         AuditService $audit,
-        UserRoleManager $roleManager,
     ): JsonResponse {
         $this->authorizeAdministrator($request);
         $data = $request->validate([
@@ -52,15 +50,23 @@ final class AdminUserController extends Controller
             'updated_at' => ['nullable', 'date'],
         ]);
         $newRoles = array_values($data['roles']);
-        $actorCanAssignElevatedRoles = $request->user()->hasRole(UserRole::GuildLeader)
-            || $request->user()->hasRole(UserRole::Developer);
         $managedRoles = $managedUser->roles ?: [$managedUser->role->value];
-        $elevatedRoles = [UserRole::GuildLeader->value, UserRole::Developer->value];
-        if (! $actorCanAssignElevatedRoles && (array_intersect($managedRoles, $elevatedRoles) || array_intersect($newRoles, $elevatedRoles))) {
-            throw ValidationException::withMessages(['roles' => 'Микро-ГЛ не может назначать или изменять роли ГЛ и Разработчик.']);
+        $addsDeveloper = ! in_array(UserRole::Developer->value, $managedRoles, true)
+            && in_array(UserRole::Developer->value, $newRoles, true);
+        if ($addsDeveloper) {
+            throw ValidationException::withMessages(['roles' => 'Роль Разработчик нельзя назначить через админку.']);
+        }
+        $wasLeader = in_array(UserRole::GuildLeader->value, $managedRoles, true);
+        $willBeLeader = in_array(UserRole::GuildLeader->value, $newRoles, true);
+        $isTransfer = ! $wasLeader && $willBeLeader;
+        if ($isTransfer && ! $request->user()->hasRole(UserRole::GuildLeader)) {
+            throw ValidationException::withMessages(['roles' => 'Передать роль ГЛ может только действующий ГЛ.']);
+        }
+        if ($wasLeader && ! $willBeLeader) {
+            throw ValidationException::withMessages(['roles' => 'Роль ГЛ снимается только при её передаче другому пользователю.']);
         }
 
-        $updated = DB::transaction(function () use ($managedUser, $newRoles, $data, $audit, $roleManager): User {
+        $updated = DB::transaction(function () use ($request, $managedUser, $newRoles, $data, $audit, $isTransfer): User {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($managedUser->id);
             if (isset($data['updated_at']) && ! $lockedUser->updated_at->equalTo($data['updated_at'])) {
                 throw ValidationException::withMessages(['updated_at' => 'Данные пользователя уже изменены другим администратором. Обновите страницу.']);
@@ -72,23 +78,29 @@ final class AdminUserController extends Controller
                 return $lockedUser;
             }
 
-            $leadersCount = User::query()
-                ->whereJsonContains('roles', UserRole::GuildLeader->value)
-                ->lockForUpdate()
-                ->get(['id'])
-                ->count();
-            $roleManager->ensureLeaderRemains(
-                in_array(UserRole::GuildLeader->value, $oldRoles, true),
-                in_array(UserRole::GuildLeader->value, $newRoles, true),
-                $leadersCount,
-            );
+            if ($isTransfer) {
+                $leaders = User::query()->whereJsonContains('roles', UserRole::GuildLeader->value)->lockForUpdate()->get();
+                if (! $leaders->contains('id', $request->user()->id)) {
+                    throw ValidationException::withMessages(['roles' => 'Вы больше не являетесь ГЛ. Обновите страницу.']);
+                }
+                foreach ($leaders as $leader) {
+                    $leaderOldRoles = $leader->roles ?: [$leader->role->value];
+                    $leaderRoles = array_values(array_filter(
+                        $leaderOldRoles,
+                        fn (string $role): bool => $role !== UserRole::GuildLeader->value,
+                    ));
+                    if ($leaderRoles === []) $leaderRoles = [UserRole::Member->value];
+                    $leader->forceFill(['roles' => $leaderRoles, 'role' => User::primaryRoleFor($leaderRoles)])->save();
+                    $audit->record('guild_leader.transferred_from', $leader, ['roles' => $leaderOldRoles], ['roles' => $leaderRoles, 'new_guild_leader_id' => $lockedUser->id]);
+                }
+            }
 
             $lockedUser->forceFill([
                 'roles' => $newRoles,
                 'role' => User::primaryRoleFor($newRoles),
             ])->save();
             $audit->record(
-                'user.roles_changed',
+                $isTransfer ? 'guild_leader.transferred_to' : 'user.roles_changed',
                 $lockedUser,
                 ['roles' => $oldRoles],
                 ['roles' => $newRoles],

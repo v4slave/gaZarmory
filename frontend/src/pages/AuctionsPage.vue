@@ -175,7 +175,7 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
           <button class="auction-history-button" title="История ставок" aria-label="История ставок" @click="openAuctionModal(auction, 'history')">↶</button>
           <button class="primary auction-bid-button" @click="openAuctionModal(auction, 'bid')">Сделать ставку</button>
         </div>
-        <div v-else-if="auction.status === 'draft' && auth.canManage" class="auction-card-actions">
+        <div v-else-if="auction.status === 'draft' && auth.canCreateAuctions" class="auction-card-actions">
           <button class="secondary" @click="editDraft(auction)">Редактировать</button><button class="primary" @click="start(auction.id)">Запустить</button>
         </div>
         <div v-else class="auction-card-actions auction-card-actions-ended">

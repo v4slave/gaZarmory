@@ -55,6 +55,34 @@ final class AdminUserLifecycleTest extends TestCase
             ->assertUnprocessable();
     }
 
+    public function test_guild_leader_role_is_transferred_atomically(): void
+    {
+        $leader = $this->userWithRoles([UserRole::GuildLeader->value, UserRole::Member->value]);
+        $successor = $this->userWithRoles([UserRole::PartyLeader->value, UserRole::Member->value]);
+
+        $this->actingAs($leader)->patchJson("/api/admin/users/{$successor->id}/roles", [
+            'roles' => [UserRole::GuildLeader->value, UserRole::PartyLeader->value, UserRole::Member->value],
+            'updated_at' => $successor->updated_at->toISOString(),
+        ])->assertOk();
+
+        self::assertFalse($leader->fresh()->hasRole(UserRole::GuildLeader));
+        self::assertTrue($leader->fresh()->hasRole(UserRole::Member));
+        self::assertTrue($successor->fresh()->hasRole(UserRole::GuildLeader));
+        self::assertSame(1, User::query()->whereJsonContains('roles', UserRole::GuildLeader->value)->count());
+    }
+
+    public function test_developer_role_cannot_be_assigned_through_admin_api(): void
+    {
+        $leader = $this->userWithRoles([UserRole::GuildLeader->value]);
+        $member = $this->userWithRoles([UserRole::Member->value]);
+
+        $this->actingAs($leader)->patchJson("/api/admin/users/{$member->id}/roles", [
+            'roles' => [UserRole::Developer->value, UserRole::Member->value],
+        ])->assertUnprocessable();
+
+        self::assertFalse($member->fresh()->hasRole(UserRole::Developer));
+    }
+
     private function userWithRoles(array $roles): User
     {
         $suffix = str_replace('.', '', uniqid('', true));

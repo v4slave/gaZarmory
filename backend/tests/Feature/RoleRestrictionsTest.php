@@ -26,15 +26,26 @@ final class RoleRestrictionsTest extends TestCase
         $this->actingAs($micro)->postJson('/api/payouts', [])->assertForbidden();
     }
 
-    public function test_micro_guild_leader_keeps_management_and_administration_access(): void
+    public function test_micro_guild_leader_keeps_guild_management_but_loses_administration_access(): void
     {
         $micro = $this->user(UserRole::MicroGuildLeader);
         $member = $this->user(UserRole::Member);
 
-        $this->actingAs($micro)->getJson('/api/admin/users')->assertOk();
+        $this->actingAs($micro)->getJson('/api/admin/users')->assertForbidden();
         $this->actingAs($micro)->postJson('/api/activities', [])->assertUnprocessable();
-        $this->actingAs($micro)->patchJson('/api/admin/users/'.$member->id.'/roles', ['roles' => [UserRole::Developer->value]])->assertUnprocessable();
+        $this->actingAs($micro)->patchJson('/api/admin/users/'.$member->id.'/roles', ['roles' => [UserRole::Developer->value]])->assertForbidden();
         self::assertTrue($member->fresh()->hasRole(UserRole::Member));
+    }
+
+    public function test_micro_guild_leader_has_member_permissions_in_economy(): void
+    {
+        $micro = $this->user(UserRole::MicroGuildLeader);
+
+        $this->actingAs($micro)->postJson('/api/treasury/transactions', [
+            'operation' => 'expense', 'amount' => 1, 'description' => 'Forbidden',
+        ])->assertForbidden();
+        $this->actingAs($micro)->getJson('/api/payouts-preview')->assertForbidden();
+        $this->actingAs($micro)->postJson('/api/auctions', [])->assertForbidden();
     }
 
     public function test_party_leader_can_move_composition_but_cannot_rename_or_delete_group(): void

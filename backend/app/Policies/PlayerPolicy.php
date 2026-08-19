@@ -21,5 +21,5 @@ final class PlayerPolicy
             && ($player->group_id === null || $player->group_id === $ownGroupId);
     }
     public function delete(User $user, Player $player): bool { return $user->canManageGuild(); }
-    public function linkUser(User $user, Player $player): bool { return $user->canManageGuild(); }
+    public function linkUser(User $user, Player $player): bool { return $user->canAdministrate(); }
 }

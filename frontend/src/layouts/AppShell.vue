@@ -18,6 +18,7 @@ const freePlayers = ref([])
 const playerOptionsLoading = ref(false)
 const notificationOpen=ref(false),notificationItems=ref([]),unreadNotifications=ref(0)
 let notificationTicker
+let playerLinkTicker
 const primaryLinks = [
   { to: '/dashboard', label: 'Дашборд', icon: '⌂' },
   { to: '/roster', label: 'Состав', icon: '♙' },
@@ -38,8 +39,16 @@ function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
 watch(() => route.fullPath, () => { menuOpen.value = false;loadActiveAuctions() })
 watch(() => auth.authenticated, authenticated => { if(authenticated)loadActiveAuctions();else activeAuctions.value=0 })
 function syncDiscordOnFocus(){if(document.visibilityState==='visible')auth.syncDiscordProfile()}
+function stopPlayerLinkPolling(){if(playerLinkTicker){window.clearInterval(playerLinkTicker);playerLinkTicker=undefined}}
+function updatePlayerLinkPolling(){
+  stopPlayerLinkPolling()
+  if(auth.authenticated&&!auth.user?.player&&auth.user?.pending_player_link_request){
+    playerLinkTicker=window.setInterval(()=>auth.fetchMe().catch(()=>{}),5000)
+  }
+}
+watch(()=>[auth.authenticated,auth.user?.player?.id,auth.user?.pending_player_link_request?.id],updatePlayerLinkPolling,{immediate:true})
 onMounted(()=>{loadActiveAuctions();loadNotifications();auth.syncDiscordProfile();notificationTicker=window.setInterval(loadNotifications,30000);window.addEventListener('auction-count-changed',updateAuctionCount);document.addEventListener('visibilitychange',syncDiscordOnFocus)})
-onBeforeUnmount(()=>{window.clearInterval(notificationTicker);window.removeEventListener('auction-count-changed',updateAuctionCount);document.removeEventListener('visibilitychange',syncDiscordOnFocus)})
+onBeforeUnmount(()=>{window.clearInterval(notificationTicker);stopPlayerLinkPolling();window.removeEventListener('auction-count-changed',updateAuctionCount);document.removeEventListener('visibilitychange',syncDiscordOnFocus)})
 async function openLinker() {
   showLinker.value = true
   linkError.value = ''
@@ -64,7 +73,7 @@ async function linkProfile() {
   </div>
   <div v-if="auth.loading" class="access-gate"><div class="access-card"><span class="access-loader"></span><p>Проверяем авторизацию…</p></div></div>
   <div v-else-if="!auth.authenticated" class="access-gate"><div class="access-card guest-card"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><p class="eyebrow">ARCHEAGE GUILD MANAGEMENT</p><h1>GAZ ARMORY</h1><button class="primary access-primary" @click="auth.login">Войти через Discord</button></div></div>
-  <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><p class="eyebrow">ПЕРВЫЙ ВХОД</p><template v-if="auth.user?.pending_player_link_request"><h1>Заявка отправлена</h1><p class="muted">Персонаж «{{ auth.user.pending_player_link_request.player?.nickname }}». Дождитесь подтверждения ГЛ или администратора.</p></template><template v-else><h1>Привяжите персонажа</h1><p class="muted">Выберите персонажа и отправьте заявку. Разделы гильдии откроются после подтверждения.</p><button class="primary access-primary" @click="openLinker">Выбрать персонажа</button></template><button class="access-logout" @click="auth.logout">Выйти</button></div></div>
+  <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><p class="eyebrow">ПЕРВЫЙ ВХОД</p><template v-if="auth.user?.pending_player_link_request"><h1>Заявка отправлена</h1><p class="muted">Персонаж «{{ auth.user.pending_player_link_request.player?.nickname }}». Дождитесь подтверждения ГЛ или администратора.</p><p class="muted">Статус проверяется автоматически — доступ откроется без обновления страницы.</p></template><template v-else><h1>Привяжите персонажа</h1><p class="muted">Выберите персонажа и отправьте заявку. Разделы гильдии откроются после подтверждения.</p><button class="primary access-primary" @click="openLinker">Выбрать персонажа</button></template><button class="access-logout" @click="auth.logout">Выйти</button></div></div>
   <div v-else class="shell">
     <aside :class="{ open: menuOpen }">
       <div class="brand">
