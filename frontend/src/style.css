@@ -480,3 +480,10 @@ section { width:100%;max-width:2100px; }
 .treasury-chart svg{overflow:hidden}
 .chart-grid text{font-variant-numeric:tabular-nums}
 .auction-grid-v2>.empty-state{grid-column:1/-1;width:100%;min-height:180px;padding:28px;text-align:center;line-height:1.55}
+.catalog-panel,.activity-definition-icons{padding:30px}
+.catalog-grid{grid-template-columns:repeat(auto-fill,minmax(225px,1fr));gap:12px}
+.catalog-grid article{grid-template-columns:52px minmax(0,1fr) auto;gap:12px;padding:12px}
+.catalog-grid img{width:52px;height:52px}
+.definition-icon-grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
+.definition-icon-grid article{grid-template-columns:70px minmax(0,1fr) auto auto;gap:12px;padding:13px}
+.definition-icon-preview{width:70px;height:54px}
