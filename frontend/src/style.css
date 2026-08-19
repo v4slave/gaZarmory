@@ -114,7 +114,7 @@ main {
 }
 .access-gate { min-height:100vh;display:grid;place-items:center;padding:24px;background-color:#090603;background-image:linear-gradient(110deg,rgba(7,4,2,.66),rgba(14,9,4,.54),rgba(5,3,1,.76)),url('/images/gaz-armory-background.png');background-position:center;background-size:cover;background-attachment:fixed; }
 .access-card { width:min(420px,100%);display:grid;justify-items:center;gap:15px;padding:34px;border:1px solid #68451f;border-radius:10px;text-align:center;background:linear-gradient(145deg,rgba(28,19,10,.94),rgba(8,5,3,.97));box-shadow:0 22px 65px #000b;backdrop-filter:blur(8px); }
-.access-card img { width:76px;height:76px;object-fit:cover;object-position:50% 25%;border:1px solid #a46e31;border-radius:10px;box-shadow:0 0 24px rgba(194,128,52,.25); }
+.access-card img { width:108px;height:108px;object-fit:cover;object-position:center;border:1px solid #a46e31;border-radius:14px;box-shadow:0 0 28px rgba(194,128,52,.3); }
 .access-card h1 { margin:0;font-size:30px; }.access-card p { margin:0;line-height:1.6; }.access-card .eyebrow { font-size:9px; }
 .access-primary { width:100%;margin-top:8px;padding:13px 18px!important; }
 .access-logout { border:0;color:#9f907b;background:transparent;text-decoration:underline;text-underline-offset:4px; }
@@ -696,8 +696,8 @@ aside nav { display:grid;gap:24px; }
 body { color:var(--text); }
 .shell { grid-template-columns:218px minmax(0,1fr); }
 aside { padding:21px 14px 15px;border-right-color:var(--border);background:linear-gradient(180deg,rgba(9,6,3,.97),rgba(12,8,4,.94)); }
-.brand { min-height:60px;padding:0 8px;gap:10px;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:.09em; }
-.brand img { width:44px;height:44px;border-radius:7px; }
+.brand { min-height:72px;padding:0 5px;gap:11px;font-family:Georgia,'Times New Roman',serif;font-size:14px;letter-spacing:.09em; }
+.brand img { width:58px;height:58px;object-position:center;border-radius:10px; }
 .brand small { margin-top:5px;font:500 8px 'JetBrains Mono',monospace;letter-spacing:.11em; }
 aside nav { gap:4px;margin-top:30px; }
 aside nav a,aside .admin { display:grid;grid-template-columns:27px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:47px;padding:11px 12px;border:1px solid transparent;border-left:1px solid transparent;border-radius:6px;font-size:13px; }
