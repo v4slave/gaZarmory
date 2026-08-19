@@ -185,7 +185,7 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
       <div v-if="!auctions.length" class="panel empty-state">Активных и недавно завершённых лотов нет.</div>
     </div>
 
-    <div v-if="selectedAuction" class="modal" @click.self="closeAuctionModal">
+    <div v-if="selectedAuction" class="modal">
       <form v-if="modalMode === 'bid'" class="form-card auction-modal-card" @submit.prevent="placeBid">
         <header class="auction-modal-head"><h2>Сделать ставку</h2><button type="button" class="modal-close" @click="closeAuctionModal">×</button></header>
         <div class="auction-modal-item">
@@ -211,7 +211,7 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
       </section>
     </div>
 
-    <div v-if="showForm" class="modal" @click.self="showForm = false">
+    <div v-if="showForm" class="modal">
       <form class="form-card auction-create-card" @submit.prevent="save">
         <h2>{{ editingId ? 'Редактировать лот' : 'Новый лот' }}</h2>
         <label>Предмет<select v-model="form.treasury_item_id" required><option disabled value="">Выберите предмет</option><option v-for="item in items" :key="item.id" :value="item.id">{{ item.item_name }} · доступно {{ item.available_quantity }}</option></select></label>
@@ -224,6 +224,6 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
         <div class="form-actions"><button type="button" class="secondary" @click="showForm = false">Отмена</button><button class="primary" :disabled="busy">{{ busy ? 'Сохранение…' : editingId ? 'Сохранить' : 'Создать черновик' }}</button></div>
       </form>
     </div>
-    <div v-if="archive" class="modal" @click.self="archive=null"><section class="form-card auction-archive"><header class="auction-modal-head"><h2>Архив побед и расходов</h2><button class="modal-close" @click="archive=null">×</button></header><div class="auction-archive-leaders"><article v-for="row in archive.players" :key="row.player_id"><strong>{{ row.nickname }}</strong><span>{{ row.wins }} побед</span><TokenAmount :value="Number(row.spent).toLocaleString('ru-RU')"/></article></div><div class="table-wrap flat"><table><thead><tr><th>Лот</th><th>Победитель</th><th>Итог</th><th>Дата</th></tr></thead><tbody><tr v-for="lot in archive.lots" :key="lot.id"><td>{{ lot.item?.item_name }}</td><td>{{ lot.winner?.nickname??'Без ставок' }}</td><td><TokenAmount v-if="lot.winning_bid!==null" :value="Number(lot.winning_bid).toLocaleString('ru-RU')"/><span v-else>—</span></td><td>{{ displayDateTime(lot.finished_at) }}</td></tr></tbody></table></div></section></div>
+    <div v-if="archive" class="modal"><section class="form-card auction-archive"><header class="auction-modal-head"><h2>Архив побед и расходов</h2><button class="modal-close" @click="archive=null">×</button></header><div class="auction-archive-leaders"><article v-for="row in archive.players" :key="row.player_id"><strong>{{ row.nickname }}</strong><span>{{ row.wins }} побед</span><TokenAmount :value="Number(row.spent).toLocaleString('ru-RU')"/></article></div><div class="table-wrap flat"><table><thead><tr><th>Лот</th><th>Победитель</th><th>Итог</th><th>Дата</th></tr></thead><tbody><tr v-for="lot in archive.lots" :key="lot.id"><td>{{ lot.item?.item_name }}</td><td>{{ lot.winner?.nickname??'Без ставок' }}</td><td><TokenAmount v-if="lot.winning_bid!==null" :value="Number(lot.winning_bid).toLocaleString('ru-RU')"/><span v-else>—</span></td><td>{{ displayDateTime(lot.finished_at) }}</td></tr></tbody></table></div></section></div>
   </section>
 </template>

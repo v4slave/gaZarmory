@@ -100,7 +100,7 @@ async function linkProfile() {
       <RouterView :key="route.fullPath" />
     </main>
   </div>
-  <div v-if="showLinker" class="modal" @click.self="showLinker=false">
+  <div v-if="showLinker" class="modal">
     <form class="form-card" @submit.prevent="linkProfile">
       <h2>Привязать игровой профиль</h2>
       <p class="muted">Выберите своего персонажа. Заявку проверит ГЛ или администратор.</p>
