@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\PlayerClass;
 use App\Enums\UserRole;
 use App\Models\Player;
+use App\Models\AuditLog;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -26,6 +27,27 @@ final class AdminWorkspaceTest extends TestCase
     public function test_member_cannot_read_administration_configuration(): void
     {
         $this->actingAs($this->user(UserRole::Member))->getJson('/api/admin/settings')->assertForbidden();
+    }
+
+    public function test_administrator_can_update_token_value_from_interface_api(): void
+    {
+        $leader=$this->user(UserRole::GuildLeader);
+        $updatedAt=$this->actingAs($leader)->getJson('/api/admin/settings')->assertOk()->json('economy.token_updated_at');
+
+        $this->actingAs($leader)->patchJson('/api/admin/settings/economy',[
+            'token_unit_value'=>125,
+            'updated_at'=>$updatedAt,
+        ])->assertOk()->assertJsonPath('token_unit_value',125);
+
+        $this->assertDatabaseHas('treasury_token_settings',['id'=>1,'token_unit_value'=>125]);
+        self::assertNotNull(AuditLog::query()->where('action','treasury_token_setting.updated')->where('user_id',$leader->id)->first());
+    }
+
+    public function test_member_cannot_update_token_value(): void
+    {
+        $this->actingAs($this->user(UserRole::Member))->patchJson('/api/admin/settings/economy',[
+            'token_unit_value'=>125,
+        ])->assertForbidden();
     }
 
     public function test_stale_role_edit_is_rejected(): void

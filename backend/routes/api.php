@@ -51,6 +51,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::delete('/admin/users/{managedUser}', [AdminUserController::class, 'destroy']);
     Route::get('/admin/audit-logs', AuditLogController::class);
     Route::get('/admin/settings', AdminSettingsController::class);
+    Route::patch('/admin/settings/economy', [AdminSettingsController::class, 'updateEconomy']);
     Route::get('/admin/player-link-requests', [PlayerLinkRequestController::class, 'index']);
     Route::post('/admin/player-link-requests/{playerLinkRequest}/approve', [PlayerLinkRequestController::class, 'approve']);
     Route::post('/admin/player-link-requests/{playerLinkRequest}/reject', [PlayerLinkRequestController::class, 'reject']);
