@@ -510,6 +510,9 @@ section { width:100%;max-width:2100px; }
 .player-avatar-small { width:30px;height:30px;font-size:11px; }
 .player-avatar-tiny { width:23px;height:23px;font-size:9px;box-shadow:none; }
 .player-identity { display:inline-flex;align-items:center;gap:9px; }
+.attendance-player-name { display:flex;align-items:center;gap:8px;min-width:0; }
+.attendance-player-name strong { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.attendance-player-name .class-tag { flex:none;padding:3px 7px;font-size:10px;line-height:1.25; }
 .group-members>a { grid-template-columns:30px minmax(0,1fr) auto; }
 .attendance-ranking>a { grid-template-columns:30px 30px minmax(0,1fr) auto; }
 .aside-profile>.player-avatar { width:34px;height:34px; }
