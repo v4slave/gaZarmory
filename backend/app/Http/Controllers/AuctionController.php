@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 final class AuctionController extends Controller
 {
-    public function index(Request $request){$manager=$request->user()->canManageGuild();return Auction::query()->with(['item','winner:id,nickname','topBid.player:id,nickname'])->withCount('bids')->where(fn($q)=>$q->where('status','!=','finished')->orWhere('finished_at','>=',now()->subDays(3)))->when(!$manager,fn($q)=>$q->whereIn('status',['active','finished']))->when($manager&&$request->filled('status'),fn($q)=>$q->where('status',$request->string('status')->toString()))->orderByDesc('id')->get();}
+    public function index(Request $request){$manager=$request->user()->canManageGuild();return Auction::query()->with(['item','winner.user:id,discord_id,discord_username,discord_display_name,discord_avatar','topBid.player.user:id,discord_id,discord_username,discord_display_name,discord_avatar'])->withCount('bids')->where(fn($q)=>$q->where('status','!=','finished')->orWhere('finished_at','>=',now()->subDays(3)))->when(!$manager,fn($q)=>$q->whereIn('status',['active','finished']))->when($manager&&$request->filled('status'),fn($q)=>$q->where('status',$request->string('status')->toString()))->orderByDesc('id')->get();}
     public function activeCount(){return response()->json(['count'=>Auction::query()->where('status','active')->count()]);}
     public function show(Request $request,Auction $auction)
     {
@@ -23,7 +23,7 @@ final class AuctionController extends Controller
 
         abort_if(!$request->user()->canManageGuild() && !$visibleToMember, 404);
 
-        return $auction->load(['item','winner:id,nickname','bids'=>fn($q)=>$q->with('player:id,nickname')->orderByDesc('amount')->orderBy('created_at')->orderBy('id')]);
+        return $auction->load(['item','winner.user:id,discord_id,discord_username,discord_display_name,discord_avatar','bids'=>fn($q)=>$q->with('player.user:id,discord_id,discord_username,discord_display_name,discord_avatar')->orderByDesc('amount')->orderBy('created_at')->orderBy('id')]);
     }
     public function store(Request $request,AuditService $audit)
     {

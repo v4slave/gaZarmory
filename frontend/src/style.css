@@ -504,6 +504,55 @@ section { width:100%;max-width:2100px; }
 .earning-list>div{grid-template-columns:46px minmax(0,1fr) minmax(120px,auto) auto}.profile-activity-details{display:grid;gap:4px}.visit-list>div{display:grid;grid-template-columns:46px minmax(0,1fr) auto;align-items:center}.visit-list>div>span:last-child{color:#81797d;font-size:12px}
 @media(max-width:700px){.earning-list>div{grid-template-columns:46px minmax(0,1fr)}.earning-list>div>b{grid-column:2;justify-self:start}.earning-list .import-status{grid-column:2}.profile-edit-button{width:100%}}
 
+/* Linked Discord identity */
+.player-avatar { position:relative;display:grid;place-items:center;flex:none;width:34px;height:34px;overflow:hidden;border:1px solid #8b5d2c;border-radius:50%;color:#efbd77;background:radial-gradient(circle at 35% 30%,#533417,#170e07 70%);font:700 12px Georgia,serif;box-shadow:0 0 0 2px rgba(9,6,3,.55); }
+.player-avatar img { position:absolute;z-index:1;inset:0;width:100%;height:100%;object-fit:cover; }
+.player-avatar-small { width:30px;height:30px;font-size:11px; }
+.player-avatar-tiny { width:23px;height:23px;font-size:9px;box-shadow:none; }
+.player-identity { display:inline-flex;align-items:center;gap:9px; }
+.group-members>a { grid-template-columns:30px minmax(0,1fr) auto; }
+.attendance-ranking>a { grid-template-columns:30px 30px minmax(0,1fr) auto; }
+.aside-profile>.player-avatar { width:34px;height:34px; }
+
+/* Auction leader is a first-class state, not secondary metadata. */
+.auction-leader-badge { display:inline-flex!important;align-items:center;gap:6px;width:max-content;max-width:100%;padding:4px 9px 4px 6px;border:1px solid rgba(211,154,66,.58);border-radius:999px;color:#f2c774;background:linear-gradient(90deg,rgba(91,58,17,.62),rgba(35,23,10,.82));box-shadow:inset 0 1px rgba(255,221,159,.06),0 0 15px rgba(197,129,37,.1); }
+.auction-leader-badge>span:first-child { color:#f3bf55;font-size:14px;text-shadow:0 0 8px rgba(243,191,85,.35); }
+.auction-leader-badge small { color:#bfa47b;font-size:8px;text-transform:uppercase;letter-spacing:.08em; }
+.auction-leader-badge b { overflow:hidden;text-overflow:ellipsis;color:#ffe1a7;font-size:11px;white-space:nowrap; }
+.auction-card-meta .auction-leader-badge { flex-basis:auto; }
+.bid-player { display:flex;align-items:center;gap:8px;min-width:0; }
+.bid-player>span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.bid-player em { padding:3px 6px;border:1px solid #856027;border-radius:999px;color:#e9bd68;background:#2d1d09;font-size:8px;font-style:normal;text-transform:uppercase;letter-spacing:.05em; }
+.auction-bid-list>div.top-bid-row { margin-inline:-8px;padding-inline:8px;border-color:#805923;border-radius:6px;background:linear-gradient(90deg,rgba(105,68,20,.22),transparent); }
+
+/* Guild composition and player readiness */
+.dashboard-main-stats { grid-template-columns:repeat(5,minmax(0,1fr)); }
+.class-distribution { min-height:0;margin-bottom:13px;padding:17px 21px!important; }
+.class-distribution .panel-title { margin-bottom:12px!important; }
+.class-distribution .panel-title>a { color:#b99568;font-size:11px;text-decoration:none; }
+.class-distribution>div:last-child { display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px; }
+.class-distribution>div:last-child>span { display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border:1px solid #51371e;border-radius:6px;background:#120d08; }
+.class-distribution small { color:#9f8d74;font-size:10px; }
+.class-distribution b { color:#edc17d;font-size:18px; }
+.group-card-heading { display:flex;align-items:flex-start;justify-content:space-between;gap:14px; }
+.group-averages { display:flex;gap:6px;flex:none; }
+.group-averages>span { display:grid;gap:3px;min-width:82px;padding:7px 9px;border:1px solid #5a3d1d;border-radius:6px;text-align:right;background:#130d07; }
+.group-averages small { color:#8f7d64;font-size:8px;text-transform:uppercase;letter-spacing:.05em; }
+.group-averages b { color:#e6b56f;font-size:13px; }
+.profile-stats { grid-template-columns:repeat(6,minmax(100px,1fr)); }
+.player-assets-panel { min-height:0;margin:13px 0;padding:18px 22px; }
+.player-assets { display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px; }
+.player-assets>span { display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid #44321f;border-radius:6px;color:#7e7568;background:#100c08;font-size:11px; }
+.player-assets>span b { display:grid;place-items:center;width:19px;height:19px;border:1px solid #4e4438;border-radius:50%;font-size:10px; }
+.player-assets>span.owned { color:#ead8bd;border-color:#6f5429;background:#1d150a; }
+.player-assets>span.owned b { color:#bce19e;border-color:#56803e;background:#172511; }
+.profile-asset-editor { display:grid;grid-template-columns:1fr 1fr;gap:7px; }
+.profile-asset-editor label { display:flex!important;grid-template-columns:none!important;align-items:center;gap:9px;padding:9px 10px;border:1px solid #49321d;border-radius:6px;color:#cdbb9f!important;background:#100b06;cursor:pointer;text-transform:none!important;letter-spacing:0!important; }
+.profile-asset-editor input { width:17px!important;height:17px;accent-color:#b97a2d; }
+@media(max-width:1200px){.dashboard-main-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }.profile-stats { grid-template-columns:repeat(3,minmax(0,1fr)); }.player-assets { grid-template-columns:repeat(3,minmax(0,1fr)); }}
+@media(max-width:760px){.dashboard-main-stats,.class-distribution>div:last-child,.player-assets { grid-template-columns:repeat(2,minmax(0,1fr)); }.group-card-heading { flex-direction:column; }.group-averages { width:100%; }.group-averages>span { flex:1;text-align:left; }.profile-asset-editor { grid-template-columns:1fr; }}
+@media(max-width:430px){.dashboard-main-stats,.class-distribution>div:last-child,.player-assets { grid-template-columns:1fr; }}
+
 /* Reference-led shell polish: engraved bronze navigation and layered parchment. */
 :root {
   --ink:#090603;
@@ -523,8 +572,8 @@ aside { padding:21px 14px 15px;border-right-color:var(--border);background:linea
 .brand img { width:44px;height:44px;border-radius:7px; }
 .brand small { margin-top:5px;font:500 8px 'JetBrains Mono',monospace;letter-spacing:.11em; }
 aside nav { gap:4px;margin-top:30px; }
-aside nav a,aside .admin { display:grid;grid-template-columns:24px minmax(0,1fr) auto;align-items:center;gap:8px;min-height:41px;padding:9px 11px;border:1px solid transparent;border-left:1px solid transparent;border-radius:6px;font-size:12px; }
-.nav-icon { display:grid;place-items:center;width:22px;height:22px;color:#b77d34;font:normal 17px/1 Georgia,serif; }
+aside nav a,aside .admin { display:grid;grid-template-columns:27px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:47px;padding:11px 12px;border:1px solid transparent;border-left:1px solid transparent;border-radius:6px;font-size:13px; }
+.nav-icon { display:grid;place-items:center;width:25px;height:25px;color:#b77d34;font:normal 19px/1 Georgia,serif; }
 aside nav a:hover,aside .admin:hover { border-color:var(--border-soft); }
 aside nav a.router-link-active { border-color:rgba(169,111,42,.25);border-left-color:#d39a52;background:linear-gradient(90deg,rgba(73,46,14,.86),rgba(31,20,9,.64)); }
 aside nav a.router-link-active .nav-icon { color:#f0b963;text-shadow:0 0 13px rgba(231,159,65,.35); }
@@ -535,6 +584,7 @@ aside .admin { margin-top:auto;margin-bottom:10px;text-decoration:none; }
 .aside-profile small { overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:8px; }
 .aside-profile>b { color:#9c6d35;font-size:18px; }
 .aside-avatar { display:grid;place-items:center;width:34px;height:34px;border:1px solid #8b5d2c;border-radius:50%;color:#efbd77;background:radial-gradient(circle at 35% 30%,#533417,#170e07 70%);font:700 13px Georgia,serif; }
+.header-user-profile { display:none; }
 main { position:relative; }
 main::before { content:'';position:fixed;z-index:0;inset:0 0 0 218px;pointer-events:none;background:radial-gradient(circle at 72% 15%,rgba(169,105,32,.08),transparent 32%),linear-gradient(180deg,transparent 55%,rgba(4,2,1,.24)); }
 main>header,main>section { position:relative;z-index:1; }
@@ -557,4 +607,5 @@ button.primary:active,.primary:active { transform:translateY(1px); }
   main::before { inset:0; }
   aside { width:min(290px,86vw); }
   section { padding:24px 14px 40px; }
+  .header-user-profile { display:inline; }
 }

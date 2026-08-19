@@ -3,6 +3,7 @@ import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
+import PlayerAvatar from '../components/PlayerAvatar.vue'
 const auth = useAuthStore()
 const route = useRoute()
 const menuOpen = ref(false)
@@ -56,9 +57,9 @@ async function linkProfile() {
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
       <nav><RouterLink v-for="link in links" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></nav>
-      <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>Настройки</span></RouterLink>
+      <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>Админка</span></RouterLink>
       <RouterLink v-if="auth.user?.player" class="aside-profile" :to="`/players/${auth.user.player.id}`">
-        <span class="aside-avatar">{{ (auth.user.discord_display_name || auth.user.discord_username || '?').slice(0, 1).toUpperCase() }}</span>
+        <PlayerAvatar :player="{ nickname: auth.user.player.nickname, user: auth.user }"/>
         <span><strong>{{ auth.user.discord_display_name || auth.user.discord_username }}</strong><small>{{ auth.canAdmin ? 'Управление гильдией' : 'Участник гильдии' }}</small></span>
         <b aria-hidden="true">›</b>
       </RouterLink>
@@ -69,7 +70,7 @@ async function linkProfile() {
         <button class="mobile-menu-button" type="button" :aria-expanded="menuOpen" aria-label="Открыть меню" @click="menuOpen=!menuOpen"><span></span><span></span><span></span></button>
         <RouterLink class="mobile-brand" to="/dashboard">GAZ ARMORY</RouterLink>
         <div class="header-spacer"></div>
-        <RouterLink v-if="auth.user?.player" class="user-link" :to="`/players/${auth.user.player.id}`">{{ auth.user.discord_display_name || auth.user.discord_username }}</RouterLink>
+        <RouterLink v-if="auth.user?.player" class="user-link header-user-profile" :to="`/players/${auth.user.player.id}`">{{ auth.user.discord_display_name || auth.user.discord_username }}</RouterLink>
         <button v-else-if="auth.user" class="user-unlinked" title="Привязать игровой профиль" @click="openLinker">{{ auth.user.discord_display_name || auth.user.discord_username }} · привязать профиль</button>
         <button v-if="auth.authenticated" @click="auth.logout">Выйти</button>
         <button v-else-if="!auth.loading" class="primary" @click="auth.login">Войти через Discord</button>

@@ -23,6 +23,7 @@ final class DashboardController extends Controller
 
         $attendanceTop = Player::query()
             ->where('is_active', true)
+            ->with('user:id,discord_id,discord_username,discord_display_name,discord_avatar')
             ->withCount([
                 'activities as primes_count' => fn ($query) => $query
                     ->where('occurred_at', '>=', $periodStart)
@@ -32,13 +33,14 @@ final class DashboardController extends Controller
                     ->whereNotNull('completed_at')
                     ->whereHas('definition', fn ($definition) => $definition->where('type', 'mini_activity')),
             ])
-            ->get(['id', 'nickname', 'class'])
+            ->get(['id', 'user_id', 'nickname', 'class'])
             ->filter(fn (Player $player) => $player->primes_count + $player->mini_activities_count > 0)
             ->map(function (Player $player) use ($totalPrimes): array {
                 return [
                     'id' => $player->id,
                     'nickname' => $player->nickname,
                     'class' => $player->class->value,
+                    'user' => $player->user,
                     'primes_count' => $player->primes_count,
                     'mini_activities_count' => $player->mini_activities_count,
                     'attendance_percentage' => $totalPrimes > 0
@@ -56,12 +58,16 @@ final class DashboardController extends Controller
 
         $items = TreasuryItem::query()->where('quantity', '>', 0)->get();
         $currentInventoryValue = (int) $items->sum(fn ($item) => $item->quantity * $item->unit_value);
+        $activePlayers = Player::query()->where('is_active', true);
+        $classDistribution = (clone $activePlayers)->select('class', DB::raw('COUNT(*) as total'))->groupBy('class')->pluck('total', 'class');
 
         return [
             'gold' => (int) (DB::table('treasury_transactions')->latest('id')->value('balance_after') ?? 0),
             'inventory_value' => $currentInventoryValue,
             'pending_payout' => (int) PrimePlayerEarning::query()->where('status', 'pending')->sum('player_share'),
             'active_auctions' => Auction::query()->where('status', 'active')->count(),
+            'average_gear_score' => (int) round((clone $activePlayers)->avg('gear_score') ?? 0),
+            'class_distribution' => $classDistribution,
             'treasury_dynamics' => $this->treasuryDynamics($currentInventoryValue),
             'upcoming_events' => $this->upcomingEvents(),
             'attendance_period_days' => 30,

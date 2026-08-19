@@ -53,4 +53,18 @@ final class SelfPlayerController extends Controller
 
         return $player->refresh()->load(['group', 'user']);
     }
+
+    public function updateProfile(Request $request, AuditService $audit)
+    {
+        $player = $request->user()->player;
+        abort_unless($player, 404, 'Игровой профиль не привязан.');
+        $fields = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers'];
+        $rules = ['gear_score' => ['required', 'integer', 'min:0', 'max:100000']];
+        foreach ($fields as $field) $rules[$field] = ['required', 'boolean'];
+        $data = $request->validate($rules);
+        $old = $player->only(array_keys($data));
+        $player->update($data);
+        $audit->record('player.self_profile_updated', $player, $old, $data);
+        return $player->refresh()->load(['group', 'user']);
+    }
 }

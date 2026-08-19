@@ -43,7 +43,7 @@ final class PlayerController extends Controller
                     ->whereColumn('player_id', 'players.id')
                     ->where('status', 'paid'),
             ])
-            ->with(['group:id,name', 'user:id,discord_id,discord_username,discord_display_name'])
+            ->with(['group:id,name', 'user:id,discord_id,discord_username,discord_display_name,discord_avatar'])
             ->withCount([
                 'activities as primes_count' => fn ($activityQuery) => $activityQuery
                     ->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'prime')),

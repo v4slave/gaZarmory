@@ -34,6 +34,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/me/player-options', [SelfPlayerController::class, 'options']);
     Route::patch('/me/player/nickname', [SelfPlayerController::class, 'rename']);
     Route::patch('/me/player/class', [SelfPlayerController::class, 'changeClass']);
+    Route::patch('/me/player/profile', [SelfPlayerController::class, 'updateProfile']);
 
     Route::middleware('player.linked')->group(function (): void {
     Route::get('/admin/users', [AdminUserController::class, 'index']);

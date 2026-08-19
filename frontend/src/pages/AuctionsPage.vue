@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 import GoldAmount from '../components/GoldAmount.vue'
+import PlayerAvatar from '../components/PlayerAvatar.vue'
 
 const auth = useAuthStore()
 const auctions = ref([])
@@ -163,7 +164,7 @@ onUnmounted(() => window.clearInterval(ticker))
           <span v-if="auction.status === 'active'">До конца: <b>{{ countdown(auction.ends_at) }}</b></span>
           <span v-else>Завершение: {{ displayDateTime(auction.ends_at) }}</span>
           <span>Ставок: {{ auction.bids_count ?? 0 }}</span>
-          <span v-if="topBid(auction)">Лидер: {{ winnerName(auction) }}</span>
+          <span v-if="topBid(auction)" class="auction-leader-badge"><span aria-hidden="true">♛</span><PlayerAvatar :player="topBid(auction).player" size="tiny"/><small>Лидер</small><b>{{ winnerName(auction) }}</b></span>
         </div>
 
         <div v-if="auction.status === 'active'" class="auction-card-actions">
@@ -200,7 +201,7 @@ onUnmounted(() => window.clearInterval(ticker))
         <header class="auction-modal-head"><div><h2>История ставок</h2><small>{{ selectedAuction.item?.item_name }}</small></div><button type="button" class="modal-close" @click="closeAuctionModal">×</button></header>
         <p v-if="modalBusy">Загрузка…</p>
         <div v-else-if="selectedAuction.bids?.length" class="auction-bid-list">
-          <div v-for="(bid, index) in selectedAuction.bids" :key="bid.id"><span><b>#{{ index + 1 }}</b> {{ bid.player?.nickname ?? '—' }}</span><GoldAmount :value="bid.amount" /></div>
+          <div v-for="(bid, index) in selectedAuction.bids" :key="bid.id" :class="{ 'top-bid-row': index === 0 }"><span class="bid-player"><b>#{{ index + 1 }}</b><PlayerAvatar :player="bid.player" size="tiny"/><span>{{ bid.player?.nickname ?? '—' }}</span><em v-if="index === 0">♛ лидер</em></span><GoldAmount :value="bid.amount" /></div>
         </div>
         <p v-else class="muted">Ставок пока нет.</p>
       </section>
