@@ -487,3 +487,10 @@ section { width:100%;max-width:2100px; }
 .definition-icon-grid{grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:12px}
 .definition-icon-grid article{grid-template-columns:70px minmax(0,1fr) auto auto;gap:12px;padding:13px}
 .definition-icon-preview{width:70px;height:54px}
+.admin-users-panel .panel-title h2{font-size:20px}
+.admin-users-panel .panel-title p,.admin-users-panel .panel-title>.muted{font-size:13px}
+.admin-user-identity strong{font-size:15px}
+.admin-user-identity small,.admin-user-player small,.admin-user-player>span{font-size:11px}
+.admin-user-player>a{font-size:14px}
+.admin-role-select label{padding:6px 8px;font-size:11px}
+.admin-actions-menu summary,.admin-actions-menu button{font-size:12px}
