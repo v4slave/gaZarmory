@@ -71,7 +71,7 @@ final class AdminUserLifecycleTest extends TestCase
         self::assertSame(1, User::query()->whereJsonContains('roles', UserRole::GuildLeader->value)->count());
     }
 
-    public function test_developer_role_cannot_be_assigned_through_admin_api(): void
+    public function test_guild_leader_cannot_assign_developer_role(): void
     {
         $leader = $this->userWithRoles([UserRole::GuildLeader->value]);
         $member = $this->userWithRoles([UserRole::Member->value]);
@@ -83,8 +83,47 @@ final class AdminUserLifecycleTest extends TestCase
         self::assertFalse($member->fresh()->hasRole(UserRole::Developer));
     }
 
+    public function test_developer_can_assign_and_remove_developer_role_for_another_user(): void
+    {
+        $developer = $this->userWithRoles([UserRole::Developer->value, UserRole::Member->value]);
+        $member = $this->userWithRoles([UserRole::Member->value]);
+
+        $this->actingAs($developer)->patchJson("/api/admin/users/{$member->id}/roles", [
+            'roles' => [UserRole::Developer->value, UserRole::Member->value],
+        ])->assertOk();
+        self::assertTrue($member->fresh()->hasRole(UserRole::Developer));
+
+        $this->actingAs($developer)->patchJson("/api/admin/users/{$member->id}/roles", [
+            'roles' => [UserRole::Member->value],
+            'updated_at' => $member->fresh()->updated_at->toISOString(),
+        ])->assertOk();
+        self::assertFalse($member->fresh()->hasRole(UserRole::Developer));
+    }
+
+    public function test_developer_cannot_remove_own_developer_role(): void
+    {
+        $developer = $this->userWithRoles([UserRole::Developer->value, UserRole::Member->value]);
+
+        $this->actingAs($developer)->patchJson("/api/admin/users/{$developer->id}/roles", [
+            'roles' => [UserRole::Member->value],
+        ])->assertUnprocessable();
+
+        self::assertTrue($developer->fresh()->hasRole(UserRole::Developer));
+    }
+
     private function userWithRoles(array $roles): User
     {
+        if (in_array(UserRole::GuildLeader->value, $roles, true)) {
+            $existingLeader = User::query()->whereJsonContains('roles', UserRole::GuildLeader->value)->first();
+            if ($existingLeader) {
+                $existingLeader->forceFill(['roles' => $roles, 'role' => User::primaryRoleFor($roles)])->save();
+                if (! $existingLeader->player) {
+                    Player::query()->create(['nickname' => 'Life'.$existingLeader->id, 'class' => PlayerClass::Melee, 'is_active' => false])
+                        ->forceFill(['user_id' => $existingLeader->id])->save();
+                }
+                return $existingLeader->refresh();
+            }
+        }
         $suffix = str_replace('.', '', uniqid('', true));
         $user = User::query()->create([
             'discord_id' => $suffix,

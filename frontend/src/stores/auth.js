@@ -12,6 +12,7 @@ export const useAuthStore = defineStore('auth', {
     canCreatePayouts: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'developer'].includes(role)),
     canAssignElevatedRoles: (state) => (state.user?.roles ?? [state.user?.role]).includes('guild_leader'),
     isGuildLeader: (state) => (state.user?.roles ?? [state.user?.role]).includes('guild_leader'),
+    isDeveloper: (state) => (state.user?.roles ?? [state.user?.role]).includes('developer'),
     isPartyLeader: (state) => (state.user?.roles ?? [state.user?.role]).includes('party_leader'),
     canViewReadiness: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'].includes(role)),
     partyGroupId: (state) => (state.user?.roles ?? [state.user?.role]).includes('party_leader') ? state.user?.player?.group_id ?? null : null,

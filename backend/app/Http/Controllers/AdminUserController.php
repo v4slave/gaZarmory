@@ -51,10 +51,15 @@ final class AdminUserController extends Controller
         ]);
         $newRoles = array_values($data['roles']);
         $managedRoles = $managedUser->roles ?: [$managedUser->role->value];
-        $addsDeveloper = ! in_array(UserRole::Developer->value, $managedRoles, true)
-            && in_array(UserRole::Developer->value, $newRoles, true);
-        if ($addsDeveloper) {
-            throw ValidationException::withMessages(['roles' => 'Роль Разработчик нельзя назначить через админку.']);
+        $hadDeveloper = in_array(UserRole::Developer->value, $managedRoles, true);
+        $willHaveDeveloper = in_array(UserRole::Developer->value, $newRoles, true);
+        if ($hadDeveloper !== $willHaveDeveloper) {
+            if (! $request->user()->hasRole(UserRole::Developer)) {
+                throw ValidationException::withMessages(['roles' => 'Назначать роль Разработчик может только другой Разработчик.']);
+            }
+            if ($request->user()->is($managedUser)) {
+                throw ValidationException::withMessages(['roles' => 'Нельзя изменить собственную роль Разработчика через админку.']);
+            }
         }
         $wasLeader = in_array(UserRole::GuildLeader->value, $managedRoles, true);
         $willBeLeader = in_array(UserRole::GuildLeader->value, $newRoles, true);
