@@ -46,7 +46,7 @@ onBeforeUnmount(()=>window.clearInterval(timer))
 
 <template>
   <section class="dashboard-page">
-    <div class="dashboard-heading"><p class="eyebrow">GAZ ARMORY · ARCHEAGE</p><h1>Дашборд</h1><p class="muted">Оперативное состояние гильдии</p></div>
+    <div class="dashboard-heading"><p class="eyebrow">GAZ ARMORY · ARCHEAGE</p><h1>Дашборд</h1></div>
     <div class="stats-row dashboard-main-stats"><StatCard label="Золото в казне / жетоны" :value="Number(data.gold).toLocaleString('ru-RU')" gold :secondary-value="Number(data.gold_token_count).toLocaleString('ru-RU')" secondary-icon="/images/treasury-token.png" secondary-alt="жетоны" note="Фактический баланс" accent/><StatCard label="Дроп с РБ / жетоны" :value="Number(data.inventory_value).toLocaleString('ru-RU')" gold :secondary-value="Number(data.inventory_token_count).toLocaleString('ru-RU')" secondary-icon="/images/treasury-token.png" secondary-alt="жетоны" note="Эквивалент в золоте"/><StatCard label="Ожидаемый нахрюк / жетоны" :value="Number(data.pending_payout).toLocaleString('ru-RU')" gold :secondary-value="Number(data.pending_payout_token_count).toLocaleString('ru-RU')" secondary-icon="/images/treasury-token.png" secondary-alt="жетоны"/><StatCard label="Средний ГС гильдии" :value="Number(data.average_gear_score).toLocaleString('ru-RU')"/><StatCard label="Активных аукционов" :value="data.active_auctions"/></div>
     <div class="panel class-distribution"><div class="panel-title"><h2>Состав по классам</h2><RouterLink to="/roster">Весь состав →</RouterLink></div><div><span v-for="(label,key) in classLabels" :key="key" :class="`class-${key}`"><small>{{ label }}</small><b>{{ Number(data.class_distribution?.[key]??0) }}</b></span></div></div>
     <div class="dashboard-overview-grid">
