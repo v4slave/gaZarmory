@@ -987,6 +987,57 @@ aside nav a.router-link-active{color:#ffe0a9;background:linear-gradient(90deg,rg
   .groups-page .group-grid{grid-template-columns:1fr}
 }
 
+/* Shared responsive frame: keep every page balanced from phones to ultrawide screens. */
+main>section{
+  width:min(100%,1600px);
+  margin-inline:auto;
+}
+img,svg,video{max-width:100%}
+.panel,.stat-card,.toolbar,.page-heading,.page-actions{min-width:0}
+.auction-grid,.auction-grid-v2{
+  grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));
+}
+
+@media(max-width:1180px){
+  main>section{padding-inline:clamp(20px,3vw,34px)}
+  .stats-row.four,.payout-stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dashboard-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .page-heading{align-items:flex-start}
+  .page-actions{flex-wrap:wrap;justify-content:flex-end}
+}
+
+@media(max-width:900px) and (min-width:761px){
+  .shell{grid-template-columns:190px minmax(0,1fr)}
+  main::before{inset-inline-start:190px}
+  aside{padding-inline:10px}
+  .brand{font-size:12px}.brand img{width:48px;height:48px}
+  aside nav a,aside .admin{padding-inline:8px;font-size:12px}
+  main>header{padding-inline:20px}
+  .header-user-profile{max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .dashboard-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:760px){
+  main>section{width:100%;padding-inline:max(14px,env(safe-area-inset-left))}
+  main>header{padding-left:max(14px,env(safe-area-inset-left));padding-right:max(14px,env(safe-area-inset-right))}
+  .page-heading>div,.panel-title>div{min-width:0;max-width:100%}
+  h1{font-size:clamp(26px,8vw,30px);overflow-wrap:anywhere}
+  .auction-grid,.auction-grid-v2{grid-template-columns:1fr}
+}
+
+@media(max-width:560px){
+  main>header{gap:7px}
+  .mobile-brand,.header-user-profile{display:none}
+  main>header .language-switcher{margin-left:auto}
+  .notification-popover{position:fixed;top:66px;right:10px;left:10px;width:auto;max-height:calc(100dvh - 76px)}
+  .notification-list{max-height:calc(100dvh - 155px)}
+}
+
+@media(max-width:390px){
+  main>header .language-switcher{display:none}
+  .panel{padding-inline:14px}
+}
+
 /* Noir-gold artwork palette. Dark neutral surfaces preserve the background without hurting readability. */
 :root{
   --app-bg:#060504;
