@@ -1074,3 +1074,37 @@ input:focus,select:focus,textarea:focus{border-color:#dba34e;box-shadow:0 0 0 3p
 .roster-pagination button{display:grid;place-items:center;min-width:39px;height:39px;padding:0 10px;color:#d6ccc0;border:1px solid var(--border);border-radius:6px;background:rgba(15,15,15,.94)}
 .roster-pagination button:hover:not(:disabled){color:#ffe0a6;border-color:var(--accent);background:rgba(94,59,18,.5)}
 .roster-pagination button.active{color:#211506;border-color:#f0bb66;background:linear-gradient(135deg,#f0b95e,#bb7628);font-weight:800}
+
+/* Party squad card actions */
+.party-squads-page .squad-card>footer button{
+  min-height:36px;
+  padding:8px 13px;
+  border:1px solid rgba(193,139,57,.55);
+  border-radius:6px;
+  color:#ead8bd;
+  background:linear-gradient(180deg,#24190e,#15100b);
+  box-shadow:inset 0 1px rgba(255,226,178,.05),0 4px 12px rgba(0,0,0,.18);
+  font:600 11px/1.2 'JetBrains Mono',monospace;
+  transition:color .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease;
+}
+.party-squads-page .squad-card>footer button:hover,
+.party-squads-page .squad-card>footer button:focus-visible{
+  color:#ffe4b0;
+  border-color:#d99a3e;
+  background:linear-gradient(180deg,#36230f,#211508);
+  box-shadow:inset 0 1px rgba(255,232,191,.07),0 0 0 3px rgba(217,154,62,.1),0 6px 16px rgba(0,0,0,.24);
+  outline:none;
+}
+.party-squads-page .squad-card>footer button:active{transform:translateY(1px)}
+.party-squads-page .squad-card>footer button.danger{
+  color:#eaa092;
+  border-color:rgba(154,65,50,.72);
+  background:linear-gradient(180deg,#29130f,#180d0b);
+}
+.party-squads-page .squad-card>footer button.danger:hover,
+.party-squads-page .squad-card>footer button.danger:focus-visible{
+  color:#ffd0c7;
+  border-color:#c76653;
+  background:linear-gradient(180deg,#482017,#29120e);
+  box-shadow:inset 0 1px rgba(255,211,199,.05),0 0 0 3px rgba(190,77,58,.1),0 6px 16px rgba(0,0,0,.24);
+}
