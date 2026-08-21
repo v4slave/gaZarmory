@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import DashboardPage from '../pages/DashboardPage.vue'
 import RosterPage from '../pages/RosterPage.vue'
 import GroupsPage from '../pages/GroupsPage.vue'
+import PartySquadsPage from '../pages/PartySquadsPage.vue'
 import ActivitiesPage from '../pages/ActivitiesPage.vue'
 import ActivityPage from '../pages/ActivityPage.vue'
 import TreasuryPage from '../pages/TreasuryPage.vue'
@@ -29,6 +30,7 @@ const routes = [
   { path: '/dashboard', component: DashboardPage, meta: { title: 'Дашборд' } },
   { path: '/roster', component: RosterPage, meta: { title: 'Состав' } },
   { path: '/groups', component: GroupsPage, meta: { title: 'Конст-пати' } },
+  { path: '/groups/:id/squads', component: PartySquadsPage, meta: { title: 'Пятёрки КП', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
   { path: '/roster-readiness', component: RosterReadinessPage, meta: { title: 'Готовность состава', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
   { path: '/attendance-analytics', component: AttendanceAnalyticsPage, meta: { title: 'Аналитика посещаемости', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
   { path: '/financial-reconciliation', component: FinancialReconciliationPage, meta: { title: 'Финансовая сверка', roles: ['guild_leader', 'developer'] } },

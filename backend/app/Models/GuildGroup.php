@@ -10,5 +10,5 @@ class GuildGroup extends Model
     protected $table = 'groups';
     protected $fillable = ['name'];
     public function players(): HasMany { return $this->hasMany(Player::class, 'group_id'); }
+    public function squads(): HasMany { return $this->hasMany(PartySquad::class, 'group_id')->orderBy('position')->orderBy('id'); }
 }
-

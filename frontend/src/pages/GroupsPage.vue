@@ -1,10 +1,12 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useGuildStore } from '../stores/guild.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 
 const auth = useAuthStore(); const guild = useGuildStore(); const name = ref(''); const busy = ref(false); const renameTarget = ref(null); const renameName = ref('')
+const router = useRouter()
 let masonryObserver
 const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг', healer: 'Хил', bard: 'Бард', tank: 'Танк' }
 async function create() { if (!name.value.trim()) return; busy.value = true; try { await guild.createGroup(name.value.trim()); name.value = '' } finally { busy.value = false } }
@@ -12,6 +14,12 @@ function rename(group) { renameTarget.value = group; renameName.value = group.na
 async function saveRename() { const value=renameName.value.trim();if(!renameTarget.value||!value||value===renameTarget.value.name)return;busy.value=true;try{await guild.renameGroup(renameTarget.value.id,value);renameTarget.value=null;renameName.value=''}finally{busy.value=false} }
 async function remove(group) { if (window.confirm(`Удалить «${group.name}»? Игроки станут одиночками.`)) await guild.deleteGroup(group.id) }
 function canManageGroup() { return auth.canManage }
+function canOpenSquads(group) { return auth.canManage || (auth.isPartyLeader && Number(auth.partyGroupId) === Number(group.id)) }
+function openSquadsFromTitle(event) {
+  if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return
+  const title = event.target.closest('.group-card h2[data-group-id]')
+  if (title) router.push(`/groups/${title.dataset.groupId}/squads`)
+}
 function isPartyLeader(player) { return (player.user?.roles ?? [player.user?.role]).includes('party_leader') }
 function comparePlayers(left, right, keepLeaderFirst = false) {
   return (keepLeaderFirst ? Number(isPartyLeader(right)) - Number(isPartyLeader(left)) : 0)
@@ -37,12 +45,17 @@ async function observeMasonry() {
   if (grid) {
     masonryObserver.observe(grid)
     for (const card of grid.children) masonryObserver.observe(card)
+    guild.groups.forEach((group, index) => {
+      if (!canOpenSquads(group)) return
+      const title = grid.children[index]?.querySelector('h2')
+      if (title) { title.dataset.groupId = group.id; title.tabIndex = 0; title.classList.add('group-title-link') }
+    })
   }
   layoutMasonry()
 }
 watch(() => [guild.groups.map(group => `${group.id}:${group.players?.length ?? 0}`).join(','), soloPlayers.value.length], observeMasonry)
-onMounted(async () => { await Promise.all([guild.fetchGroups(), guild.fetchPlayers({ active: true, per_page: 100 })]);await observeMasonry() })
-onBeforeUnmount(() => masonryObserver?.disconnect())
+onMounted(async () => { await Promise.all([guild.fetchGroups(), guild.fetchPlayers({ active: true, per_page: 100 })]);await observeMasonry();document.querySelector('.groups-page .group-grid')?.addEventListener('click',openSquadsFromTitle);document.querySelector('.groups-page .group-grid')?.addEventListener('keydown',openSquadsFromTitle) })
+onBeforeUnmount(() => { masonryObserver?.disconnect();document.querySelector('.groups-page .group-grid')?.removeEventListener('click',openSquadsFromTitle);document.querySelector('.groups-page .group-grid')?.removeEventListener('keydown',openSquadsFromTitle) })
 </script>
 
 <template><section class="groups-page"><div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · ГИЛЬДИЯ</p><h1>Конст-пати</h1></div></div>

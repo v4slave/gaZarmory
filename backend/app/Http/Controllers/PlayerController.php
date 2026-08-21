@@ -124,6 +124,7 @@ final class PlayerController extends Controller
     {
         $old = $player->only(['nickname', 'class', 'group_id', 'is_active']);
         $player->update($request->validated());
+        if ($player->wasChanged('group_id')) DB::table('party_squad_players')->where('player_id', $player->id)->delete();
         $this->audit->record('player.updated', $player, $old, $player->only(['nickname', 'class', 'group_id', 'is_active']));
         return $player->refresh()->load(['group', 'user']);
     }
@@ -139,6 +140,7 @@ final class PlayerController extends Controller
         }
         $old = ['group_id' => $player->group_id];
         $player->update($data);
+        if ($player->wasChanged('group_id')) DB::table('party_squad_players')->where('player_id', $player->id)->delete();
         $this->audit->record('player.group_changed', $player, $old, $data);
         return $player->refresh()->load('group');
     }
