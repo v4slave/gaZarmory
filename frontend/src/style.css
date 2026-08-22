@@ -987,18 +987,6 @@ aside nav a.router-link-active{color:#ffe0a9;background:linear-gradient(90deg,rg
   .groups-page .group-grid{grid-template-columns:1fr}
 }
 
-/* The desktop composition is authored for 2560x1440.
-   Scale the whole canvas on Full HD so geometry and density stay identical. */
-@media (min-width:1800px) and (max-width:2000px){
-  #app{
-    width:133.333333%;
-    min-height:133.333333vh;
-    zoom:.75;
-  }
-  .shell,main{min-height:133.333333vh}
-  aside{height:133.333333vh}
-}
-
 /* Noir-gold artwork palette. Dark neutral surfaces preserve the background without hurting readability. */
 :root{
   --app-bg:#060504;
