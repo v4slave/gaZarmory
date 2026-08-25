@@ -72,6 +72,8 @@ sudo systemctl reload nginx
 
 Замените `armory.example.com` и при необходимости сокет PHP-FPM. Для Ubuntu 26.04 с PHP 8.5 это `php8.5-fpm.sock`. После проверки HTTP выпустите сертификат ACME/Let's Encrypt и включите перенаправление HTTP → HTTPS.
 
+Для загрузки видео в медиатеку установите в `php.ini` для PHP-FPM значения `upload_max_filesize = 300M` и `post_max_size = 310M`, затем перезапустите PHP-FPM. Nginx-шаблон уже разрешает запросы до 310 МБ.
+
 Проверка backend:
 
 ```bash

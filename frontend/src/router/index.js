@@ -24,6 +24,7 @@ import AdminLootPage from '../pages/AdminLootPage.vue'
 import AdminAuditPage from '../pages/AdminAuditPage.vue'
 import AdminEconomyPage from '../pages/AdminEconomyPage.vue'
 import AdminIntegrationsPage from '../pages/AdminIntegrationsPage.vue'
+import MediaPage from '../pages/MediaPage.vue'
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
@@ -37,6 +38,7 @@ const routes = [
   { path: '/players/:id', component: PlayerPage, meta: { title: 'Игрок' } },
   { path: '/activities', component: ActivitiesPage, meta: { title: 'Активности' } },
   { path: '/activities/:id', component: ActivityPage, meta: { title: 'Активность' } },
+  { path: '/media', component: MediaPage, meta: { title: 'Видео и мемы' } },
   { path: '/treasury', component: TreasuryPage, meta: { title: 'Казна' } },
   { path: '/auctions', component: AuctionsPage, meta: { title: 'Аукционы' } },
   { path: '/auctions/:id', component: AuctionPage, meta: { title: 'Аукцион' } },

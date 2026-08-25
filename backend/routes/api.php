@@ -31,6 +31,7 @@ use App\Http\Controllers\PayoutExportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\AdminSettingsController;
 use App\Http\Controllers\PartySquadController;
+use App\Http\Controllers\MediaPostController;
 use App\Services\DiscordProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +52,11 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'read']);
 
     Route::middleware('player.linked')->group(function (): void {
+    Route::get('/media', [MediaPostController::class, 'index']);
+    Route::post('/media', [MediaPostController::class, 'store'])->middleware('throttle:10,1');
+    Route::get('/media/{mediaPost}/file', [MediaPostController::class, 'media'])->name('media.file');
+    Route::post('/media/{mediaPost}/reaction', [MediaPostController::class, 'react']);
+    Route::delete('/media/{mediaPost}', [MediaPostController::class, 'destroy']);
     Route::get('/admin/users', [AdminUserController::class, 'index']);
     Route::patch('/admin/users/{managedUser}/roles', [AdminUserController::class, 'updateRole']);
     Route::delete('/admin/users/{managedUser}', [AdminUserController::class, 'destroy']);
