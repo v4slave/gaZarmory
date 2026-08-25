@@ -229,6 +229,21 @@ td a:hover,.user-link:hover,.catalog-link { color:#e5ae62; }
 @media(max-width:800px){.media-toolbar{align-items:stretch;flex-direction:column}.media-search{width:100%}.media-sort{margin-left:0}.media-filters,.media-sort{overflow:auto}.media-grid{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}.media-mode{grid-template-columns:1fr}.media-viewer{padding:8px}.media-view-info{align-items:start;flex-direction:column}}
 .media-load-more{display:flex;justify-content:center;padding:22px}.media-load-more button{min-width:180px;padding:10px 18px}
 
+/* Calm, readable controls for the content gallery. */
+.media-page button{transition:color .16s ease,border-color .16s ease,background .16s ease,box-shadow .16s ease,transform .16s ease}
+.media-page .primary{color:#fff0d8;border-color:#a86f2d;background:linear-gradient(180deg,#7b4c19,#57300d);box-shadow:inset 0 1px rgba(255,223,169,.12),0 5px 16px rgba(0,0,0,.24)}
+.media-page .primary:hover{color:#fff7e9;border-color:#d49a4a;background:linear-gradient(180deg,#8a571f,#633812);box-shadow:0 0 0 1px rgba(212,154,74,.1),0 7px 20px rgba(0,0,0,.28);filter:none}
+.media-filters button,.media-sort button{color:#bcae9a;border-color:#594229;background:rgba(20,14,9,.9)}
+.media-filters button:hover,.media-sort button:hover{color:#eadbc4;border-color:#80603a;background:#21170e}
+.media-filters button.active,.media-sort button.active{color:#f5dfbc;border-color:#a87838;background:#3a2713;box-shadow:inset 0 0 0 1px rgba(226,169,87,.07)}
+.media-mode>button{color:#d6c7b2;border:1px solid #5b4329;background:#17110c;box-shadow:none}
+.media-mode>button:hover{color:#f0dfc6;border-color:#886233;background:#21170e}
+.media-mode>button.active{color:#f8e8ce;border-color:#b47d35;background:linear-gradient(135deg,#3b2814,#291b0f);box-shadow:inset 3px 0 #d49743,0 5px 15px rgba(0,0,0,.2)}
+.media-mode>button.active small{color:#bbaa91}.media-mode>button.active b{color:#ffe0a3;background:#63390e}
+.media-add-modal .form-actions>button:not(.primary){color:#d4c5b0;border-color:#5e4930;background:#18130e}
+.media-add-modal .form-actions>button:not(.primary):hover{color:#f1e4d2;border-color:#80613b;background:#211910}
+.media-load-more button{color:#d7c6ad;border:1px solid #624a2e;border-radius:6px;background:#18120c}.media-load-more button:hover{color:#f3e2c8;border-color:#92703f;background:#24190f}
+
 /* Compact desktop dashboard */
 .dashboard-page { width:min(1540px,100%);max-width:1540px;padding-top:32px; }
 .dashboard-heading h1 { margin-top:4px;font-size:34px; }
