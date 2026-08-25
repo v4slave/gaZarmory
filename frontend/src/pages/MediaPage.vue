@@ -72,7 +72,7 @@ async function remove(post) { if (!confirm(`Удалить «${post.title}»?`))
 
 <template>
   <section class="media-page">
-    <div class="page-heading media-heading"><div><p class="eyebrow">Творчество гильдии</p><h1>Контент</h1><p class="muted">Видео, моменты, гайды и мемы участников — всё в одном месте.</p></div><button class="primary media-add" @click="openAdd">＋ Добавить</button></div>
+    <div class="page-heading media-heading"><div><h1>Контент</h1></div><button class="primary media-add" @click="openAdd">＋ Добавить</button></div>
     <div class="media-toolbar">
       <label class="media-search"><span>⌕</span><input v-model.trim="search" placeholder="Поиск по названию…"></label>
       <div class="media-filters"><button :class="{active:!kind&&!favorites}" @click="kind='';favorites=false">Все</button><button :class="{active:kind==='video'}" @click="kind='video';favorites=false">Видео</button><button :class="{active:kind==='image'}" @click="kind='image';favorites=false">Изображения</button><button :class="{active:favorites}" @click="favorites=!favorites">★ Избранное</button></div>
