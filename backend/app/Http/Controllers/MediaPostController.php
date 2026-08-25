@@ -128,16 +128,18 @@ final class MediaPostController extends Controller
 
     private function resolveTitle(string $url, array $media): string
     {
+        $rutubeId = $media['provider'] === 'rutube' && preg_match('~/embed/([a-zA-Z0-9]+)~', $media['embed_url'], $match) ? $match[1] : null;
         $endpoint = match ($media['provider']) {
             'youtube' => 'https://www.youtube.com/oembed',
-            'rutube' => 'https://rutube.ru/api/oembed/',
+            'rutube' => "https://rutube.ru/api/video/{$rutubeId}/",
             'vimeo' => 'https://vimeo.com/api/oembed.json',
             default => null,
         };
 
         if ($endpoint) {
             try {
-                $response = Http::acceptJson()->timeout(4)->get($endpoint, ['url' => $url, 'format' => 'json']);
+                $query = $media['provider'] === 'rutube' ? [] : ['url' => $url, 'format' => 'json'];
+                $response = Http::acceptJson()->timeout(4)->get($endpoint, $query);
                 $title = trim((string) $response->json('title'));
                 if ($response->successful() && $title !== '') return mb_substr($title, 0, 160);
             } catch (\Throwable) {

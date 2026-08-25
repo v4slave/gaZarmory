@@ -12,6 +12,7 @@ const form = ref({ title: '', description: '', url: '' })
 const titleLoading = ref(false), autoTitle = ref('')
 let searchTimer
 let metadataTimer
+let loadSequence = 0
 
 const canDelete = post => post.user_id === auth.user?.id || auth.canAdmin
 const mediaSrc = post => post.provider === 'upload' ? `/api/media/${post.id}/file` : post.source_url
@@ -20,17 +21,21 @@ const authorName = post => post.author?.player?.nickname || post.author?.discord
 const providerName = computed(() => ({ youtube:'YouTube', rutube:'Rutube', vimeo:'Vimeo', direct:'Ссылка', upload:'Файл' }))
 
 async function load(append = false) {
+  const sequence = ++loadSequence
   append ? loadingMore.value = true : loading.value = true; error.value = ''
   try {
     const { data } = await api.get('/api/media', { params: { search: search.value || undefined, kind: kind.value || undefined, sort: sort.value, favorites: favorites.value ? 1 : undefined, page: append ? nextPage.value : 1 } })
-    posts.value = append ? [...posts.value, ...data.data] : data.data
+    if (sequence !== loadSequence) return
+    posts.value = append
+      ? [...new Map([...posts.value, ...data.data].map(post => [post.id, post])).values()]
+      : data.data
     nextPage.value = data.next_page_url ? data.current_page + 1 : null
-  } catch (e) { error.value = e.response?.data?.message || 'Не удалось загрузить медиатеку.' }
-  finally { loading.value = false; loadingMore.value = false }
+  } catch (e) { if (sequence === loadSequence) error.value = e.response?.data?.message || 'Не удалось загрузить медиатеку.' }
+  finally { if (sequence === loadSequence) { loading.value = false; loadingMore.value = false } }
 }
-watch([kind, sort, favorites], load)
-watch(search, () => { clearTimeout(searchTimer); searchTimer = setTimeout(load, 300) })
-onMounted(load)
+watch([kind, sort, favorites], () => load(false))
+watch(search, () => { clearTimeout(searchTimer); searchTimer = setTimeout(() => load(false), 300) })
+onMounted(() => load(false))
 watch(() => form.value.url, url => {
   clearTimeout(metadataTimer)
   if (addMode.value !== 'url' || !/^https?:\/\//i.test(url || '')) return
@@ -94,7 +99,7 @@ async function remove(post) { if (!confirm(`Удалить «${post.title}»?`))
         <div class="media-mode"><button type="button" :class="{active:addMode==='url'}" @click="addMode='url'"><b>▶</b><span>Ссылка<small>YouTube, Rutube, Vimeo</small></span></button><button type="button" :class="{active:addMode==='file'}" @click="addMode='file'"><b>⇧</b><span>Изображение<small>Файл с устройства</small></span></button></div>
         <label v-if="addMode==='url'">Ссылка на видео или изображение<input v-model.trim="form.url" type="url" placeholder="https://youtube.com/watch?v=…" required></label>
         <label v-else class="media-file">Изображение<input type="file" accept="image/jpeg,image/png,image/gif,image/webp" required @change="chooseFile"><span>{{ selectedFile?.name || 'Выбрать изображение' }}</span><small>До 20 МБ · JPG, PNG, GIF или WebP</small></label>
-        <label>Название <small v-if="titleLoading">получаем с платформы…</small><input v-model.trim="form.title" maxlength="160" :placeholder="titleLoading ? 'Получаем название…' : 'Название заполнится автоматически'" required></label><label>Описание <small>(необязательно)</small><textarea v-model.trim="form.description" maxlength="2000" rows="3" placeholder="Добавьте немного контекста…"></textarea></label>
+        <label>Название <small v-if="titleLoading">получаем с платформы…</small><input v-model.trim="form.title" maxlength="160" :placeholder="titleLoading ? 'Получаем название…' : 'Название заполнится автоматически'"></label><label>Описание <small>(необязательно)</small><textarea v-model.trim="form.description" maxlength="2000" rows="3" placeholder="Добавьте немного контекста…"></textarea></label>
         <p v-if="error" class="notice error">{{ error }}</p><div class="form-actions"><button type="button" @click="showAdd=false">Отмена</button><button class="primary" :disabled="saving">{{ saving ? 'Публикуем…' : 'Опубликовать' }}</button></div>
       </form>
     </div>
