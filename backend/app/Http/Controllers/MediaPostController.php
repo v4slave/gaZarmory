@@ -5,11 +5,19 @@ namespace App\Http\Controllers;
 use App\Models\MediaPost;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 final class MediaPostController extends Controller
 {
+    public function metadata(Request $request)
+    {
+        $url = $request->validate(['url' => ['required', 'url:http,https', 'max:2000']])['url'];
+        $media = $this->parseUrl($url);
+        return ['title' => $this->resolveTitle($url, $media)];
+    }
+
     public function index(Request $request)
     {
         $data = $request->validate([
@@ -44,22 +52,24 @@ final class MediaPostController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'title' => ['required', 'string', 'max:160'],
+            'title' => ['nullable', 'string', 'max:160'],
             'description' => ['nullable', 'string', 'max:2000'],
             'url' => ['nullable', 'url:http,https', 'max:2000', 'required_without:file'],
             'file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:20480', 'required_without:url'],
         ]);
 
-        $attributes = ['user_id' => $request->user()->id, 'title' => $data['title'], 'description' => $data['description'] ?? null];
+        $attributes = ['user_id' => $request->user()->id, 'description' => $data['description'] ?? null];
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $attributes += [
+                'title' => ($data['title'] ?? null) ?: (pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME) ?: 'Изображение'),
                 'kind' => 'image',
                 'provider' => 'upload',
                 'file_path' => $file->store('media', 'local'),
             ];
         } else {
-            $attributes += $this->parseUrl($data['url']);
+            $media = $this->parseUrl($data['url']);
+            $attributes += $media + ['title' => ($data['title'] ?? null) ?: $this->resolveTitle($data['url'], $media)];
         }
 
         return response()->json(MediaPost::query()->create($attributes), 201);
@@ -114,5 +124,32 @@ final class MediaPostController extends Controller
             return ['kind'=>'image','provider'=>'direct','source_url'=>$url,'embed_url'=>null,'thumbnail_url'=>$url];
 
         throw ValidationException::withMessages(['url' => 'Поддерживаются YouTube, Rutube, Vimeo и прямые ссылки на видео или изображения.']);
+    }
+
+    private function resolveTitle(string $url, array $media): string
+    {
+        $endpoint = match ($media['provider']) {
+            'youtube' => 'https://www.youtube.com/oembed',
+            'rutube' => 'https://rutube.ru/api/oembed/',
+            'vimeo' => 'https://vimeo.com/api/oembed.json',
+            default => null,
+        };
+
+        if ($endpoint) {
+            try {
+                $response = Http::acceptJson()->timeout(4)->get($endpoint, ['url' => $url, 'format' => 'json']);
+                $title = trim((string) $response->json('title'));
+                if ($response->successful() && $title !== '') return mb_substr($title, 0, 160);
+            } catch (\Throwable) {
+                // A platform outage must not block publishing; use a safe fallback.
+            }
+        }
+
+        $filename = rawurldecode(pathinfo((string) parse_url($url, PHP_URL_PATH), PATHINFO_FILENAME));
+        if ($filename !== '') return mb_substr(str_replace(['-', '_'], ' ', $filename), 0, 160);
+        return match ($media['provider']) {
+            'youtube' => 'Видео YouTube', 'rutube' => 'Видео Rutube', 'vimeo' => 'Видео Vimeo',
+            default => 'Новая публикация',
+        };
     }
 }

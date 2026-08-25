@@ -53,6 +53,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
 
     Route::middleware('player.linked')->group(function (): void {
     Route::get('/media', [MediaPostController::class, 'index']);
+    Route::post('/media/metadata', [MediaPostController::class, 'metadata'])->middleware('throttle:20,1');
     Route::post('/media', [MediaPostController::class, 'store'])->middleware('throttle:10,1');
     Route::get('/media/{mediaPost}/file', [MediaPostController::class, 'media'])->name('media.file');
     Route::post('/media/{mediaPost}/reaction', [MediaPostController::class, 'react']);

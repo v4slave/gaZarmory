@@ -9,7 +9,9 @@ const nextPage = ref(null)
 const search = ref(''), kind = ref(''), sort = ref('new'), favorites = ref(false)
 const showAdd = ref(false), addMode = ref('url'), active = ref(null), selectedFile = ref(null)
 const form = ref({ title: '', description: '', url: '' })
+const titleLoading = ref(false), autoTitle = ref('')
 let searchTimer
+let metadataTimer
 
 const canDelete = post => post.user_id === auth.user?.id || auth.canAdmin
 const mediaSrc = post => post.provider === 'upload' ? `/api/media/${post.id}/file` : post.source_url
@@ -29,8 +31,23 @@ async function load(append = false) {
 watch([kind, sort, favorites], load)
 watch(search, () => { clearTimeout(searchTimer); searchTimer = setTimeout(load, 300) })
 onMounted(load)
+watch(() => form.value.url, url => {
+  clearTimeout(metadataTimer)
+  if (addMode.value !== 'url' || !/^https?:\/\//i.test(url || '')) return
+  metadataTimer = setTimeout(() => loadMetadata(url), 450)
+})
 
-function openAdd() { showAdd.value = true; error.value = ''; form.value = { title:'', description:'', url:'' }; selectedFile.value = null }
+async function loadMetadata(url) {
+  titleLoading.value = true
+  try {
+    const { data } = await api.post('/api/media/metadata', { url })
+    if (form.value.url === url && (!form.value.title || form.value.title === autoTitle.value)) {
+      autoTitle.value = data.title; form.value.title = data.title
+    }
+  } catch {} finally { if (form.value.url === url) titleLoading.value = false }
+}
+
+function openAdd() { showAdd.value = true; error.value = ''; autoTitle.value = ''; titleLoading.value = false; form.value = { title:'', description:'', url:'' }; selectedFile.value = null }
 function chooseFile(event) { selectedFile.value = event.target.files?.[0] || null; if (selectedFile.value && !form.value.title) form.value.title = selectedFile.value.name.replace(/\.[^.]+$/, '') }
 async function submit() {
   saving.value = true; error.value = ''
@@ -77,7 +94,7 @@ async function remove(post) { if (!confirm(`Удалить «${post.title}»?`))
         <div class="media-mode"><button type="button" :class="{active:addMode==='url'}" @click="addMode='url'"><b>▶</b><span>Ссылка<small>YouTube, Rutube, Vimeo</small></span></button><button type="button" :class="{active:addMode==='file'}" @click="addMode='file'"><b>⇧</b><span>Изображение<small>Файл с устройства</small></span></button></div>
         <label v-if="addMode==='url'">Ссылка на видео или изображение<input v-model.trim="form.url" type="url" placeholder="https://youtube.com/watch?v=…" required></label>
         <label v-else class="media-file">Изображение<input type="file" accept="image/jpeg,image/png,image/gif,image/webp" required @change="chooseFile"><span>{{ selectedFile?.name || 'Выбрать изображение' }}</span><small>До 20 МБ · JPG, PNG, GIF или WebP</small></label>
-        <label>Название<input v-model.trim="form.title" maxlength="160" placeholder="Дайте публикации короткое название" required></label><label>Описание <small>(необязательно)</small><textarea v-model.trim="form.description" maxlength="2000" rows="3" placeholder="Добавьте немного контекста…"></textarea></label>
+        <label>Название <small v-if="titleLoading">получаем с платформы…</small><input v-model.trim="form.title" maxlength="160" :placeholder="titleLoading ? 'Получаем название…' : 'Название заполнится автоматически'" required></label><label>Описание <small>(необязательно)</small><textarea v-model.trim="form.description" maxlength="2000" rows="3" placeholder="Добавьте немного контекста…"></textarea></label>
         <p v-if="error" class="notice error">{{ error }}</p><div class="form-actions"><button type="button" @click="showAdd=false">Отмена</button><button class="primary" :disabled="saving">{{ saving ? 'Публикуем…' : 'Опубликовать' }}</button></div>
       </form>
     </div>
