@@ -243,6 +243,8 @@ td a:hover,.user-link:hover,.catalog-link { color:#e5ae62; }
 .media-add-modal .form-actions>button:not(.primary){color:#d4c5b0;border-color:#5e4930;background:#18130e}
 .media-add-modal .form-actions>button:not(.primary):hover{color:#f1e4d2;border-color:#80613b;background:#211910}
 .media-load-more button{color:#d7c6ad;border:1px solid #624a2e;border-radius:6px;background:#18120c}.media-load-more button:hover{color:#f3e2c8;border-color:#92703f;background:#24190f}
+.media-toolbar{gap:14px}.media-filters,.media-sort{gap:8px}.media-filters button,.media-sort button{display:inline-flex;align-items:center;justify-content:center;min-height:40px;padding:10px 16px;border-radius:22px;font-size:13px;font-weight:600;line-height:1;white-space:nowrap}.media-search{min-height:44px}.media-search input{height:42px;font-size:13px}
+@media(max-width:800px){.media-filters button,.media-sort button{min-height:42px;padding:11px 17px;font-size:13px}}
 
 /* Compact desktop dashboard */
 .dashboard-page { width:min(1540px,100%);max-width:1540px;padding-top:32px; }
