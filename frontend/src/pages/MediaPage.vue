@@ -4,7 +4,8 @@ import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
-const posts = ref([]), loading = ref(true), saving = ref(false), error = ref('')
+const posts = ref([]), loading = ref(true), loadingMore = ref(false), saving = ref(false), error = ref('')
+const nextPage = ref(null)
 const search = ref(''), kind = ref(''), sort = ref('new'), favorites = ref(false)
 const showAdd = ref(false), addMode = ref('url'), active = ref(null), selectedFile = ref(null)
 const form = ref({ title: '', description: '', url: '' })
@@ -16,13 +17,14 @@ const previewSrc = post => post.thumbnail_url || (post.kind === 'image' ? mediaS
 const authorName = post => post.author?.player?.nickname || post.author?.discord_display_name || post.author?.discord_username || 'Участник'
 const providerName = computed(() => ({ youtube:'YouTube', rutube:'Rutube', vimeo:'Vimeo', direct:'Ссылка', upload:'Файл' }))
 
-async function load() {
-  loading.value = true; error.value = ''
+async function load(append = false) {
+  append ? loadingMore.value = true : loading.value = true; error.value = ''
   try {
-    const { data } = await api.get('/api/media', { params: { search: search.value || undefined, kind: kind.value || undefined, sort: sort.value, favorites: favorites.value ? 1 : undefined } })
-    posts.value = data.data
+    const { data } = await api.get('/api/media', { params: { search: search.value || undefined, kind: kind.value || undefined, sort: sort.value, favorites: favorites.value ? 1 : undefined, page: append ? nextPage.value : 1 } })
+    posts.value = append ? [...posts.value, ...data.data] : data.data
+    nextPage.value = data.next_page_url ? data.current_page + 1 : null
   } catch (e) { error.value = e.response?.data?.message || 'Не удалось загрузить медиатеку.' }
-  finally { loading.value = false }
+  finally { loading.value = false; loadingMore.value = false }
 }
 watch([kind, sort, favorites], load)
 watch(search, () => { clearTimeout(searchTimer); searchTimer = setTimeout(load, 300) })
@@ -48,7 +50,7 @@ async function remove(post) { if (!confirm(`Удалить «${post.title}»?`))
 
 <template>
   <section class="media-page">
-    <div class="page-heading media-heading"><div><p class="eyebrow">Творчество гильдии</p><h1>Видео и мемы</h1><p class="muted">Моменты, гайды и мемы участников — всё в одном месте.</p></div><button class="primary media-add" @click="openAdd">＋ Добавить</button></div>
+    <div class="page-heading media-heading"><div><p class="eyebrow">Творчество гильдии</p><h1>Контент</h1><p class="muted">Видео, моменты, гайды и мемы участников — всё в одном месте.</p></div><button class="primary media-add" @click="openAdd">＋ Добавить</button></div>
     <div class="media-toolbar">
       <label class="media-search"><span>⌕</span><input v-model.trim="search" placeholder="Поиск по названию…"></label>
       <div class="media-filters"><button :class="{active:!kind&&!favorites}" @click="kind='';favorites=false">Все</button><button :class="{active:kind==='video'}" @click="kind='video';favorites=false">Видео</button><button :class="{active:kind==='image'}" @click="kind='image';favorites=false">Изображения</button><button :class="{active:favorites}" @click="favorites=!favorites">★ Избранное</button></div>
@@ -60,8 +62,7 @@ async function remove(post) { if (!confirm(`Удалить «${post.title}»?`))
     <div v-else class="media-grid">
       <article v-for="post in posts" :key="post.id" class="media-card">
         <button class="media-preview" @click="active=post">
-          <img v-if="previewSrc(post)" :src="previewSrc(post)" :alt="post.title">
-          <video v-else-if="post.provider==='upload'&&post.kind==='video'" :src="mediaSrc(post)" preload="metadata" muted></video>
+          <img v-if="previewSrc(post)" :src="previewSrc(post)" :alt="post.title" loading="lazy" decoding="async">
           <span v-else class="media-provider-placeholder">{{ providerName[post.provider] || 'Видео' }}</span>
           <i v-if="post.kind==='video'" class="media-play">▶</i><em>{{ post.kind === 'video' ? '▣' : '▧' }}</em>
         </button>
@@ -69,12 +70,13 @@ async function remove(post) { if (!confirm(`Удалить «${post.title}»?`))
         <footer><button :class="{active:post.liked_by_me}" @click="react(post,'like')">♥ {{ post.likes_count }}</button><button :class="{active:post.favorite_by_me}" @click="react(post,'favorite')">★ {{ post.favorites_count }}</button><button v-if="canDelete(post)" class="media-delete" title="Удалить" @click="remove(post)">×</button></footer>
       </article>
     </div>
+    <div v-if="nextPage&&!loading" class="media-load-more"><button :disabled="loadingMore" @click="load(true)">{{ loadingMore ? 'Загружаем…' : 'Показать ещё' }}</button></div>
 
     <div v-if="showAdd" class="modal media-add-modal" @click.self="showAdd=false">
       <form class="form-card" @submit.prevent="submit"><button class="media-modal-close" type="button" aria-label="Закрыть" @click="showAdd=false">×</button><p class="eyebrow">Новая публикация</p><h2>Добавить в медиатеку</h2>
-        <div class="media-mode"><button type="button" :class="{active:addMode==='url'}" @click="addMode='url'"><b>▶</b><span>Ссылка<small>YouTube, Rutube, Vimeo</small></span></button><button type="button" :class="{active:addMode==='file'}" @click="addMode='file'"><b>⇧</b><span>Файл с устройства<small>Видео или изображение</small></span></button></div>
+        <div class="media-mode"><button type="button" :class="{active:addMode==='url'}" @click="addMode='url'"><b>▶</b><span>Ссылка<small>YouTube, Rutube, Vimeo</small></span></button><button type="button" :class="{active:addMode==='file'}" @click="addMode='file'"><b>⇧</b><span>Изображение<small>Файл с устройства</small></span></button></div>
         <label v-if="addMode==='url'">Ссылка на видео или изображение<input v-model.trim="form.url" type="url" placeholder="https://youtube.com/watch?v=…" required></label>
-        <label v-else class="media-file">Файл<input type="file" accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime" required @change="chooseFile"><span>{{ selectedFile?.name || 'Выбрать видео или изображение' }}</span><small>До 300 МБ · MP4, WebM, MOV, JPG, PNG, GIF, WebP</small></label>
+        <label v-else class="media-file">Изображение<input type="file" accept="image/jpeg,image/png,image/gif,image/webp" required @change="chooseFile"><span>{{ selectedFile?.name || 'Выбрать изображение' }}</span><small>До 20 МБ · JPG, PNG, GIF или WebP</small></label>
         <label>Название<input v-model.trim="form.title" maxlength="160" placeholder="Дайте публикации короткое название" required></label><label>Описание <small>(необязательно)</small><textarea v-model.trim="form.description" maxlength="2000" rows="3" placeholder="Добавьте немного контекста…"></textarea></label>
         <p v-if="error" class="notice error">{{ error }}</p><div class="form-actions"><button type="button" @click="showAdd=false">Отмена</button><button class="primary" :disabled="saving">{{ saving ? 'Публикуем…' : 'Опубликовать' }}</button></div>
       </form>

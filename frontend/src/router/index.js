@@ -38,7 +38,7 @@ const routes = [
   { path: '/players/:id', component: PlayerPage, meta: { title: 'Игрок' } },
   { path: '/activities', component: ActivitiesPage, meta: { title: 'Активности' } },
   { path: '/activities/:id', component: ActivityPage, meta: { title: 'Активность' } },
-  { path: '/media', component: MediaPage, meta: { title: 'Видео и мемы' } },
+  { path: '/media', component: MediaPage, meta: { title: 'Контент' } },
   { path: '/treasury', component: TreasuryPage, meta: { title: 'Казна' } },
   { path: '/auctions', component: AuctionsPage, meta: { title: 'Аукционы' } },
   { path: '/auctions/:id', component: AuctionPage, meta: { title: 'Аукцион' } },

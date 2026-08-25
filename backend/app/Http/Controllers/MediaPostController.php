@@ -36,7 +36,7 @@ final class MediaPostController extends Controller
             ->when($data['kind'] ?? null, fn ($q, $value) => $q->where('kind', $value))
             ->when($data['favorites'] ?? false, fn ($q) => $q->whereHas('reactions', fn ($r) => $r->where('user_id', $userId)->where('type', 'favorite')))
             ->when(($data['sort'] ?? 'new') === 'popular',
-                fn ($q) => $q->orderByRaw("(select count(*) from media_reactions where media_reactions.media_post_id = media_posts.id and type = 'like') desc"),
+                fn ($q) => $q->orderByRaw("(select count(*) from media_reactions where media_reactions.media_post_id = media_posts.id and type = 'like') desc")->latest('id'),
                 fn ($q) => $q->latest())
             ->paginate(30);
     }
@@ -47,14 +47,14 @@ final class MediaPostController extends Controller
             'title' => ['required', 'string', 'max:160'],
             'description' => ['nullable', 'string', 'max:2000'],
             'url' => ['nullable', 'url:http,https', 'max:2000', 'required_without:file'],
-            'file' => ['nullable', 'file', 'mimetypes:image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime', 'max:307200', 'required_without:url'],
+            'file' => ['nullable', 'image', 'mimes:jpg,jpeg,png,gif,webp', 'max:20480', 'required_without:url'],
         ]);
 
         $attributes = ['user_id' => $request->user()->id, 'title' => $data['title'], 'description' => $data['description'] ?? null];
         if ($request->hasFile('file')) {
             $file = $request->file('file');
             $attributes += [
-                'kind' => str_starts_with((string) $file->getMimeType(), 'image/') ? 'image' : 'video',
+                'kind' => 'image',
                 'provider' => 'upload',
                 'file_path' => $file->store('media', 'local'),
             ];
@@ -68,7 +68,14 @@ final class MediaPostController extends Controller
     public function media(Request $request, MediaPost $mediaPost)
     {
         abort_unless($mediaPost->file_path && Storage::disk('local')->exists($mediaPost->file_path), 404);
-        return Storage::disk('local')->response($mediaPost->file_path, null, ['Cache-Control' => 'private, max-age=86400']);
+        $response = Storage::disk('local')->response($mediaPost->file_path, null, [
+            'Cache-Control' => 'private, max-age=86400',
+            'Accept-Ranges' => 'bytes',
+        ]);
+        // In production Nginx serves the bytes after Laravel has checked access,
+        // so a long video does not occupy a PHP-FPM worker.
+        if (app()->isProduction()) $response->headers->set('X-Accel-Redirect', '/protected-media/'.basename($mediaPost->file_path));
+        return $response;
     }
 
     public function react(Request $request, MediaPost $mediaPost)

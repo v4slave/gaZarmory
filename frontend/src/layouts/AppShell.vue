@@ -24,7 +24,7 @@ const primaryLinks = [
   { to: '/roster', label: 'Состав', icon: '♙' },
   { to: '/groups', label: 'Конст-пати', icon: '♜' },
   { to: '/activities', label: 'Активности', icon: '⚔' },
-  { to: '/media', label: 'Видео и мемы', icon: '▶' },
+  { to: '/media', label: 'Контент', icon: '▶' },
 ]
 const economyLinks = [
   { to: '/treasury', label: 'Казна', icon: '▣' },
