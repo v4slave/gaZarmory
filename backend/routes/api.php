@@ -69,6 +69,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/admin/player-link-requests/{playerLinkRequest}/reject', [PlayerLinkRequestController::class, 'reject']);
 
     Route::delete('/players/{player}/permanent', [PlayerController::class, 'destroyPermanently']);
+    Route::patch('/players/{player}/profile', [PlayerController::class, 'updateProfile']);
     Route::apiResource('players', PlayerController::class);
     Route::post('/players/{player}/activate', [PlayerController::class, 'activate']);
     Route::put('/players/{player}/group', [PlayerController::class, 'move']);

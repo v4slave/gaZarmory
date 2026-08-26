@@ -9,6 +9,8 @@ use App\Http\Requests\UpdatePlayerRequest;
 use App\Models\Player;
 use App\Models\Activity;
 use App\Models\PrimePlayerEarning;
+use App\Models\PlayerGearScoreHistory;
+use App\Rules\ValidPlayerNickname;
 use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -127,6 +129,40 @@ final class PlayerController extends Controller
         if ($player->wasChanged('group_id')) DB::table('party_squad_players')->where('player_id', $player->id)->delete();
         $this->audit->record('player.updated', $player, $old, $player->only(['nickname', 'class', 'group_id', 'is_active']));
         return $player->refresh()->load(['group', 'user']);
+    }
+
+    public function updateProfile(Request $request, Player $player): Player
+    {
+        abort_unless($request->user()->hasRole(UserRole::Developer), 403);
+
+        $assetFields = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers'];
+        $rules = [
+            'nickname' => ['required', 'string', new ValidPlayerNickname(), Rule::unique('players', 'nickname')->ignore($player)],
+            'class' => ['required', Rule::enum(PlayerClass::class)],
+            'gear_score' => ['required', 'integer', 'min:0', 'max:100000'],
+        ];
+        foreach ($assetFields as $field) $rules[$field] = ['required', 'boolean'];
+        $data = $request->validate($rules);
+
+        return DB::transaction(function () use ($player, $data): Player {
+            $trackedFields = array_keys($data);
+            $old = $player->only($trackedFields);
+
+            if ((int) $data['gear_score'] !== (int) $player->gear_score) {
+                $data['previous_gear_score'] = $player->gear_score;
+                $data['gear_score_updated_at'] = now();
+                PlayerGearScoreHistory::query()->create([
+                    'player_id' => $player->id,
+                    'gear_score' => $data['gear_score'],
+                    'recorded_at' => now(),
+                ]);
+            }
+
+            $player->update($data);
+            $this->audit->record('player.profile_updated_by_developer', $player, $old, $player->only($trackedFields));
+
+            return $player->refresh()->load(['group', 'user']);
+        });
     }
 
     public function move(Request $request, Player $player): Player

@@ -21,6 +21,8 @@ const statistics = computed(() => player.value?.statistics ?? {})
 const earnings = computed(() => (player.value?.earnings_history ?? []).filter(item => item.activity?.definition?.type !== 'mini_activity'))
 const earningStatus = { pending:'Ожидается', paid:'Выплачено', cancelled:'Отменено' }
 const isOwnProfile = computed(() => Number(auth.user?.player?.id) === Number(player.value?.id))
+const isDeveloper = computed(() => (auth.user?.roles ?? [auth.user?.role]).includes('developer'))
+const canEditProfile = computed(() => isOwnProfile.value || isDeveloper.value)
 const gearDelta = computed(() => player.value?.previous_gear_score === null || player.value?.previous_gear_score === undefined ? null : Number(player.value.gear_score) - Number(player.value.previous_gear_score))
 const gearDeltaText = computed(() => gearDelta.value === null ? 'Изменений пока нет' : `${gearDelta.value >= 0 ? '+' : '−'}${Math.abs(gearDelta.value).toLocaleString('ru-RU')} с прошлого обновления`)
 
@@ -31,13 +33,16 @@ function openEditor() { syncEditor(); error.value = ''; showEditor.value = true 
 async function saveProfile() {
   savingProfile.value = true; error.value = ''
   try {
-    const requests = []
-    if (nickname.value !== player.value.nickname) requests.push(api.patch('/api/me/player/nickname', { nickname: nickname.value }))
-    if (selectedClass.value !== player.value.class) requests.push(api.patch('/api/me/player/class', { class: selectedClass.value }))
-    requests.push(api.patch('/api/me/player/profile', { gear_score: Number(gearScore.value), ...assets }))
-    await Promise.all(requests)
-    await auth.fetchMe()
-    player.value.nickname = auth.user.player.nickname
+    if (!isOwnProfile.value && isDeveloper.value) {
+      await api.patch(`/api/players/${player.value.id}/profile`, { nickname: nickname.value, class: selectedClass.value, gear_score: Number(gearScore.value), ...assets })
+    } else {
+      const requests = []
+      if (nickname.value !== player.value.nickname) requests.push(api.patch('/api/me/player/nickname', { nickname: nickname.value }))
+      if (selectedClass.value !== player.value.class) requests.push(api.patch('/api/me/player/class', { class: selectedClass.value }))
+      requests.push(api.patch('/api/me/player/profile', { gear_score: Number(gearScore.value), ...assets }))
+      await Promise.all(requests)
+      await auth.fetchMe()
+    }
     player.value = (await api.get(`/api/players/${route.params.id}`)).data
     showEditor.value = false
     notifications.success('Профиль персонажа сохранён.')
@@ -50,7 +55,7 @@ async function saveProfile() {
   <p v-if="error" class="notice error">{{ error }}</p>
   <div class="profile-showcase">
     <div class="profile-showcase-identity"><PlayerAvatar :player="player" size="hero"/><div><p class="eyebrow">ПРОФИЛЬ ИГРОКА</p><h1>{{ player.nickname }} <span :class="['class-tag',`class-${player.class}`]">{{ labels[player.class] }}</span></h1><p>{{ player.group?.name ?? 'Сольники' }}</p><a v-if="player.user?.discord_id" class="profile-discord-card" :href="`https://discord.com/users/${player.user.discord_id}`" target="_blank" rel="noopener noreferrer" :title="`Открыть личные сообщения с ${player.nickname} в Discord`"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.5 5.3A16.3 16.3 0 0 0 15.4 4l-.5 1a15 15 0 0 0-5.8 0l-.5-1a16.3 16.3 0 0 0-4.1 1.3C1.9 9.1 1.2 12.8 1.5 16.4a16.8 16.8 0 0 0 5 2.5l1.2-1.7-1.8-.9.4-.3c3.5 1.6 7.9 1.6 11.4 0l.4.3-1.8.9 1.2 1.7a16.8 16.8 0 0 0 5-2.5c.4-4.2-.8-7.8-3-11.1ZM8.7 14.6c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Zm6.6 0c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Z"/></svg></i><span><small>Discord</small><b>{{ player.user.discord_display_name || player.user.discord_username }}</b></span></a><span v-else-if="player.user" class="profile-discord-card"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M19.5 5.3A16.3 16.3 0 0 0 15.4 4l-.5 1a15 15 0 0 0-5.8 0l-.5-1a16.3 16.3 0 0 0-4.1 1.3C1.9 9.1 1.2 12.8 1.5 16.4a16.8 16.8 0 0 0 5 2.5l1.2-1.7-1.8-.9.4-.3c3.5 1.6 7.9 1.6 11.4 0l.4.3-1.8.9 1.2 1.7a16.8 16.8 0 0 0 5-2.5c.4-4.2-.8-7.8-3-11.1ZM8.7 14.6c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Zm6.6 0c-1.1 0-2-1-2-2.2s.9-2.2 2-2.2 2 1 2 2.2-.9 2.2-2 2.2Z"/></svg></i><span><small>Discord</small><b>{{ player.user.discord_display_name || player.user.discord_username }}</b></span></span></div></div>
-    <button v-if="isOwnProfile" class="secondary profile-edit-button" @click="openEditor">Редактировать профиль</button>
+    <button v-if="canEditProfile" class="secondary profile-edit-button" @click="openEditor">Редактировать профиль</button>
     <div class="profile-stats"><article class="stat-card profile-gear-stat"><span>ГС</span><strong>{{ Number(player.gear_score??0).toLocaleString('ru-RU') }}</strong><small :class="gearDelta === null ? '' : gearDelta >= 0 ? 'positive' : 'negative'">{{ gearDeltaText }}</small></article><StatCard label="Праймы · 30 дней" :value="statistics.primes_count??0"/><StatCard label="Посещение праймов · 30 дней" :value="`${Number(statistics.prime_attendance_percentage??0).toLocaleString('ru-RU')}%`"/><StatCard label="Выплачено" :value="Number(statistics.paid_gold??0).toLocaleString('ru-RU')" gold/><StatCard label="Ожидается" :value="Number(statistics.pending_gold??0).toLocaleString('ru-RU')" gold/></div>
   </div>
   <div class="panel player-assets-panel"><div class="panel-title"><h2>Оснащение и транспорт</h2><span class="muted">{{ Object.keys(assetLabels).filter(key => player[key]).length }} / {{ Object.keys(assetLabels).length }}</span></div><div class="player-assets"><span v-for="(label,key) in assetLabels" :key="key" :class="{ owned: player[key] }"><img class="profile-asset-image" :src="assetImages[key]" :alt="label" loading="lazy" :style="{ objectPosition: `${assetImagePositions[key]} center` }"><span class="profile-asset-copy"><i aria-hidden="true">{{ player[key] ? '✓' : '×' }}</i><span><b>{{ label }}</b><small>{{ player[key] ? 'В наличии' : 'Нет' }}</small></span></span></span></div></div>
