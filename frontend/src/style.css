@@ -1225,7 +1225,19 @@ img[src$="#rarity-tale"],.loot-rarity.rarity-tale{border-image-source:url('/imag
 img[src$="#rarity-age_legend"],.loot-rarity.rarity-age_legend{border-image-source:url('/images/loot-grades/icon_grade10.png')!important}
 img[src$="#rarity-myth"],.loot-rarity.rarity-myth{border-image-source:url('/images/loot-grades/icon_grade11.png')!important}
 img[src$="#rarity-twelve"],.loot-rarity.rarity-twelve{border-image-source:url('/images/loot-grades/icon_grade12.png')!important}
-.catalog-rarity-select{width:120px;height:32px;padding:4px 7px;font-size:10px}
+.catalog-grid article{
+  grid-template-columns:52px minmax(0,1fr) auto;
+  grid-template-rows:auto auto;
+  align-content:center;
+  min-height:92px;
+}
+.catalog-grid article>img{grid-column:1;grid-row:1/3}
+.catalog-grid article>strong{grid-column:2;grid-row:1;align-self:end;min-width:0;line-height:1.35}
+.catalog-rarity-select{grid-column:2;grid-row:2;width:100%;height:32px;padding:4px 28px 4px 8px;font-size:10px}
+.catalog-grid article>.danger{grid-column:3;grid-row:1/3;align-self:center;padding:6px}
+.admin-catalog-create .catalog-admin-form{grid-template-columns:1.5fr .8fr 1.5fr auto}
+@media(max-width:1100px){.admin-catalog-create .catalog-admin-form{grid-template-columns:1fr 1fr}}
+@media(max-width:600px){.catalog-grid{grid-template-columns:1fr}.admin-catalog-create .catalog-admin-form{grid-template-columns:1fr}}
 
 /* Inventory slots are operable with mouse, keyboard and touch. */
 .inventory-slot{cursor:pointer}
