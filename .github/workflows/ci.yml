@@ -69,6 +69,10 @@ jobs:
         working-directory: backend
         run: composer install --no-interaction --prefer-dist --no-progress
 
+      - name: Create testing environment file
+        working-directory: backend
+        run: cp .env.example .env
+
       - name: Audit backend dependencies
         working-directory: backend
         run: composer audit --locked --no-interaction
@@ -139,3 +143,4 @@ jobs:
           --volume "$GITHUB_WORKSPACE:/repo"
           ghcr.io/gitleaks/gitleaks:v8.18.4
           detect --source=/repo --no-banner --redact
+          --gitleaks-ignore-path=/repo/.gitleaksignore
