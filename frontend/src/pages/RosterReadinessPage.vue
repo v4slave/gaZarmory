@@ -31,7 +31,7 @@ onMounted(load)
 
 <template>
   <section>
-    <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · РУКОВОДИТЕЛЯМ</p><h1>Готовность состава</h1><p class="muted">ГС, его динамика и оснащение игроков для формирования рейда</p></div></div>
+    <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · РУКОВОДИТЕЛЯМ</p><h1>Готовность состава</h1></div></div>
 
     <div class="readiness-summary">
       <article><span>В выборке</span><strong>{{ data.summary.players ?? 0 }}</strong><small>игроков</small></article>

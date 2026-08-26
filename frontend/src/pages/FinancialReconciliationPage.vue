@@ -13,7 +13,7 @@ onMounted(load)
 </script>
 
 <template><section>
-  <div class="page-heading reconciliation-heading"><div><p class="eyebrow">GAZ ARMORY · ФИНАНСОВЫЙ КОНТРОЛЬ</p><h1>Финансовая сверка</h1><p class="muted">Автоматический поиск расхождений без изменения данных</p></div><button class="primary" :disabled="loading" @click="load">{{ loading?'Проверяем…':'Запустить сверку' }}</button></div>
+  <div class="page-heading reconciliation-heading"><div><p class="eyebrow">GAZ ARMORY · ФИНАНСОВЫЙ КОНТРОЛЬ</p><h1>Финансовая сверка</h1></div><button class="primary" :disabled="loading" @click="load">{{ loading?'Проверяем…':'Запустить сверку' }}</button></div>
   <p v-if="error" class="notice error">{{ error }}</p><div v-if="loading" class="panel empty">Проверяем журналы движений, остатки и связанные операции…</div>
   <template v-else>
     <div :class="['reconciliation-overview',`status-${report.status}`]"><span class="reconciliation-overview-icon">{{ statusIcons[report.status] }}</span><div><small>Результат сверки</small><h2>{{ statusLabels[report.status] }}</h2><p>Проверено: {{ checkedAt }}</p></div><div class="reconciliation-totals"><span><b>{{ report.summary.passed }}</b><small>пройдено</small></span><span><b>{{ report.summary.issues }}</b><small>замечаний</small></span><span><b>{{ report.summary.critical }}</b><small>критических</small></span></div></div>

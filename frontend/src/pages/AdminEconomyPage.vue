@@ -51,7 +51,7 @@ onMounted(load)
 <template>
   <section>
     <div class="page-heading">
-      <div><p class="eyebrow">АДМИНКА</p><h1>Настройки экономики</h1><p class="muted">Контроль параметров, влияющих на отображение казны</p></div>
+      <div><p class="eyebrow">АДМИНКА</p><h1>Настройки экономики</h1></div>
       <button :disabled="loading || saving" @click="load">Обновить</button>
     </div>
     <AdminNav/>

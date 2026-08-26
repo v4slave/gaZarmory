@@ -58,7 +58,7 @@ async function deletePlayer(player) {
 
 <template>
   <section class="roster-page">
-    <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · ГИЛЬДИЯ</p><h1>Состав</h1><p class="muted">Игроки, классы и распределение по конст-пати</p></div><button v-if="auth.canManage" class="primary" @click="showForm = true">Добавить игрока</button></div>
+    <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · ГИЛЬДИЯ</p><h1>Состав</h1></div><button v-if="auth.canManage" class="primary" @click="showForm = true">Добавить игрока</button></div>
     <div class="toolbar"><input v-model="guild.filters.search" placeholder="Поиск по никнейму"><select v-model="guild.filters.class"><option v-for="item in classes" :key="item[0]" :value="item[0]">{{ item[1] }}</option></select></div>
     <p v-if="guild.error" class="notice error">{{ guild.error }}</p>
     <div class="table-wrap roster-table"><div class="roster-table-summary"><span>Игроки гильдии</span><strong>{{ playerCountLabel(guild.pagination?.total ?? guild.players.length) }}</strong></div><table><thead><tr><th>Никнейм</th><th>Класс</th><th>Конст-пати</th><th>Посещено праймов</th><th class="right">Выплачено всего</th><th v-if="auth.canManage" class="right">Действия</th></tr></thead><tbody>

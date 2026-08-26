@@ -1204,6 +1204,11 @@ input:focus,select:focus,textarea:focus{border-color:#dba34e;box-shadow:0 0 0 3p
   display:none;
 }
 
+/* Admin pages share the same explanatory line below their title. */
+main>section:has(>.admin-tabs)>.page-heading .muted{
+  display:none;
+}
+
 /* Inventory slots are operable with mouse, keyboard and touch. */
 .inventory-slot{cursor:pointer}
 .inventory-slot:focus-visible{z-index:12;outline:2px solid #e0a44d;outline-offset:3px}
