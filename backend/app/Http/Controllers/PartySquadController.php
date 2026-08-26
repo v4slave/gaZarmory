@@ -16,7 +16,7 @@ final class PartySquadController extends Controller
 {
     public function show(Request $request, GuildGroup $group)
     {
-        $this->ensureAccess($request, $group);
+        $this->ensureViewAccess($request);
         $periodStart = now()->subDays(30);
         $totalPrimes = Activity::query()->where('occurred_at', '>=', $periodStart)
             ->whereHas('definition', fn ($query) => $query->where('type', 'prime'))->count();
@@ -33,12 +33,12 @@ final class PartySquadController extends Controller
             'player_ids' => $squad->players->pluck('id')->values(),
         ]);
 
-        return response()->json(['group' => $group->only(['id','name']), 'players' => $players, 'squads' => $squads, 'can_edit' => true]);
+        return response()->json(['group' => $group->only(['id','name']), 'players' => $players, 'squads' => $squads, 'can_edit' => $this->canEdit($request, $group)]);
     }
 
     public function store(Request $request, GuildGroup $group)
     {
-        $this->ensureAccess($request, $group);
+        $this->ensureEditAccess($request, $group);
         $data = $request->validate(['name' => ['nullable','string','max:120']]);
         $position = (int) $group->squads()->max('position') + 1;
         $name = trim($data['name'] ?? '') ?: 'Группа '.$position;
@@ -80,7 +80,7 @@ final class PartySquadController extends Controller
 
     public function unassign(Request $request, GuildGroup $group, Player $player)
     {
-        $this->ensureAccess($request, $group);
+        $this->ensureEditAccess($request, $group);
         abort_unless($player->group_id === $group->id, 404);
         DB::table('party_squad_players')->where('player_id', $player->id)->delete();
         return response()->json(null, 204);
@@ -88,14 +88,23 @@ final class PartySquadController extends Controller
 
     private function ensureSquad(Request $request, GuildGroup $group, PartySquad $squad): void
     {
-        $this->ensureAccess($request, $group);
+        $this->ensureEditAccess($request, $group);
         abort_unless($squad->group_id === $group->id, 404);
     }
 
-    private function ensureAccess(Request $request, GuildGroup $group): void
+    private function ensureViewAccess(Request $request): void
+    {
+        abort_unless($request->user()?->player, 403);
+    }
+
+    private function ensureEditAccess(Request $request, GuildGroup $group): void
+    {
+        abort_unless($this->canEdit($request, $group), 403);
+    }
+
+    private function canEdit(Request $request, GuildGroup $group): bool
     {
         $user = $request->user();
-        $allowed = $user->canManageGuild() || ($user->hasRole(UserRole::PartyLeader) && $user->player?->group_id === $group->id);
-        abort_unless($allowed, 403);
+        return $user->canManageGuild() || ($user->hasRole(UserRole::PartyLeader) && $user->player?->group_id === $group->id);
     }
 }

@@ -28,7 +28,7 @@ final class PartySquadTest extends TestCase
         $this->getJson('/api/groups/'.$own->id.'/squads')->assertOk()
             ->assertJsonPath('group.id', $own->id)->assertJsonPath('squads.0.player_ids.0', $member->id)
             ->assertJsonPath('players.1.gear_score', 25000);
-        $this->getJson('/api/groups/'.$other->id.'/squads')->assertForbidden();
+        $this->getJson('/api/groups/'.$other->id.'/squads')->assertOk()->assertJsonPath('can_edit', false);
     }
 
     public function test_squad_is_limited_to_five_members(): void
@@ -43,11 +43,13 @@ final class PartySquadTest extends TestCase
             ->assertUnprocessable()->assertJsonValidationErrors('player_id');
     }
 
-    public function test_regular_member_cannot_open_squad_editor(): void
+    public function test_regular_member_can_view_squads_but_cannot_edit_them(): void
     {
         $group = GuildGroup::query()->create(['name' => 'Squads denied '.uniqid()]);
         [$member] = $this->userWithPlayer(UserRole::Member, $group);
-        $this->actingAs($member)->getJson('/api/groups/'.$group->id.'/squads')->assertForbidden();
+        $this->actingAs($member)->getJson('/api/groups/'.$group->id.'/squads')
+            ->assertOk()->assertJsonPath('can_edit', false);
+        $this->postJson('/api/groups/'.$group->id.'/squads', ['name'=>'Нельзя'])->assertForbidden();
     }
 
     private function userWithPlayer(UserRole $role, GuildGroup $group): array

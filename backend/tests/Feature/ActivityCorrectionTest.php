@@ -46,7 +46,7 @@ final class ActivityCorrectionTest extends TestCase
         $activity->earnings()->first()->update(['status'=>'paid']);
         $this->actingAs($leader)->postJson('/api/activities/'.$activity->id.'/reopen', ['reason'=>'Попытка изменить выплаченную активность'])->assertStatus(409);
 
-        [$leader2, $activity2] = $this->calculatedMiniActivity();
+        [$leader2, $activity2] = $this->calculatedMiniActivity($leader);
         $payout = Payout::query()->create(['period_from'=>now()->toDateString(),'period_to'=>now()->toDateString(),'status'=>'calculated','total_amount'=>500,'created_by'=>$leader2->id]);
         $activity2->earnings()->update(['payout_id'=>$payout->id]);
         $this->actingAs($leader2)->postJson('/api/activities/'.$activity2->id.'/reopen', ['reason'=>'Начисления уже попали в нахрюк'])->assertStatus(409);
@@ -59,13 +59,15 @@ final class ActivityCorrectionTest extends TestCase
         $this->actingAs($leader)->postJson('/api/activities/'.$activity->id.'/reopen', ['reason'=>'ошибка'])->assertUnprocessable();
     }
 
-    private function calculatedMiniActivity(): array
+    private function calculatedMiniActivity(?User $leader = null): array
     {
         $suffix = str_replace('.', '', uniqid('', true));
-        $leader = User::query()->create(['discord_id'=>$suffix,'discord_username'=>'correction'.$suffix]);
-        $leader->forceFill(['role'=>UserRole::GuildLeader,'roles'=>[UserRole::GuildLeader->value]])->save();
-        $leaderPlayer = Player::query()->create(['nickname'=>'Lead'.substr($suffix,-8),'class'=>PlayerClass::Melee,'is_active'=>true]);
-        $leaderPlayer->forceFill(['user_id'=>$leader->id])->save();
+        if (!$leader) {
+            $leader = User::query()->create(['discord_id'=>$suffix,'discord_username'=>'correction'.$suffix]);
+            $leader->forceFill(['role'=>UserRole::GuildLeader,'roles'=>[UserRole::GuildLeader->value]])->save();
+            $leaderPlayer = Player::query()->create(['nickname'=>'Lead'.substr($suffix,-8),'class'=>PlayerClass::Melee,'is_active'=>true]);
+            $leaderPlayer->forceFill(['user_id'=>$leader->id])->save();
+        }
         $definition = ActivityDefinition::query()->create(['name'=>'Correction'.uniqid(),'type'=>'mini_activity','is_active'=>true]);
         $activity = Activity::query()->create(['activity_definition_id'=>$definition->id,'occurred_at'=>now(),'created_by'=>$leader->id]);
         $players = collect(['Alpha','Beta'])->map(fn ($name) => Player::query()->create(['nickname'=>$name.substr(uniqid(),-6),'class'=>PlayerClass::Mage,'is_active'=>true]));

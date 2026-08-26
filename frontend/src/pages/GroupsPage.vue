@@ -4,17 +4,19 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useGuildStore } from '../stores/guild.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
+import { useConfirmationStore } from '../stores/confirmation.js'
 
 const auth = useAuthStore(); const guild = useGuildStore(); const name = ref(''); const busy = ref(false); const renameTarget = ref(null); const renameName = ref('')
 const router = useRouter()
+const confirmation = useConfirmationStore()
 let masonryObserver
 const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг', healer: 'Хил', bard: 'Бард', tank: 'Танк' }
 async function create() { if (!name.value.trim()) return; busy.value = true; try { await guild.createGroup(name.value.trim()); name.value = '' } finally { busy.value = false } }
 function rename(group) { renameTarget.value = group; renameName.value = group.name }
 async function saveRename() { const value=renameName.value.trim();if(!renameTarget.value||!value||value===renameTarget.value.name)return;busy.value=true;try{await guild.renameGroup(renameTarget.value.id,value);renameTarget.value=null;renameName.value=''}finally{busy.value=false} }
-async function remove(group) { if (window.confirm(`Удалить «${group.name}»? Игроки станут одиночками.`)) await guild.deleteGroup(group.id) }
+async function remove(group) { if (await confirmation.ask({title:'Удалить конст-пати?',message:`Игроки из «${group.name}» станут одиночками.`,confirmLabel:'Удалить',danger:true})) await guild.deleteGroup(group.id) }
 function canManageGroup() { return auth.canManage }
-function canOpenSquads(group) { return auth.canManage || (auth.isPartyLeader && Number(auth.partyGroupId) === Number(group.id)) }
+function canOpenSquads() { return true }
 function openSquadsFromTitle(event) {
   if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return
   const title = event.target.closest('.group-card h2[data-group-id]')

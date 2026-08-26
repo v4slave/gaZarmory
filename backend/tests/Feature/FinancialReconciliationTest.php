@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Enums\PlayerClass;
 use App\Enums\UserRole;
+use App\Models\Payout;
 use App\Models\Player;
 use App\Models\TreasuryItem;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class FinancialReconciliationTest extends TestCase
@@ -42,6 +44,30 @@ final class FinancialReconciliationTest extends TestCase
         foreach ([UserRole::Member, UserRole::MicroGuildLeader] as $role) {
             $this->actingAs($this->user($role))->getJson('/api/financial-reconciliation')->assertForbidden();
         }
+    }
+
+    public function test_payout_reconciliation_does_not_add_a_query_per_payout(): void
+    {
+        $developer = $this->user(UserRole::Developer);
+        $queries = [];
+        DB::listen(function () use (&$queries): void { $queries[] = true; });
+
+        $this->actingAs($developer)->getJson('/api/financial-reconciliation')->assertOk();
+        $baseline = count($queries);
+
+        foreach (range(1, 20) as $index) {
+            Payout::query()->create([
+                'period_from'=>now()->toDateString(),
+                'period_to'=>now()->toDateString(),
+                'status'=>'calculated',
+                'total_amount'=>$index,
+                'created_by'=>$developer->id,
+            ]);
+        }
+
+        $queries = [];
+        $this->actingAs($developer)->getJson('/api/financial-reconciliation')->assertOk();
+        $this->assertLessThanOrEqual($baseline + 2, count($queries));
     }
 
     private function user(UserRole $role): User

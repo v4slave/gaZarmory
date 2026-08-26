@@ -1,9 +1,11 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { useActivitiesStore } from '../stores/activities.js'
+import { useConfirmationStore } from '../stores/confirmation.js'
 
 const props=defineProps({activityId:{type:[String,Number],required:true}})
 const activities=useActivitiesStore(); const file=ref(null); const busy=ref(false); const error=ref(''); const saved=ref({})
+const confirmation=useConfirmationStore()
 const draft=computed(()=>activities.lootImport)
 const hasInvalid=computed(()=>draft.value?.rows?.some(row=>row.status!=='valid')??false)
 function choose(event){file.value=event.target.files?.[0]??null;error.value=''}
@@ -16,7 +18,7 @@ async function upload(){
   finally{busy.value=false}
 }
 async function save(row){busy.value=true;error.value='';try{await activities.updateLootRow(draft.value.id,row.id,{item_name:row.item_name,quantity:Number(row.quantity),unit_price:Number(row.unit_price)});saved.value[row.id]=true;setTimeout(()=>delete saved.value[row.id],1200)}catch(e){error.value=e.response?.data?.message??'Проверьте значения строки.'}finally{busy.value=false}}
-async function confirmImport(){if(!confirm('Подтвердить импорт? Предметы поступят в казну, а транзакции станут immutable.'))return;busy.value=true;error.value='';try{await activities.confirmLootImport(draft.value.id)}catch(e){error.value=e.response?.data?.message??'Не удалось подтвердить импорт.'}finally{busy.value=false}}
+async function confirmImport(){if(!await confirmation.ask({title:'Подтвердить импорт?',message:'Предметы поступят в казну, а созданные транзакции больше нельзя будет изменить.',confirmLabel:'Подтвердить в казну'}))return;busy.value=true;error.value='';try{await activities.confirmLootImport(draft.value.id)}catch(e){error.value=e.response?.data?.message??'Не удалось подтвердить импорт.'}finally{busy.value=false}}
 </script>
 
 <template><div class="panel loot-import"><div class="panel-title"><div><h2>Импорт лута</h2><p class="muted">CSV/XLSX · черновик до подтверждения</p></div><span v-if="draft" :class="['import-status',draft.status]">{{ draft.status==='draft'?'Черновик':'Подтверждён' }}</span></div>

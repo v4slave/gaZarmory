@@ -32,24 +32,43 @@ const economyLinks = [
   { to: '/payouts', label: 'Нахрюк', icon: '🐷' },
 ]
 async function loadActiveAuctions(){if(!auth.user?.player)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
-async function loadNotifications(){if(!auth.authenticated)return;try{const data=(await api.get('/api/notifications')).data;notificationItems.value=data.items;unreadNotifications.value=data.unread_count}catch{}}
+async function loadNotifications(){if(!auth.authenticated)return;try{const data=(await api.get('/api/notifications')).data;notificationItems.value=data.items;unreadNotifications.value=data.unread_count}catch{/* Background refresh retries on the next interval. */}}
 async function markNotification(item){if(!item.read_at){await api.post(`/api/notifications/${item.id}/read`);item.read_at=new Date().toISOString();unreadNotifications.value=Math.max(0,unreadNotifications.value-1)}notificationOpen.value=false}
 async function markAllNotifications(){await api.post('/api/notifications/read-all');notificationItems.value.forEach(item=>item.read_at??=new Date().toISOString());unreadNotifications.value=0}
 function notificationIcon(type){return({link_request:'♙',auction_started:'♢',auction_finished:'◆',auction_outbid:'!',payout_calculated:'🐷',insufficient_gold:'▣',activity_upcoming:'⚔'})[type]??'•'}
 function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
-watch(() => route.fullPath, () => { menuOpen.value = false;loadActiveAuctions() })
-watch(() => auth.authenticated, authenticated => { if(authenticated)loadActiveAuctions();else activeAuctions.value=0 })
-function syncDiscordOnFocus(){if(document.visibilityState==='visible')auth.syncDiscordProfile()}
+watch(() => route.fullPath, () => { menuOpen.value = false })
+watch(() => auth.authenticated, authenticated => {
+  if(authenticated&&document.visibilityState==='visible')loadActiveAuctions()
+  else if(!authenticated)activeAuctions.value=0
+  updateNotificationPolling()
+})
+function stopNotificationPolling(){if(notificationTicker){window.clearInterval(notificationTicker);notificationTicker=undefined}}
+function updateNotificationPolling(){
+  stopNotificationPolling()
+  if(auth.authenticated&&document.visibilityState==='visible'){
+    loadNotifications()
+    notificationTicker=window.setInterval(loadNotifications,30000)
+  }
+}
 function stopPlayerLinkPolling(){if(playerLinkTicker){window.clearInterval(playerLinkTicker);playerLinkTicker=undefined}}
 function updatePlayerLinkPolling(){
   stopPlayerLinkPolling()
-  if(auth.authenticated&&!auth.user?.player&&auth.user?.pending_player_link_request){
+  if(document.visibilityState==='visible'&&auth.authenticated&&!auth.user?.player&&auth.user?.pending_player_link_request){
     playerLinkTicker=window.setInterval(()=>auth.fetchMe().catch(()=>{}),5000)
   }
 }
+function handleVisibilityChange(){
+  if(document.visibilityState==='visible'){
+    auth.syncDiscordProfile()
+    loadActiveAuctions()
+  }
+  updateNotificationPolling()
+  updatePlayerLinkPolling()
+}
 watch(()=>[auth.authenticated,auth.user?.player?.id,auth.user?.pending_player_link_request?.id],updatePlayerLinkPolling,{immediate:true})
-onMounted(()=>{loadActiveAuctions();loadNotifications();auth.syncDiscordProfile();notificationTicker=window.setInterval(loadNotifications,30000);window.addEventListener('auction-count-changed',updateAuctionCount);document.addEventListener('visibilitychange',syncDiscordOnFocus)})
-onBeforeUnmount(()=>{window.clearInterval(notificationTicker);stopPlayerLinkPolling();window.removeEventListener('auction-count-changed',updateAuctionCount);document.removeEventListener('visibilitychange',syncDiscordOnFocus)})
+onMounted(()=>{handleVisibilityChange();window.addEventListener('auction-count-changed',updateAuctionCount);document.addEventListener('visibilitychange',handleVisibilityChange)})
+onBeforeUnmount(()=>{stopNotificationPolling();stopPlayerLinkPolling();window.removeEventListener('auction-count-changed',updateAuctionCount);document.removeEventListener('visibilitychange',handleVisibilityChange)})
 async function openLinker() {
   showLinker.value = true
   linkError.value = ''

@@ -5,8 +5,11 @@ import { useGuildStore } from '../stores/guild.js'
 import PlayerForm from '../components/PlayerForm.vue'
 import GoldAmount from '../components/GoldAmount.vue'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
+import { useConfirmationStore } from '../stores/confirmation.js'
+import { apiErrorMessage, useNotificationsStore } from '../stores/notifications.js'
 
 const auth = useAuthStore(); const guild = useGuildStore(); const showForm = ref(false)
+const confirmation = useConfirmationStore(); const notifications = useNotificationsStore()
 const moving = ref(null)
 const deleting = ref(null)
 const classes = [['', 'Все классы'], ['melee', 'Милик'], ['archer', 'Лучник'], ['mage', 'Маг'], ['healer', 'Хил'], ['bard', 'Бард'], ['tank', 'Танк']]
@@ -31,14 +34,22 @@ function playerCountLabel(value) {
   return `${count.toLocaleString('ru-RU')} ${word}`
 }
 async function deletePlayer(player) {
-  if (!window.confirm(`Удалить персонажа «${player.nickname}» без возможности восстановления?`)) return
+  const confirmed = await confirmation.ask({
+    title: 'Безвозвратно удалить персонажа?',
+    message: `Персонаж «${player.nickname}» будет удалён без возможности восстановления. Исторические записи блокируют удаление автоматически.`,
+    confirmLabel: 'Удалить навсегда',
+    danger: true,
+    expectedText: player.nickname,
+  })
+  if (!confirmed) return
   deleting.value = player.id
   guild.error = ''
   try {
     await guild.deletePlayer(player.id)
+    notifications.success(`Персонаж «${player.nickname}» удалён.`)
   } catch (error) {
-    const validationError = Object.values(error.response?.data?.errors ?? {}).flat()[0]
-    guild.error = validationError ?? error.response?.data?.message ?? 'Не удалось удалить персонажа.'
+    guild.error = apiErrorMessage(error, 'Не удалось удалить персонажа.')
+    notifications.error(guild.error)
   } finally {
     deleting.value = null
   }

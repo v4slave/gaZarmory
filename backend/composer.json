@@ -1,7 +1,9 @@
 {
   "$schema": "https://getcomposer.org/schema.json",
   "name": "armory-aa/backend",
+  "description": "Backend API for the Armory AA guild management application.",
   "type": "project",
+  "license": "proprietary",
   "require": {
     "php": "^8.3",
     "laravel/framework": "^12.0",

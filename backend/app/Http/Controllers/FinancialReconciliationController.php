@@ -40,47 +40,73 @@ final class FinancialReconciliationController extends Controller
 
     private function goldCheck(): array
     {
-        $transactions = TreasuryTransaction::query()->orderBy('id')->get(['id','type','amount','balance_after','description','created_at']);
-        $issues = []; $running = 0;
-        foreach ($transactions as $transaction) {
-            $running += (int) $transaction->amount;
-            if ($running !== (int) $transaction->balance_after) $issues[] = $this->issue('critical', 'Разрыв баланса в транзакции #'.$transaction->id, 'Ожидалось '.$running.', записано '.$transaction->balance_after, 'treasury_transaction', $transaction->id);
-        }
-        $current = (int) ($transactions->last()?->balance_after ?? 0);
+        $runningBalances = TreasuryTransaction::query()
+            ->select(['id','balance_after'])
+            ->selectRaw('SUM(amount) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS expected_balance');
+        $breaks = DB::query()->fromSub($runningBalances, 'running_transactions')
+            ->whereColumn('expected_balance', '<>', 'balance_after')
+            ->orderBy('id')->get();
+        $issues = $breaks->map(fn ($transaction) => $this->issue(
+            'critical',
+            'Разрыв баланса в транзакции #'.$transaction->id,
+            'Ожидалось '.$transaction->expected_balance.', записано '.$transaction->balance_after,
+            'treasury_transaction',
+            $transaction->id,
+        ))->all();
+        $running = (int) TreasuryTransaction::query()->sum('amount');
+        $current = (int) (TreasuryTransaction::query()->latest('id')->value('balance_after') ?? 0);
         if ($running !== $current && !$issues) $issues[] = $this->issue('critical','Сумма транзакций не совпадает с текущим балансом','По движениям '.$running.', текущий баланс '.$current);
-        return $this->check('gold','Золото по транзакциям','Сверка последовательности всех движений и текущего баланса',$issues,['calculated_balance'=>$running,'current_balance'=>$current,'transactions'=>$transactions->count()]);
+        return $this->check('gold','Золото по транзакциям','Сверка последовательности всех движений и текущего баланса',$issues,['calculated_balance'=>$running,'current_balance'=>$current,'transactions'=>TreasuryTransaction::query()->count()]);
     }
 
     private function itemCheck(): array
     {
-        $movementTotals = TreasuryItemTransaction::query()->selectRaw('treasury_item_id, SUM(quantity_delta) AS total')->groupBy('treasury_item_id')->pluck('total','treasury_item_id');
-        $items = TreasuryItem::query()->orderBy('id')->get(); $issues = [];
-        foreach ($items as $item) {
-            $expected = (int) ($movementTotals[$item->id] ?? 0);
-            if ($expected !== (int) $item->quantity) $issues[] = $this->issue('critical','Остаток «'.$item->item_name.'» не совпадает с движениями','По движениям '.$expected.', в казне '.$item->quantity,'treasury_item',$item->id);
-        }
-        return $this->check('items','Предметы по движениям','Сумма движений каждого предмета против текущего остатка',$issues,['items'=>$items->count(),'movements'=>TreasuryItemTransaction::query()->count()]);
+        $movementTotals = TreasuryItemTransaction::query()
+            ->selectRaw('treasury_item_id, SUM(quantity_delta) AS expected_quantity')
+            ->groupBy('treasury_item_id');
+        $items = TreasuryItem::query()
+            ->leftJoinSub($movementTotals, 'movement_totals', fn ($join) => $join->on('movement_totals.treasury_item_id', '=', 'treasury_items.id'))
+            ->whereRaw('COALESCE(movement_totals.expected_quantity, 0) <> treasury_items.quantity')
+            ->orderBy('treasury_items.id')
+            ->get(['treasury_items.id','treasury_items.item_name','treasury_items.quantity',DB::raw('COALESCE(movement_totals.expected_quantity, 0) AS expected_quantity')]);
+        $issues = $items->map(fn ($item) => $this->issue('critical','Остаток «'.$item->item_name.'» не совпадает с движениями','По движениям '.$item->expected_quantity.', в казне '.$item->quantity,'treasury_item',$item->id))->all();
+        return $this->check('items','Предметы по движениям','Сумма движений каждого предмета против текущего остатка',$issues,['items'=>TreasuryItem::query()->count(),'movements'=>TreasuryItemTransaction::query()->count()]);
     }
 
     private function payoutCheck(): array
     {
-        $payouts = Payout::query()->with('players:id,payout_id,amount,status,paid_at')->orderBy('id')->get(); $issues = [];
-        $earnings = PrimePlayerEarning::query()->whereNotNull('payout_id')->selectRaw('payout_id, SUM(player_share) AS total, COUNT(*) AS rows')->groupBy('payout_id')->get()->keyBy('payout_id');
+        $playerTotals = DB::table('payout_players')->selectRaw("payout_id, SUM(amount) AS total, BOOL_AND(status = 'paid') AS all_paid")->groupBy('payout_id');
+        $earningTotals = DB::table('prime_player_earnings')->whereNotNull('payout_id')->selectRaw('payout_id, SUM(player_share) AS total, COUNT(*) AS rows')->groupBy('payout_id');
+        $goldTotals = DB::table('treasury_transactions')->where('related_entity_type', Payout::class)->selectRaw('related_entity_id AS payout_id, SUM(amount) AS total')->groupBy('related_entity_id');
+        $payouts = Payout::query()
+            ->leftJoinSub($playerTotals, 'player_totals', fn ($join) => $join->on('player_totals.payout_id', '=', 'payouts.id'))
+            ->leftJoinSub($earningTotals, 'earning_totals', fn ($join) => $join->on('earning_totals.payout_id', '=', 'payouts.id'))
+            ->leftJoinSub($goldTotals, 'gold_totals', fn ($join) => $join->on('gold_totals.payout_id', '=', 'payouts.id'))
+            ->whereNotIn('payouts.status', ['draft','cancelled'])
+            ->where(function ($query): void {
+                $query->whereRaw('COALESCE(player_totals.total, 0) <> payouts.total_amount')
+                    ->orWhereRaw('COALESCE(earning_totals.total, 0) <> payouts.total_amount')
+                    ->orWhere(fn ($paid) => $paid->where('payouts.status', 'paid')->where(fn ($invalid) => $invalid
+                        ->whereRaw('COALESCE(gold_totals.total, 0) <> -payouts.total_amount')
+                        ->orWhereRaw('COALESCE(player_totals.all_paid, false) = false')));
+            })
+            ->orderBy('payouts.id')
+            ->get(['payouts.*',DB::raw('COALESCE(player_totals.total, 0) AS players_total'),DB::raw('COALESCE(earning_totals.total, 0) AS earnings_total'),DB::raw('COALESCE(gold_totals.total, 0) AS gold_total'),DB::raw('COALESCE(player_totals.all_paid, false) AS all_players_paid')]);
+        $issues = [];
         foreach ($payouts as $payout) {
-            if ($payout->status === 'draft' || $payout->status === 'cancelled') continue;
-            $playersTotal = (int) $payout->players->sum('amount');
-            $earningsTotal = (int) ($earnings->get($payout->id)?->total ?? 0);
+            $playersTotal = (int) $payout->players_total;
+            $earningsTotal = (int) $payout->earnings_total;
             if ($playersTotal !== (int) $payout->total_amount) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': сумма игроков не совпадает','Игрокам '.$playersTotal.', итог '.$payout->total_amount,'payout',$payout->id);
             if ($earningsTotal !== (int) $payout->total_amount) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': начисления не совпадают','Начисления '.$earningsTotal.', итог '.$payout->total_amount,'payout',$payout->id);
             if ($payout->status === 'paid') {
-                $gold = (int) TreasuryTransaction::query()->where('related_entity_type', Payout::class)->where('related_entity_id',$payout->id)->sum('amount');
+                $gold = (int) $payout->gold_total;
                 if ($gold !== -(int)$payout->total_amount) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': неверное списание золота','Ожидалось '.(-$payout->total_amount).', списано '.$gold,'payout',$payout->id);
-                if ($payout->players->contains(fn ($row) => $row->status !== 'paid')) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': не все строки игроков оплачены','Статус нахрюка paid, но есть строки с другим статусом','payout',$payout->id);
+                if (!(bool) $payout->all_players_paid) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': не все строки игроков оплачены','Статус нахрюка paid, но есть строки с другим статусом','payout',$payout->id);
             }
         }
         $orphaned = PrimePlayerEarning::query()->whereNotNull('payout_id')->whereDoesntHave('payout')->get(['id','payout_id']);
         foreach ($orphaned as $earning) $issues[] = $this->issue('critical','Начисление #'.$earning->id.' ссылается на отсутствующий нахрюк','payout_id '.$earning->payout_id,'earning',$earning->id);
-        return $this->check('payouts','Начисления и нахрюки','Сверка начислений, строк игроков, итогов и списаний золота',$issues,['payouts'=>$payouts->count(),'linked_earnings'=>(int)$earnings->sum('rows')]);
+        return $this->check('payouts','Начисления и нахрюки','Сверка начислений, строк игроков, итогов и списаний золота',$issues,['payouts'=>Payout::query()->count(),'linked_earnings'=>PrimePlayerEarning::query()->whereNotNull('payout_id')->count()]);
     }
 
     private function reservationCheck(): array

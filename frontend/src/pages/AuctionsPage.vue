@@ -131,7 +131,7 @@ async function placeBid() {
 onMounted(async () => {
   await loadAll()
   ticker = window.setInterval(() => { clock.value = Date.now() }, 1000)
-  liveTicker=window.setInterval(async()=>{try{await loadAll();if(selectedAuction.value)selectedAuction.value=(await api.get(`/api/auctions/${selectedAuction.value.id}`)).data}catch{}},5000)
+  liveTicker=window.setInterval(async()=>{try{await loadAll();if(selectedAuction.value)selectedAuction.value=(await api.get(`/api/auctions/${selectedAuction.value.id}`)).data}catch{/* Keep the last successful live state. */}},5000)
 })
 onUnmounted(() => {window.clearInterval(ticker);window.clearInterval(liveTicker)})
 async function openArchive(){archive.value=(await api.get('/api/auctions/archive')).data}

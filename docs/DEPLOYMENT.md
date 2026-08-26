@@ -65,12 +65,17 @@ https://armory.example.com/auth/discord/callback
 
 ```bash
 sudo cp deploy/nginx/gaz-armory.conf /etc/nginx/sites-available/gaz-armory
+sudo cp deploy/nginx/security-headers.conf /etc/nginx/snippets/gaz-armory-security.conf
 sudo ln -s /etc/nginx/sites-available/gaz-armory /etc/nginx/sites-enabled/gaz-armory
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
 Замените `armory.example.com` и при необходимости сокет PHP-FPM. Для Ubuntu 26.04 с PHP 8.5 это `php8.5-fpm.sock`. После проверки HTTP выпустите сертификат ACME/Let's Encrypt и включите перенаправление HTTP → HTTPS.
+
+Не оставляйте приложение доступным по HTTP после выпуска сертификата. HTTPS-конфигурация должна передавать PHP заголовок `X-Forwarded-Proto: https`, а HTTP-server — отвечать перенаправлением `301` на тот же URI по HTTPS. Добавьте `Strict-Transport-Security: max-age=31536000; includeSubDomains` только после проверки HTTPS на основном домене и всех его поддоменах.
+
+Шаблон ограничивает API до 120 запросов в минуту с одного IP, а OAuth и Sanctum — до 20. Если перед Nginx используется CDN или reverse proxy, сначала настройте `set_real_ip_from` и `real_ip_header`; иначе лимит будет применяться к адресу прокси, а не пользователя. Защитные заголовки находятся в отдельном snippet и должны оставаться подключёнными также в locations с собственным `add_header`, поскольку Nginx не наследует родительские `add_header` в таких блоках.
 
 Для загрузки изображений в раздел «Контент» установите в `php.ini` для PHP-FPM значения `upload_max_filesize = 20M` и `post_max_size = 22M`, затем перезапустите PHP-FPM. Загрузка видео с устройства запрещена: ролики добавляются только ссылками на поддерживаемые платформы.
 
@@ -139,6 +144,8 @@ APP_DIR=/var/www/gaz-armory/current deploy/scripts/deploy.sh
 - главная страница и изображения открываются по HTTPS;
 - вход и выход через Discord работают;
 - cookie имеет флаги `Secure` и `HttpOnly`;
+- cookie-сессия зашифрована (`SESSION_ENCRYPT=true`);
+- ответы содержат CSP, `X-Content-Type-Options`, `Referrer-Policy` и запрет framing;
 - создаётся тестовая активность;
 - очередь обрабатывает Discord-уведомление;
 - истёкший тестовый аукцион закрывается scheduler;

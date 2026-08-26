@@ -2,8 +2,10 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
+import { useConfirmationStore } from '../stores/confirmation.js'
 
 const auth = useAuthStore()
+const confirmation = useConfirmationStore()
 const posts = ref([]), loading = ref(true), loadingMore = ref(false), saving = ref(false), error = ref('')
 const nextPage = ref(null)
 const search = ref(''), kind = ref(''), sort = ref('new'), favorites = ref(false)
@@ -49,7 +51,7 @@ async function loadMetadata(url) {
     if (form.value.url === url && (!form.value.title || form.value.title === autoTitle.value)) {
       autoTitle.value = data.title; form.value.title = data.title
     }
-  } catch {} finally { if (form.value.url === url) titleLoading.value = false }
+  } catch { /* A title can still be entered manually. */ } finally { if (form.value.url === url) titleLoading.value = false }
 }
 
 function openAdd() { showAdd.value = true; error.value = ''; autoTitle.value = ''; titleLoading.value = false; form.value = { title:'', description:'', url:'' }; selectedFile.value = null }
@@ -67,7 +69,7 @@ async function react(post, type) {
   const field = type === 'like' ? 'liked_by_me' : 'favorite_by_me', count = type === 'like' ? 'likes_count' : 'favorites_count'
   const { data } = await api.post(`/api/media/${post.id}/reaction`, { type }); post[field] = data.active; post[count] += data.active ? 1 : -1
 }
-async function remove(post) { if (!confirm(`Удалить «${post.title}»?`)) return; await api.delete(`/api/media/${post.id}`); if (active.value?.id === post.id) active.value = null; posts.value = posts.value.filter(item => item.id !== post.id) }
+async function remove(post) { if (!await confirmation.ask({title:'Удалить публикацию?',message:`«${post.title}» исчезнет из раздела контента.`,confirmLabel:'Удалить',danger:true})) return; await api.delete(`/api/media/${post.id}`); if (active.value?.id === post.id) active.value = null; posts.value = posts.value.filter(item => item.id !== post.id) }
 </script>
 
 <template>

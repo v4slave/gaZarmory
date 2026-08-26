@@ -7,7 +7,7 @@ return [
             'driver' => 'pgsql', 'url' => env('DB_URL'), 'host' => env('DB_HOST', '127.0.0.1'),
             'port' => env('DB_PORT', '5432'), 'database' => env('DB_DATABASE', 'armory_aa'),
             'username' => env('DB_USERNAME', 'armory_aa'), 'password' => env('DB_PASSWORD', ''),
-            'charset' => 'utf8', 'prefix' => '', 'prefix_indexes' => true, 'search_path' => 'public', 'sslmode' => env('DB_SSLMODE', 'prefer'),
+            'charset' => 'utf8', 'prefix' => '', 'prefix_indexes' => true, 'search_path' => env('DB_SEARCH_PATH', 'public'), 'sslmode' => env('DB_SSLMODE', 'prefer'),
         ],
     ],
     'migrations' => ['table' => 'migrations', 'update_date_on_publish' => true],

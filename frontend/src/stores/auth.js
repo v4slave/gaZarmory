@@ -25,7 +25,7 @@ export const useAuthStore = defineStore('auth', {
     },
     async syncDiscordProfile() {
       if (!this.user) return
-      try { this.user = (await api.post('/api/me/discord-profile/sync')).data } catch {}
+      try { this.user = (await api.post('/api/me/discord-profile/sync')).data } catch { /* Profile sync is best-effort. */ }
     },
     login() { window.location.assign(`${api.defaults.baseURL}/auth/discord`) },
     async logout() { await api.post('/api/logout'); this.user = null },

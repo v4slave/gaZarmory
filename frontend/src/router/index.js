@@ -1,37 +1,39 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import DashboardPage from '../pages/DashboardPage.vue'
-import RosterPage from '../pages/RosterPage.vue'
-import GroupsPage from '../pages/GroupsPage.vue'
-import PartySquadsPage from '../pages/PartySquadsPage.vue'
-import ActivitiesPage from '../pages/ActivitiesPage.vue'
-import ActivityPage from '../pages/ActivityPage.vue'
-import TreasuryPage from '../pages/TreasuryPage.vue'
-import PayoutsPage from '../pages/PayoutsPage.vue'
-import PayoutPage from '../pages/PayoutPage.vue'
-import AuctionsPage from '../pages/AuctionsPage.vue'
-import PlayerPage from '../pages/PlayerPage.vue'
-import AdminPage from '../pages/AdminPage.vue'
-import AuctionPage from '../pages/AuctionPage.vue'
-import AccessDeniedPage from '../pages/AccessDeniedPage.vue'
-import NotFoundPage from '../pages/NotFoundPage.vue'
-import RosterReadinessPage from '../pages/RosterReadinessPage.vue'
-import AttendanceAnalyticsPage from '../pages/AttendanceAnalyticsPage.vue'
-import FinancialReconciliationPage from '../pages/FinancialReconciliationPage.vue'
-import AdminUsersPage from '../pages/AdminUsersPage.vue'
-import AdminRequestsPage from '../pages/AdminRequestsPage.vue'
-import AdminActivitiesPage from '../pages/AdminActivitiesPage.vue'
-import AdminLootPage from '../pages/AdminLootPage.vue'
-import AdminAuditPage from '../pages/AdminAuditPage.vue'
-import AdminEconomyPage from '../pages/AdminEconomyPage.vue'
-import AdminIntegrationsPage from '../pages/AdminIntegrationsPage.vue'
-import MediaPage from '../pages/MediaPage.vue'
+
+const page = (name) => () => import(`../pages/${name}.vue`)
+const DashboardPage = page('DashboardPage')
+const RosterPage = page('RosterPage')
+const GroupsPage = page('GroupsPage')
+const PartySquadsPage = page('PartySquadsPage')
+const ActivitiesPage = page('ActivitiesPage')
+const ActivityPage = page('ActivityPage')
+const TreasuryPage = page('TreasuryPage')
+const PayoutsPage = page('PayoutsPage')
+const PayoutPage = page('PayoutPage')
+const AuctionsPage = page('AuctionsPage')
+const PlayerPage = page('PlayerPage')
+const AdminPage = page('AdminPage')
+const AuctionPage = page('AuctionPage')
+const AccessDeniedPage = page('AccessDeniedPage')
+const NotFoundPage = page('NotFoundPage')
+const RosterReadinessPage = page('RosterReadinessPage')
+const AttendanceAnalyticsPage = page('AttendanceAnalyticsPage')
+const FinancialReconciliationPage = page('FinancialReconciliationPage')
+const AdminUsersPage = page('AdminUsersPage')
+const AdminRequestsPage = page('AdminRequestsPage')
+const AdminActivitiesPage = page('AdminActivitiesPage')
+const AdminLootPage = page('AdminLootPage')
+const AdminAuditPage = page('AdminAuditPage')
+const AdminEconomyPage = page('AdminEconomyPage')
+const AdminIntegrationsPage = page('AdminIntegrationsPage')
+const MediaPage = page('MediaPage')
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
   { path: '/dashboard', component: DashboardPage, meta: { title: 'Дашборд' } },
   { path: '/roster', component: RosterPage, meta: { title: 'Состав' } },
   { path: '/groups', component: GroupsPage, meta: { title: 'Конст-пати' } },
-  { path: '/groups/:id/squads', component: PartySquadsPage, meta: { title: 'Пятёрки КП', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
+  { path: '/groups/:id/squads', component: PartySquadsPage, meta: { title: 'Пятёрки КП' } },
   { path: '/roster-readiness', component: RosterReadinessPage, meta: { title: 'Готовность состава', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
   { path: '/attendance-analytics', component: AttendanceAnalyticsPage, meta: { title: 'Аналитика посещаемости', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
   { path: '/financial-reconciliation', component: FinancialReconciliationPage, meta: { title: 'Финансовая сверка', roles: ['guild_leader', 'developer'] } },
