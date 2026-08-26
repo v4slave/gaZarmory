@@ -51,6 +51,34 @@ final class NotificationCenterTest extends TestCase
         self::assertNull($notification->fresh()->read_at);
     }
 
+    public function test_expired_notifications_are_hidden_and_pruned(): void
+    {
+        config(['notifications.retention_days' => 7]);
+        $user = $this->linkedUser();
+        $expired = ArmoryNotification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'auction_started',
+            'data' => ['title' => 'Старый аукцион', 'message' => 'Лот уже не актуален.', 'url' => '/auctions'],
+        ]);
+        $expired->forceFill(['created_at' => now()->subDays(8), 'updated_at' => now()->subDays(8)])->save();
+        $current = ArmoryNotification::query()->create([
+            'user_id' => $user->id,
+            'type' => 'auction_started',
+            'data' => ['title' => 'Новый аукцион', 'message' => 'Лот открыт.', 'url' => '/auctions'],
+        ]);
+
+        $this->actingAs($user)->getJson('/api/notifications')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1)
+            ->assertJsonCount(1, 'items')
+            ->assertJsonPath('items.0.id', $current->id);
+
+        $this->artisan('notifications:prune')->assertSuccessful();
+
+        self::assertDatabaseMissing('notifications', ['id' => $expired->id]);
+        self::assertDatabaseHas('notifications', ['id' => $current->id]);
+    }
+
     public function test_upcoming_activity_notification_is_not_duplicated(): void
     {
         $user = $this->linkedUser();

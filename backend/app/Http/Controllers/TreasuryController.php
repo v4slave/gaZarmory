@@ -22,7 +22,7 @@ final class TreasuryController extends Controller
         $gold = (int) (DB::table('treasury_transactions')->latest('id')->value('balance_after') ?? 0);
         $tokenCount = $tokenUnitValue > 0 ? intdiv($gold, $tokenUnitValue) : 0;
         $transactionQuery = TreasuryItemTransaction::query()->with([
-            'item:id,item_name,icon_path,unit_value',
+            'item:id,item_name,icon_path,rarity,unit_value',
             'recipient:id,nickname',
             'sourceActivity:id,activity_definition_id,occurred_at',
             'sourceActivity.definition:id,name,type,icon_path',
@@ -54,6 +54,7 @@ final class TreasuryController extends Controller
                         'id' => $transaction->id,
                         'name' => $transaction->item?->item_name,
                         'icon_url' => $transaction->item?->icon_url,
+                        'rarity' => $transaction->item?->rarity,
                         'quantity' => $transaction->quantity_delta,
                     ])->values(),
                 ];

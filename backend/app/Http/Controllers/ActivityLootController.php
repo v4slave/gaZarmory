@@ -39,15 +39,17 @@ final class ActivityLootController extends Controller
                 'unit_price' => $data['unit_price'],
                 'quantity' => $data['quantity'],
                 'icon_path' => $iconPath,
+                'rarity' => $catalogItem->rarity,
                 'created_by' => $request->user()->id,
             ]);
             $item = TreasuryItem::query()->lockForUpdate()->firstOrCreate(
                 ['item_name' => $catalogItem->name],
-                ['quantity' => 0, 'reserved_quantity' => 0, 'unit_value' => $data['unit_price'], 'icon_path' => $iconPath]
+                ['quantity' => 0, 'reserved_quantity' => 0, 'unit_value' => $data['unit_price'], 'icon_path' => $iconPath, 'rarity' => $catalogItem->rarity]
             );
             $item->quantity += $data['quantity'];
             $item->unit_value = $data['unit_price'];
             if ($iconPath) $item->icon_path = $iconPath;
+            $item->rarity = $catalogItem->rarity;
             $item->save();
             TreasuryItemTransaction::query()->create([
                 'treasury_item_id' => $item->id,

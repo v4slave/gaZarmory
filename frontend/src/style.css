@@ -265,7 +265,8 @@ main>header{height:64px;padding:0 30px;background:rgba(8,7,6,.86);backdrop-filte
 main>header button,.secondary,.page-actions>button,.form-actions button{border-radius:8px;transition:color .16s ease,border-color .16s ease,background .16s ease,transform .16s ease,box-shadow .16s ease}
 button.primary,.primary{border-radius:8px;background:linear-gradient(135deg,#c88b3d,#80501d);box-shadow:0 7px 20px rgba(115,68,19,.24)}
 button.primary:hover,.primary:hover{transform:translateY(-1px);filter:brightness(1.08)}
-button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px}
+button:focus-visible,a:focus-visible{outline:2px solid var(--accent-bright);outline-offset:2px}
+input:focus-visible,select:focus-visible,textarea:focus-visible{outline:none}
 
 section{padding:38px 36px 52px}
 .page-heading{margin-bottom:25px}.page-heading h1{margin-top:4px}.dashboard-heading>.muted{margin:7px 0 0;font-size:.9rem}
@@ -957,7 +958,7 @@ aside nav a.router-link-active{color:#ffd58d;background:linear-gradient(90deg,rg
 .readiness-equipment{display:grid;gap:8px;min-width:0}
 .readiness-equipment .readiness-missing,.readiness-equipment .readiness-complete{grid-column:auto;margin:0;line-height:1.35}
 @media(max-width:1250px){.readiness-equipment{grid-column:1/-1}}
-.readiness-list{width:min(1600px,100%);margin-inline:auto}
+.readiness-list{width:100%;margin-inline:0}
 .profile-discord-card:is(a){text-decoration:none;cursor:pointer;transition:transform .18s ease,border-color .18s ease,filter .18s ease}
 .profile-discord-card:is(a):hover{transform:translateY(-2px);border-color:#8870e8;filter:brightness(1.12)}
 .profile-discord-card:is(a):focus-visible{outline:2px solid #8870e8;outline-offset:3px}
@@ -1208,6 +1209,23 @@ input:focus,select:focus,textarea:focus{border-color:#dba34e;box-shadow:0 0 0 3p
 main>section:has(>.admin-tabs)>.page-heading .muted{
   display:none;
 }
+
+/* Loot quality frames. The rarity marker is appended by the API to every loot
+   icon URL, so the same treatment is applied in catalog, treasury and auctions. */
+img[src*="#rarity-"],.loot-rarity{border:4px solid transparent!important;border-image-slice:4!important;border-image-width:4!important;border-image-repeat:stretch!important;box-shadow:none!important}
+img[src$="#rarity-common"],.loot-rarity.rarity-common{border-image-source:url('/images/loot-grades/icon_grade1.png')!important}
+img[src$="#rarity-uncommon"],.loot-rarity.rarity-uncommon{border-image-source:url('/images/loot-grades/icon_grade2.png')!important}
+img[src$="#rarity-rare"],.loot-rarity.rarity-rare{border-image-source:url('/images/loot-grades/icon_grade3.png')!important}
+img[src$="#rarity-unique"],.loot-rarity.rarity-unique{border-image-source:url('/images/loot-grades/icon_grade4.png')!important}
+img[src$="#rarity-epic"],.loot-rarity.rarity-epic{border-image-source:url('/images/loot-grades/icon_grade5.png')!important}
+img[src$="#rarity-legendary"],.loot-rarity.rarity-legendary{border-image-source:url('/images/loot-grades/icon_grade6.png')!important}
+img[src$="#rarity-relic"],.loot-rarity.rarity-relic{border-image-source:url('/images/loot-grades/icon_grade7.png')!important}
+img[src$="#rarity-wonder"],.loot-rarity.rarity-wonder{border-image-source:url('/images/loot-grades/icon_grade8.png')!important}
+img[src$="#rarity-tale"],.loot-rarity.rarity-tale{border-image-source:url('/images/loot-grades/icon_grade9.png')!important}
+img[src$="#rarity-age_legend"],.loot-rarity.rarity-age_legend{border-image-source:url('/images/loot-grades/icon_grade10.png')!important}
+img[src$="#rarity-myth"],.loot-rarity.rarity-myth{border-image-source:url('/images/loot-grades/icon_grade11.png')!important}
+img[src$="#rarity-twelve"],.loot-rarity.rarity-twelve{border-image-source:url('/images/loot-grades/icon_grade12.png')!important}
+.catalog-rarity-select{width:120px;height:32px;padding:4px 7px;font-size:10px}
 
 /* Inventory slots are operable with mouse, keyboard and touch. */
 .inventory-slot{cursor:pointer}
