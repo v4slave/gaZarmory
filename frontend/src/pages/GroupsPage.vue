@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useGuildStore } from '../stores/guild.js'
@@ -9,18 +9,18 @@ import { useConfirmationStore } from '../stores/confirmation.js'
 const auth = useAuthStore(); const guild = useGuildStore(); const name = ref(''); const busy = ref(false); const renameTarget = ref(null); const renameName = ref('')
 const router = useRouter()
 const confirmation = useConfirmationStore()
-let masonryObserver
 const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг', healer: 'Хил', bard: 'Бард', tank: 'Танк' }
 async function create() { if (!name.value.trim()) return; busy.value = true; try { await guild.createGroup(name.value.trim()); name.value = '' } finally { busy.value = false } }
 function rename(group) { renameTarget.value = group; renameName.value = group.name }
 async function saveRename() { const value=renameName.value.trim();if(!renameTarget.value||!value||value===renameTarget.value.name)return;busy.value=true;try{await guild.renameGroup(renameTarget.value.id,value);renameTarget.value=null;renameName.value=''}finally{busy.value=false} }
 async function remove(group) { if (await confirmation.ask({title:'Удалить конст-пати?',message:`Игроки из «${group.name}» станут одиночками.`,confirmLabel:'Удалить',danger:true})) await guild.deleteGroup(group.id) }
 function canManageGroup() { return auth.canManage }
-function canOpenSquads() { return true }
 function openSquadsFromTitle(event) {
-  if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return
-  const title = event.target.closest('.group-card h2[data-group-id]')
-  if (title) router.push(`/groups/${title.dataset.groupId}/squads`)
+  const title = event.target.closest('.group-card:not(.solo) h2')
+  if (!title || (event.type === 'keydown' && !['Enter', ' '].includes(event.key))) return
+  const cards = [...document.querySelectorAll('.groups-page .group-card:not(.solo)')]
+  const group = guild.groups[cards.indexOf(title.closest('.group-card'))]
+  if (group) router.push(`/groups/${group.id}/squads`)
 }
 function isPartyLeader(player) { return (player.user?.roles ?? [player.user?.role]).includes('party_leader') }
 function comparePlayers(left, right, keepLeaderFirst = false) {
@@ -32,32 +32,18 @@ function sortedPlayers(group) { return [...(group.players ?? [])].sort((left, ri
 const soloPlayers = computed(() => guild.players
   .filter(player => player.is_active && player.group_id === null)
   .sort((left, right) => comparePlayers(left, right)))
-function layoutMasonry() {
+onMounted(async () => {
+  await Promise.all([guild.fetchGroups(), guild.fetchPlayers({ active: true, solo: true, per_page: 100 })])
+  document.querySelectorAll('.groups-page .group-card:not(.solo) h2').forEach(title => { title.tabIndex = 0; title.classList.add('group-title-link') })
   const grid = document.querySelector('.groups-page .group-grid')
-  if (!grid) return
-  for (const card of grid.children) {
-    card.style.gridRowEnd = `span ${Math.ceil((card.getBoundingClientRect().height + 8) / 16)}`
-  }
-}
-async function observeMasonry() {
-  await nextTick()
+  grid?.addEventListener('click', openSquadsFromTitle)
+  grid?.addEventListener('keydown', openSquadsFromTitle)
+})
+onBeforeUnmount(() => {
   const grid = document.querySelector('.groups-page .group-grid')
-  masonryObserver?.disconnect()
-  masonryObserver = new ResizeObserver(layoutMasonry)
-  if (grid) {
-    masonryObserver.observe(grid)
-    for (const card of grid.children) masonryObserver.observe(card)
-    guild.groups.forEach((group, index) => {
-      if (!canOpenSquads(group)) return
-      const title = grid.children[index]?.querySelector('h2')
-      if (title) { title.dataset.groupId = group.id; title.tabIndex = 0; title.classList.add('group-title-link') }
-    })
-  }
-  layoutMasonry()
-}
-watch(() => [guild.groups.map(group => `${group.id}:${group.players?.length ?? 0}`).join(','), soloPlayers.value.length], observeMasonry)
-onMounted(async () => { await Promise.all([guild.fetchGroups(), guild.fetchPlayers({ active: true, per_page: 100 })]);await observeMasonry();document.querySelector('.groups-page .group-grid')?.addEventListener('click',openSquadsFromTitle);document.querySelector('.groups-page .group-grid')?.addEventListener('keydown',openSquadsFromTitle) })
-onBeforeUnmount(() => { masonryObserver?.disconnect();document.querySelector('.groups-page .group-grid')?.removeEventListener('click',openSquadsFromTitle);document.querySelector('.groups-page .group-grid')?.removeEventListener('keydown',openSquadsFromTitle) })
+  grid?.removeEventListener('click', openSquadsFromTitle)
+  grid?.removeEventListener('keydown', openSquadsFromTitle)
+})
 </script>
 
 <template><section class="groups-page"><div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · ГИЛЬДИЯ</p><h1>Конст-пати</h1></div></div>
