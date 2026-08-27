@@ -3,7 +3,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { api } from '../api.js'
 import StatCard from '../components/StatCard.vue'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
-import { formatDate, formatDecimal, formatInteger } from '../utils/format.js'
+import { formatDate, formatDateTime, formatDecimal, formatInteger } from '../utils/format.js'
 import { getLocale } from '../i18n.js'
 
 const data = ref({
