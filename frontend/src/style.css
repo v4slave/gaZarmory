@@ -1030,6 +1030,8 @@ aside nav a.router-link-active{color:#ffe0a9;background:linear-gradient(90deg,rg
   column-gap:16px;
   row-gap:16px;
 }
+.groups-page .group-grid.is-layout-pending{visibility:hidden}
+.groups-loading{padding:24px;color:var(--muted)}
 .groups-page .group-card{
   display:flex;
   width:100%;
