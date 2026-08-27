@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth.js'
 import { useGuildStore } from '../stores/guild.js'
@@ -9,6 +9,7 @@ import { useConfirmationStore } from '../stores/confirmation.js'
 const auth = useAuthStore(); const guild = useGuildStore(); const name = ref(''); const busy = ref(false); const renameTarget = ref(null); const renameName = ref('')
 const router = useRouter()
 const confirmation = useConfirmationStore()
+let masonryFrame
 const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг', healer: 'Хил', bard: 'Бард', tank: 'Танк' }
 async function create() { if (!name.value.trim()) return; busy.value = true; try { await guild.createGroup(name.value.trim()); name.value = '' } finally { busy.value = false } }
 function rename(group) { renameTarget.value = group; renameName.value = group.name }
@@ -32,14 +33,39 @@ function sortedPlayers(group) { return [...(group.players ?? [])].sort((left, ri
 const soloPlayers = computed(() => guild.players
   .filter(player => player.is_active && player.group_id === null)
   .sort((left, right) => comparePlayers(left, right)))
+function layoutMasonry() {
+  masonryFrame = undefined
+  const grid = document.querySelector('.groups-page .group-grid')
+  if (!grid) return
+  const styles = window.getComputedStyle(grid)
+  const rowHeight = Number.parseFloat(styles.gridAutoRows) || 8
+  const rowGap = Number.parseFloat(styles.rowGap) || 16
+  const cards = [...grid.children]
+  cards.forEach(card => { card.style.gridRowEnd = 'auto' })
+  cards.forEach(card => {
+    const span = Math.ceil((card.getBoundingClientRect().height + rowGap) / (rowHeight + rowGap))
+    card.style.gridRowEnd = `span ${span}`
+  })
+  grid.querySelectorAll('.group-card:not(.solo) h2').forEach(title => { title.tabIndex = 0; title.classList.add('group-title-link') })
+}
+function scheduleMasonry() {
+  if (masonryFrame) window.cancelAnimationFrame(masonryFrame)
+  masonryFrame = window.requestAnimationFrame(layoutMasonry)
+}
+watch(() => [guild.groups.map(group => `${group.id}:${group.players?.length ?? 0}`).join(','), soloPlayers.value.length], async () => { await nextTick();scheduleMasonry() }, { flush: 'post' })
 onMounted(async () => {
   await Promise.all([guild.fetchGroups(), guild.fetchPlayers({ active: true, solo: true, per_page: 100 })])
-  document.querySelectorAll('.groups-page .group-card:not(.solo) h2').forEach(title => { title.tabIndex = 0; title.classList.add('group-title-link') })
+  await nextTick()
+  await document.fonts?.ready
+  scheduleMasonry()
+  window.addEventListener('resize', scheduleMasonry, { passive: true })
   const grid = document.querySelector('.groups-page .group-grid')
   grid?.addEventListener('click', openSquadsFromTitle)
   grid?.addEventListener('keydown', openSquadsFromTitle)
 })
 onBeforeUnmount(() => {
+  if (masonryFrame) window.cancelAnimationFrame(masonryFrame)
+  window.removeEventListener('resize', scheduleMasonry)
   const grid = document.querySelector('.groups-page .group-grid')
   grid?.removeEventListener('click', openSquadsFromTitle)
   grid?.removeEventListener('keydown', openSquadsFromTitle)
