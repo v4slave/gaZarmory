@@ -28,34 +28,43 @@ final class AttendanceAnalyticsController extends Controller
         $format = $request->validate(['format' => ['required', Rule::in(['csv', 'xlsx'])]])['format'];
         $report = $this->build($request);
         $filename = 'attendance-'.$report['period']['key'].'-'.now()->format('Y-m-d');
+        $playerHeaders = app()->isLocale('en')
+            ? ['Player','Static party','Attended','Available','Attendance, %','Attendance streak','Absence streak','Last attendance']
+            : ['Игрок','Конста','Посещено','Доступно','Посещаемость, %','Серия посещений','Серия пропусков','Последнее посещение'];
+        $eventHeaders = app()->isLocale('en')
+            ? ['Activity','Held','Attendances','Average participants']
+            : ['Событие','Проведено','Посещений','Среднее участников'];
+        $groupHeaders = app()->isLocale('en')
+            ? ['Static party','Players','Attended','Available','Attendance, %']
+            : ['Конста','Игроков','Посещено','Доступно','Посещаемость, %'];
 
         if ($format === 'csv') {
-            return response()->streamDownload(function () use ($report): void {
+            return response()->streamDownload(function () use ($report, $playerHeaders): void {
                 $output = fopen('php://output', 'wb');
                 fwrite($output, "\xEF\xBB\xBF");
-                fputcsv($output, ['Игрок','Конста','Посещено','Доступно','Посещаемость, %','Серия посещений','Серия пропусков','Последнее посещение'], ';');
+                fputcsv($output, $playerHeaders, ';');
                 foreach ($report['players'] as $player) fputcsv($output, [$player['nickname'],$player['group_name'],$player['attended'],$player['available'],$player['percentage'],$player['attendance_streak'],$player['absence_streak'],$player['last_attended_at']], ';');
                 fclose($output);
             }, $filename.'.csv', ['Content-Type' => 'text/csv; charset=UTF-8']);
         }
 
         $spreadsheet = new Spreadsheet();
-        $sheet = $spreadsheet->getActiveSheet()->setTitle('Посещаемость');
-        $sheet->fromArray(['Игрок','Конста','Посещено','Доступно','Посещаемость, %','Серия посещений','Серия пропусков','Последнее посещение'], null, 'A1');
+        $sheet = $spreadsheet->getActiveSheet()->setTitle(app()->isLocale('en') ? 'Attendance' : 'Посещаемость');
+        $sheet->fromArray($playerHeaders, null, 'A1');
         $row = 2;
         foreach ($report['players'] as $player) {
             $sheet->fromArray([$player['nickname'],$player['group_name'],$player['attended'],$player['available'],$player['percentage'],$player['attendance_streak'],$player['absence_streak'],$player['last_attended_at']], null, 'A'.$row++);
         }
         $sheet->getStyle('A1:H1')->getFont()->setBold(true);
         foreach (range('A', 'H') as $column) $sheet->getColumnDimension($column)->setAutoSize(true);
-        $events = $spreadsheet->createSheet()->setTitle('События');
-        $events->fromArray(['Событие','Проведено','Посещений','Среднее участников'], null, 'A1');
+        $events = $spreadsheet->createSheet()->setTitle(app()->isLocale('en') ? 'Activities' : 'События');
+        $events->fromArray($eventHeaders, null, 'A1');
         $row = 2;
         foreach ($report['events'] as $event) $events->fromArray([$event['name'],$event['total'],$event['attendances'],$event['average_participants']], null, 'A'.$row++);
         $events->getStyle('A1:D1')->getFont()->setBold(true);
         foreach (range('A', 'D') as $column) $events->getColumnDimension($column)->setAutoSize(true);
-        $groups = $spreadsheet->createSheet()->setTitle('Консты');
-        $groups->fromArray(['Конста','Игроков','Посещено','Доступно','Посещаемость, %'], null, 'A1');
+        $groups = $spreadsheet->createSheet()->setTitle(app()->isLocale('en') ? 'Static parties' : 'Консты');
+        $groups->fromArray($groupHeaders, null, 'A1');
         $row = 2;
         foreach ($report['groups'] as $group) $groups->fromArray([$group['name'],$group['players'],$group['attended'],$group['available'],$group['percentage']], null, 'A'.$row++);
         $groups->getStyle('A1:E1')->getFont()->setBold(true);
@@ -82,7 +91,7 @@ final class AttendanceAnalyticsController extends Controller
         $period = $filters['period'] ?? '30';
         $from = $period === 'all' ? null : now()->subDays((int) $period)->startOfDay();
         $partyGroupId = $user->hasRole(UserRole::PartyLeader) && !$user->canManageGuild() ? $user->player?->group_id : null;
-        if ($user->hasRole(UserRole::PartyLeader) && !$user->canManageGuild()) abort_unless($partyGroupId, 403, 'PL не привязан к конст-пати.');
+        if ($user->hasRole(UserRole::PartyLeader) && !$user->canManageGuild()) abort_unless($partyGroupId, 403, __('domain.party.leader_not_linked'));
         $groupId = $partyGroupId ?: ($filters['group_id'] ?? null);
 
         $players = Player::query()->where('is_active', true)
@@ -142,7 +151,7 @@ final class AttendanceAnalyticsController extends Controller
         $last = $available->filter(fn ($activity) => $activity->players->contains('id', $player->id))->last();
         [$attendanceStreak, $absenceStreak] = $this->currentStreaks($sequence);
         return array_merge($player->only(['id','nickname','class']), [
-            'group_id'=>$player->group_id,'group_name'=>$player->group?->name ?? 'Без консты','attended'=>$attended,'available'=>$available->count(),
+            'group_id'=>$player->group_id,'group_name'=>$player->group?->name ?? (app()->isLocale('en') ? 'No static party' : 'Без консты'),'attended'=>$attended,'available'=>$available->count(),
             'percentage'=>$available->count() ? round($attended/$available->count()*100,1) : 0,
             'attendance_streak'=>$attendanceStreak,'absence_streak'=>$absenceStreak,'last_attended_at'=>$last?->occurred_at?->toISOString(),
             'user'=>$player->user,

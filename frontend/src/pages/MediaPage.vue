@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useConfirmationStore } from '../stores/confirmation.js'
+import { formatDate } from '../utils/format.js'
 
 const auth = useAuthStore()
 const confirmation = useConfirmationStore()
@@ -90,7 +91,7 @@ async function remove(post) { if (!await confirmation.ask({title:'Удалить
           <span v-else class="media-provider-placeholder">{{ providerName[post.provider] || 'Видео' }}</span>
           <i v-if="post.kind==='video'" class="media-play">▶</i><em>{{ post.kind === 'video' ? '▣' : '▧' }}</em>
         </button>
-        <div class="media-card-body"><h2>{{ post.title }}</h2><p v-if="post.description">{{ post.description }}</p><div><strong>{{ authorName(post) }}</strong><time>{{ new Date(post.created_at).toLocaleDateString('ru-RU') }}</time></div></div>
+        <div class="media-card-body"><h2>{{ post.title }}</h2><p v-if="post.description">{{ post.description }}</p><div><strong>{{ authorName(post) }}</strong><time>{{ formatDate(post.created_at) }}</time></div></div>
         <footer><button :class="{active:post.liked_by_me}" @click="react(post,'like')">♥ {{ post.likes_count }}</button><button :class="{active:post.favorite_by_me}" @click="react(post,'favorite')">★ {{ post.favorites_count }}</button><button v-if="canDelete(post)" class="media-delete" title="Удалить" @click="remove(post)">×</button></footer>
       </article>
     </div>
@@ -106,6 +107,6 @@ async function remove(post) { if (!await confirmation.ask({title:'Удалить
       </form>
     </div>
 
-    <div v-if="active" class="modal media-viewer" @click.self="active=null"><article><button class="media-modal-close" aria-label="Закрыть" @click="active=null">×</button><div class="media-stage"><iframe v-if="active.embed_url" :src="active.embed_url" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe><video v-else-if="active.kind==='video'" :src="mediaSrc(active)" controls autoplay></video><img v-else :src="mediaSrc(active)" :alt="active.title"></div><div class="media-view-info"><div><h2>{{ active.title }}</h2><p v-if="active.description">{{ active.description }}</p><small>{{ authorName(active) }} · {{ new Date(active.created_at).toLocaleDateString('ru-RU') }}</small></div><a v-if="active.source_url&&active.provider!=='direct'" :href="active.source_url" target="_blank" rel="noopener">Открыть на {{ providerName[active.provider] }} ↗</a></div><footer><button :class="{active:active.liked_by_me}" @click="react(active,'like')">♥ {{ active.likes_count }}</button><button :class="{active:active.favorite_by_me}" @click="react(active,'favorite')">★ {{ active.favorites_count }}</button></footer></article></div>
+    <div v-if="active" class="modal media-viewer" @click.self="active=null"><article><button class="media-modal-close" aria-label="Закрыть" @click="active=null">×</button><div class="media-stage"><iframe v-if="active.embed_url" :src="active.embed_url" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe><video v-else-if="active.kind==='video'" :src="mediaSrc(active)" controls autoplay></video><img v-else :src="mediaSrc(active)" :alt="active.title"></div><div class="media-view-info"><div><h2>{{ active.title }}</h2><p v-if="active.description">{{ active.description }}</p><small>{{ authorName(active) }} · {{ formatDate(active.created_at) }}</small></div><a v-if="active.source_url&&active.provider!=='direct'" :href="active.source_url" target="_blank" rel="noopener">Открыть на {{ providerName[active.provider] }} ↗</a></div><footer><button :class="{active:active.liked_by_me}" @click="react(active,'like')">♥ {{ active.likes_count }}</button><button :class="{active:active.favorite_by_me}" @click="react(active,'favorite')">★ {{ active.favorites_count }}</button></footer></article></div>
   </section>
 </template>

@@ -17,10 +17,10 @@ final class ConfirmLootImport
         return DB::transaction(function()use($import,$userId){
             $locked=LootImport::query()->lockForUpdate()->with('rows')->findOrFail($import->id);
             $activity=Activity::query()->lockForUpdate()->findOrFail($locked->activity_id);
-            if($activity->completed_at)throw ValidationException::withMessages(['activity'=>'Завершённая активность immutable.']);
-            if($activity->earnings()->exists())throw ValidationException::withMessages(['activity'=>'Лут рассчитанного прайма immutable.']);
-            if($locked->status!=='draft') throw ValidationException::withMessages(['import'=>'Импорт уже обработан.']);
-            if($locked->rows->contains('status','invalid')) throw ValidationException::withMessages(['rows'=>'Исправьте невалидные строки перед подтверждением.']);
+            if($activity->completed_at)throw ValidationException::withMessages(['activity'=>__('domain.activity.completed_locked')]);
+            if($activity->earnings()->exists())throw ValidationException::withMessages(['activity'=>__('domain.activity.calculated_loot_locked')]);
+            if($locked->status!=='draft') throw ValidationException::withMessages(['import'=>__('domain.loot.import_processed')]);
+            if($locked->rows->contains('status','invalid')) throw ValidationException::withMessages(['rows'=>__('domain.loot.fix_invalid_rows')]);
             foreach($locked->rows as $row){
                 ActivityLoot::query()->create(['activity_id'=>$locked->activity_id,'item_name'=>$row->item_name,'quantity'=>$row->quantity,'unit_price'=>$row->unit_price,'created_by'=>$userId]);
                 $item=TreasuryItem::query()->where('item_name',$row->item_name)->lockForUpdate()->first();

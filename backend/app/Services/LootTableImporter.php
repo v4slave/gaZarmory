@@ -15,7 +15,7 @@ final class LootTableImporter
     public function createDraft(Activity $activity, UploadedFile $file, int $userId): LootImport
     {
         $hash=hash_file('sha256',$file->getRealPath());
-        if(LootImport::query()->where('activity_id',$activity->id)->where('file_hash',$hash)->exists()) throw ValidationException::withMessages(['file'=>'Этот файл уже импортирован для события.']);
+        if(LootImport::query()->where('activity_id',$activity->id)->where('file_hash',$hash)->exists()) throw ValidationException::withMessages(['file'=>__('domain.loot.file_duplicate')]);
         try {
             $type = IOFactory::identify($file->getRealPath());
             $reader = IOFactory::createReader($type);
@@ -26,10 +26,10 @@ final class LootTableImporter
 
             $worksheetInfo = $reader->listWorksheetInfo($file->getRealPath())[0] ?? null;
             if (($worksheetInfo['totalRows'] ?? 0) > self::MAX_ROWS + 1) {
-                throw ValidationException::withMessages(['file' => 'В таблице допускается не более '.self::MAX_ROWS.' строк лута.']);
+                throw ValidationException::withMessages(['file' => __('domain.loot.too_many_rows', ['count' => self::MAX_ROWS])]);
             }
             if (($worksheetInfo['totalColumns'] ?? 0) > self::MAX_COLUMNS) {
-                throw ValidationException::withMessages(['file' => 'В таблице слишком много столбцов. Оставьте item_name, quantity и unit_price.']);
+                throw ValidationException::withMessages(['file' => __('domain.loot.too_many_columns')]);
             }
 
             $spreadsheet = $reader->load($file->getRealPath());
@@ -39,12 +39,12 @@ final class LootTableImporter
         } catch (ValidationException $exception) {
             throw $exception;
         } catch (\Throwable) {
-            throw ValidationException::withMessages(['file' => 'Не удалось прочитать таблицу. Сохраните её как CSV или XLSX и попробуйте снова.']);
+            throw ValidationException::withMessages(['file' => __('domain.loot.read_failed')]);
         }
-        if(count($sheet)<2) throw ValidationException::withMessages(['file'=>'Таблица не содержит строк лута.']);
+        if(count($sheet)<2) throw ValidationException::withMessages(['file'=>__('domain.loot.no_rows')]);
         $headers=array_map(fn($v)=>mb_strtolower(trim((string)$v)),array_shift($sheet));
         $map=array_flip($headers);
-        foreach(['item_name','quantity','unit_price'] as $required) if(!array_key_exists($required,$map)) throw ValidationException::withMessages(['file'=>"Отсутствует колонка {$required}."]);
+        foreach(['item_name','quantity','unit_price'] as $required) if(!array_key_exists($required,$map)) throw ValidationException::withMessages(['file'=>__('domain.loot.missing_column', ['column' => $required])]);
         return DB::transaction(function()use($activity,$file,$userId,$hash,$sheet,$map){
             $import=LootImport::query()->create(['activity_id'=>$activity->id,'created_by'=>$userId,'source_type'=>'table','original_filename'=>$file->getClientOriginalName(),'file_hash'=>$hash,'status'=>'draft']);
             foreach($sheet as $offset=>$data){
@@ -53,7 +53,7 @@ final class LootTableImporter
                 $valid=$quantity!==false&&$quantity>0&&$price!==false&&$price>=0;
                 $import->rows()->create(['row_number'=>$offset+2,'item_name'=>$name,'quantity'=>$valid?$quantity:0,'unit_price'=>$valid?$price:0,'status'=>$valid?'valid':'invalid','raw_data'=>$data]);
             }
-            if(!$import->rows()->exists()) throw ValidationException::withMessages(['file'=>'Не найдено ни одного предмета.']);
+            if(!$import->rows()->exists()) throw ValidationException::withMessages(['file'=>__('domain.loot.no_items')]);
             return $import->load('rows');
         });
     }

@@ -19,13 +19,13 @@ final class PayPayoutPlayers
     {
         try { return DB::transaction(function () use ($payout,$playerIds,$userId): Payout {
             $locked=Payout::query()->lockForUpdate()->findOrFail($payout->id);
-            if($locked->status!=='calculated')throw ValidationException::withMessages(['payout'=>'Выдавать можно только рассчитанный нахрюк.']);
+            if($locked->status!=='calculated')throw ValidationException::withMessages(['payout'=>__('domain.payout.pay_calculated_only')]);
             $rows=$locked->players()->with('player.user:id,discord_id')->whereIn('player_id',$playerIds)->where('status','pending')->lockForUpdate()->get();
-            if($rows->isEmpty())throw ValidationException::withMessages(['players'=>'Не выбраны ожидающие выплаты игроки.']);
+            if($rows->isEmpty())throw ValidationException::withMessages(['players'=>__('domain.payout.no_pending_players')]);
             $amount=(int)$rows->sum('amount');
             DB::select('SELECT pg_advisory_xact_lock(?)',[834721]);
             $balance=(int)(TreasuryTransaction::query()->latest('id')->value('balance_after')??0);
-            if($balance<$amount)throw ValidationException::withMessages(['treasury'=>'В казне недостаточно золота. Требуется '.$amount.', доступно '.$balance.'.']);
+            if($balance<$amount)throw ValidationException::withMessages(['treasury'=>__('domain.payout.insufficient_gold', ['required'=>$amount, 'available'=>$balance])]);
             TreasuryTransaction::query()->create(['type'=>'payout','amount'=>-$amount,'balance_after'=>$balance-$amount,'description'=>'Нахрюк #'.$locked->id.': фактически выдано '.count($rows).' игрокам','related_entity_type'=>Payout::class,'related_entity_id'=>$locked->id,'created_by'=>$userId]);
             $ids=$rows->pluck('player_id');
             $earningsByPlayer=PrimePlayerEarning::query()

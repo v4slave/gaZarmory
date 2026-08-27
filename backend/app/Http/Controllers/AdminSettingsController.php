@@ -45,7 +45,7 @@ final class AdminSettingsController extends Controller
         return DB::transaction(function () use ($data, $audit): array {
             $setting = TreasuryTokenSetting::query()->lockForUpdate()->findOrFail(1);
             if (isset($data['updated_at']) && !$setting->updated_at?->equalTo($data['updated_at'])) {
-                throw ValidationException::withMessages(['updated_at' => 'Стоимость жетона уже изменена другим пользователем. Обновите страницу.']);
+                throw ValidationException::withMessages(['updated_at' => __('domain.admin.token_value_stale')]);
             }
 
             $old = ['token_unit_value' => $setting->token_unit_value];

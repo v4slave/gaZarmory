@@ -11,7 +11,7 @@ final class UserRoleManager
     {
         if ($wasGuildLeader && !$willBeGuildLeader && $leadersCount <= 1) {
             throw ValidationException::withMessages([
-                'roles' => 'Нельзя снять роль у последнего ГЛ.',
+                'roles' => __('domain.admin.last_guild_leader'),
             ]);
         }
     }

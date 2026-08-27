@@ -1,4 +1,6 @@
 import { readonly, ref } from 'vue'
+import { createI18n } from 'vue-i18n'
+import { bossNames } from './locales/bossNames.js'
 
 const STORAGE_KEY = 'gaz-armory-locale'
 const supported = ['ru', 'en']
@@ -7,16 +9,14 @@ const initial = supported.includes(localStorage.getItem(STORAGE_KEY))
   : (navigator.language?.toLowerCase().startsWith('en') ? 'en' : 'ru')
 const locale = ref(initial)
 
-// Longer phrases are replaced first. This keeps the existing Russian templates as
-// the source of truth while giving every current and future view a translation.
+// Russian copy is kept as the legacy lookup key while views are migrated to
+// vue-i18n. Replacements are bounded, so a short label such as "Да" can never
+// corrupt a longer word such as "Данные".
 const translations = {
-  'Т2 Левиафан': 'Leviathan T2', 'Т2 Кракен': 'Kraken T2', 'Т2 АГЛ': 'JMG T2',
-  'АГЛ': 'JMG', 'Месания': 'Mesania', 'Ксанатос': 'Black dragon', 'Анталлон': 'Anthalon',
-  'Калидис': 'Charybdis', 'Авиара': 'Thunderwing Titan', 'Калеиль': 'Nehiliya',
-  'Кракен': 'Kraken', 'Левиафан': 'Leviathan', 'Кошка': 'Hanure',
   'Проверяем авторизацию…': 'Checking authentication…', 'Войти через Discord': 'Sign in with Discord',
   'ПЕРВЫЙ ВХОД': 'FIRST SIGN-IN', 'Заявка отправлена': 'Request sent',
   'Дождитесь подтверждения ГЛ или администратора.': 'Wait for approval from the guild leader or an administrator.',
+  'Статус проверяется автоматически — доступ откроется без обновления страницы.': 'The status is checked automatically; access will open without refreshing the page.',
   'Привяжите персонажа': 'Link your character',
   'Выберите персонажа и отправьте заявку. Разделы гильдии откроются после подтверждения.': 'Choose your character and submit a request. Guild sections will become available after approval.',
   'Выбрать персонажа': 'Choose character', 'Привязать игровой профиль': 'Link game profile',
@@ -41,7 +41,7 @@ const translations = {
   'Discord и уведомления': 'Discord and notifications', 'Панель управления': 'Control panel',
   'Добавить': 'Add', 'Создать': 'Create', 'Редактировать': 'Edit', 'Удалить': 'Delete',
   'Сохранить': 'Save', 'Сохранение…': 'Saving…', 'Подтвердить': 'Confirm', 'Закрыть': 'Close',
-  'Загрузка…': 'Loading…', 'Загружаем данные…': 'Loading data…', 'Повторить': 'Retry',
+  'Загрузка…': 'Loading…', 'Загружаем данные…': 'Loading data…', 'Не удалось загрузить данные': 'Could not load data', 'Здесь пока ничего нет': 'Nothing here yet', 'Повторить': 'Retry',
   'Поиск': 'Search', 'Никнейм': 'Nickname', 'Класс': 'Class', 'Роль': 'Role', 'Статус': 'Status',
   'Дата': 'Date', 'Название': 'Name', 'Описание': 'Description', 'Комментарий': 'Comment',
   'Количество': 'Quantity', 'Сумма': 'Amount', 'Баланс': 'Balance', 'Действия': 'Actions',
@@ -118,7 +118,9 @@ const translations = {
   'Конкретные активности': 'Specific activities', 'Период с': 'Period from', 'Период по': 'Period to',
   'К выдаче': 'To pay', 'Баланс до': 'Balance before', 'Баланс после': 'Balance after',
   'Создать ведомость': 'Create statement', 'Подтвердить расчёт': 'Confirm calculation',
-  'Зафиксировать прайм': 'Finalize prime', 'КОНТРОЛИРУЕМАЯ ОПЕРАЦИЯ': 'CONTROLLED OPERATION'
+  'Зафиксировать прайм': 'Finalize prime', 'КОНТРОЛИРУЕМАЯ ОПЕРАЦИЯ': 'CONTROLLED OPERATION',
+  'Для подтверждения введите': 'Type to confirm:', 'Подтвердите действие': 'Confirm action',
+  'Введите значение': 'Enter a value', 'Значение': 'Value'
   ,'Новое событие': 'New event', 'Выберите из справочника': 'Choose from catalog', 'Дата и время': 'Date and time',
   'Черновик активности создан.': 'Activity draft created.', 'Не удалось создать событие.': 'Could not create the event.',
   'Событие создано, но страницу не удалось открыть. Обновите журнал активностей.': 'The event was created, but its page could not be opened. Refresh the activity log.',
@@ -134,6 +136,135 @@ const translations = {
   'Лут добавлен в активность.': 'Loot added to the activity.', 'Не удалось добавить лут.': 'Could not add loot.',
   'Добавить лут': 'Add loot', 'Предметы не найдены.': 'No items found.', 'Добавление…': 'Adding…',
   'Справочник пуст. Сначала добавьте предметы в разделе администрирования.': 'The catalog is empty. Add items in the admin section first.',
+  'GAZ ARMORY · ЖУРНАЛ': 'GAZ ARMORY · LOG', 'GAZ ARMORY · СОБЫТИЕ': 'GAZ ARMORY · ACTIVITY',
+  'GAZ ARMORY · ОБЗОР': 'GAZ ARMORY · OVERVIEW', 'GAZ ARMORY · ГИЛЬДИЯ': 'GAZ ARMORY · GUILD',
+  'GAZ ARMORY · УПРАВЛЕНИЕ': 'GAZ ARMORY · MANAGEMENT', 'GAZ ARMORY · ФИНАНСОВЫЙ КОНТРОЛЬ': 'GAZ ARMORY · FINANCIAL CONTROL',
+  'ЭКОНОМИКА · АУКЦИОН #': 'ECONOMY · AUCTION #', 'Экономика · аукцион': 'Economy · auction',
+  'ЭКОНОМИКА · НАХРЮК': 'ECONOMY · PAYOUT', 'ЭКОНОМИКА · ВЕДОМОСТЬ': 'ECONOMY · STATEMENT',
+  'ЭКОНОМИКА · КАЗНА': 'ECONOMY · TREASURY', 'ПРОФИЛЬ ИГРОКА': 'PLAYER PROFILE',
+  'АДМИНКА': 'ADMIN', 'КОНСТ-ПАТИ': 'STATIC PARTIES', 'КОНСТ-ПАТИ · СОСТАВ': 'STATIC PARTY · ROSTER',
+  'участников': 'participants', 'стоимость лута': 'loot value', 'на участника': 'per participant',
+  'Нахрюк рассчитан: каждому': 'Payout calculated: each player receives', 'К распределению: оценки лута': 'To distribute: estimated loot value',
+  'Участников:': 'Participants:', 'События и единые изображения для истории посещений': 'Activities and shared images for attendance history',
+  'Справочник пуст': 'The catalog is empty', 'Действие, сущность или пользователь': 'Action, entity, or user',
+  'Дата с': 'Date from', 'Дата по': 'Date to', 'Неизменяемый журнал действий пользователей': 'Immutable user activity log',
+  'записей': 'entries', 'Все действия': 'All actions', 'Пользователь': 'User', 'Действие': 'Action', 'Сущность': 'Entity',
+  'Состояние авторизации, webhook и внутреннего центра': 'Authentication, webhook, and notification-center status',
+  'Проверено': 'Checked', 'Проверить': 'Check', 'Предметы, доступные при заведении дропа': 'Items available when adding loot',
+  'Предметов пока нет': 'No items yet', 'Добавьте первый предмет ниже.': 'Add the first item below.',
+  'Добавить предмет': 'Add item', 'Редкость': 'Rarity', 'Иконка': 'Icon',
+  'Привязка Discord-пользователей к персонажам': 'Link Discord users to characters', 'хочет привязать': 'wants to link',
+  'Отклонить': 'Reject', 'Новых заявок нет': 'No new requests', 'Все запросы на привязку обработаны.': 'All link requests have been processed.',
+  'Поиск по Discord или персонажу': 'Search by Discord or character', 'Управление аккаунтами и минимально необходимыми правами': 'Account and least-privilege access management',
+  'Всего:': 'Total:', 'Профиль не привязан': 'Profile not linked', 'Права доступа': 'Access permissions',
+  'Отвязать Discord': 'Unlink Discord', 'Ликвидировать': 'Retire', 'Восстановить': 'Restore', 'Удалить пользователя': 'Delete user',
+  'Пользователи не найдены': 'No users found', 'Измените строку поиска.': 'Change the search query.', 'Назад': 'Previous', 'из': 'of', 'Далее': 'Next',
+  'ПЕРЕДАЧА РОЛИ': 'ROLE TRANSFER', 'Передать права ГЛ?': 'Transfer guild leader permissions?', 'Новым ГЛ станет': 'The new guild leader will be',
+  'После подтверждения роль ГЛ будет снята с вашего аккаунта. Остальные назначенные вам роли сохранятся.': 'After confirmation, the Guild Leader role will be removed from your account. Your other assigned roles will remain.',
+  'Передать роль ГЛ': 'Transfer Guild Leader role', 'Период': 'Period', 'Всё время': 'All time', 'Конста': 'Static party',
+  'Все праймы': 'All primes', 'Динамика игрока': 'Player trend', 'Страницы истории ставок': 'Bid history pages',
+  'шт. · до МСК': 'pcs. · until MSK', 'К списку лотов': 'Back to lots', 'Ставок пока нет': 'No bids yet',
+  'Минимум жет. · шаг жет. · автопродление мин.': 'Minimum tokens · step tokens · auto-extension min.',
+  'Установить максимум': 'Set maximum', 'Завершён без ставок': 'Completed without bids', 'Лот отменён': 'Lot cancelled',
+  'Приём ставок завершён': 'Bidding has ended', 'Отменить': 'Cancel', 'Запустить': 'Start',
+  'Минимальный шаг, жетоны': 'Minimum step, tokens', 'Завершение': 'End time',
+  'Архив побед и расходов': 'Wins and spending archive', 'побед': 'wins', 'Лот': 'Lot', 'Итог': 'Result',
+  '· прайм. · мини': '· primes · mini', 'PL · лидер конст-пати': 'PL · static-party leader',
+  'Посещённые праймы и мини-праймы': 'Attended primes and mini-primes', 'В конст-пати пока никого нет': 'No one is in this static party yet',
+  'Активных сольников нет': 'No active solo players', 'Переименовать группу': 'Rename group',
+  'Введите новое название для « ».': 'Enter a new name for “”.', 'Новое название': 'New name',
+  'Поиск по названию…': 'Search by title…', 'Добавьте немного контекста…': 'Add some context…', 'Изображения': 'Images',
+  '★ Избранное': '★ Favorites', 'Здесь пока тихо': 'Nothing here yet', 'Добавьте первое видео или изображение.': 'Add the first video or image.',
+  'Добавить публикацию': 'Add post', 'Новая публикация': 'New post', 'Добавить в медиатеку': 'Add to media library',
+  'Файл с устройства': 'File from device', 'получаем с платформы…': 'fetching from platform…', '(необязательно)': '(optional)',
+  'Открыть на ↗': 'Open on ↗', 'Распределите участников по 5 человек.': 'Arrange participants into groups of 5.',
+  '+ Добавить группу': '+ Add group', 'Загружаем состав…': 'Loading roster…', 'Создать нахрюк': 'Create payout',
+  'Ник': 'Nickname', 'Праймы': 'Primes', 'История ведомостей': 'Statement history', 'Начислений за праймы пока нет.': 'No prime earnings yet.',
+  'Посещений праймов пока нет.': 'No prime attendance yet.', 'ГС': 'GS',
+  'Навсегда удалить непривязанного персонажа': 'Permanently delete an unlinked character',
+  'По выбранным условиям игроков не найдено.': 'No players match the selected filters.',
+  'Закрыть информацию о предмете': 'Close item details', 'Доступно:': 'Available:', 'Дропа из активностей пока нет.': 'No activity loot yet.',
+  'Подтвердить импорт?': 'Confirm import?', 'Предметы поступят в казну, а созданные транзакции больше нельзя будет изменить.': 'The items will be added to the treasury, and the created transactions can no longer be changed.',
+  'Не удалось добавить участников.': 'Could not add participants.', 'Удалить лут из активности?': 'Remove loot from the activity?',
+  'Лут удалён из активности и казны.': 'Loot was removed from the activity and treasury.', 'Не удалось удалить лут.': 'Could not remove loot.',
+  'Исправить стоимость': 'Correct value', 'Стоимость единицы': 'Unit value', 'Сохранить стоимость': 'Save value',
+  'Стоимость должна быть целым неотрицательным числом.': 'The value must be a non-negative integer.',
+  'Стоимость предмета исправлена.': 'Item value corrected.', 'Не удалось изменить стоимость.': 'Could not change the value.',
+  'Начисления отменены. Исправьте данные и выполните расчёт заново.': 'Earnings were cancelled. Correct the data and calculate again.',
+  'Не удалось открыть активность для исправления.': 'Could not open the activity for correction.',
+  'Нахрюк рассчитан, начисления сформированы.': 'Payout calculated and earnings created.', 'Не удалось рассчитать нахрюк.': 'Could not calculate the payout.',
+  'Не удалось сохранить черновик.': 'Could not save the draft.', 'Удалить черновик активности?': 'Delete the activity draft?',
+  'Черновик будет удалён. Активность с лутом удалить нельзя.': 'The draft will be deleted. An activity with used loot cannot be deleted.',
+  'Черновик с лутом удалить нельзя.': 'A draft with used loot cannot be deleted.', 'Добавлено участников: .': 'Participants added: .',
+  '« » будет удалён, остаток в казне уменьшится на шт.': '“ ” will be removed, and treasury stock will decrease by pcs.',
+  'Укажите новую стоимость одной единицы « ».': 'Enter a new unit value for “ ”.',
+  'Зафиксировать прайм: участников получат по . Всего начислено , остаток оценки . Золотой баланс казны не изменится.': 'Finalize the prime: participants will receive each. Total earnings , undistributed estimate . The treasury gold balance will not change.',
+  'Не удалось загрузить активности.': 'Could not load activities.', 'Не удалось загрузить изображение.': 'Could not upload the image.',
+  'Удалить изображение?': 'Delete the image?', 'Все активности « » останутся без картинки.': 'All “ ” activities will be left without an image.',
+  'Не удалось загрузить аудит.': 'Could not load the audit log.', 'Не удалось загрузить настройки.': 'Could not load settings.',
+  'Не удалось обновить стоимость жетона.': 'Could not update the token value.', 'Не удалось проверить интеграции.': 'Could not check integrations.',
+  'Не удалось загрузить лут.': 'Could not load loot.', 'Не удалось добавить предмет.': 'Could not add the item.',
+  'Не удалось изменить редкость.': 'Could not change the rarity.',
+  'Discord-аккаунты, персонажи и права доступа': 'Discord accounts, characters, and access permissions',
+  'Подтверждение привязки персонажей': 'Character link approvals', 'Справочник событий и изображения': 'Activity catalog and images',
+  'Предметы и их иконки': 'Items and their icons', 'Журнал действий и изменений': 'Action and change log',
+  'Стоимость жетона и финансовая конфигурация': 'Token value and financial configuration',
+  'Состояние интеграций и доставки': 'Integration and delivery status', 'Не удалось загрузить заявки.': 'Could not load requests.',
+  'Не удалось обработать заявку.': 'Could not process the request.', 'Не удалось загрузить пользователей.': 'Could not load users.',
+  'Не удалось изменить права.': 'Could not change permissions.', 'Отвязать': 'Unlink',
+  'Ликвидировать персонажа?': 'Retire the character?', 'Восстановить персонажа?': 'Restore the character?',
+  'Персонаж « » и вся история сохранятся.': 'The character “ ” and all history will be preserved.',
+  '« » исчезнет из активного состава, история сохранится.': '“ ” will be removed from the active roster while history is preserved.',
+  '« » вернётся в активный состав.': '“ ” will return to the active roster.',
+  'Discord-пользователь @ будет удалён, персонаж и история сохранятся.': 'Discord user @ will be deleted while the character and history are preserved.',
+  'Не удалось загрузить аналитику посещаемости.': 'Could not load attendance analytics.', 'Не удалось сформировать экспорт.': 'Could not generate the export.',
+  'Не удалось загрузить лот.': 'Could not load the lot.', 'Ставка принята.': 'Bid accepted.', 'Ставка отклонена.': 'Bid rejected.',
+  'Аукцион завершён.': 'Auction completed.', 'Не удалось завершить аукцион.': 'Could not complete the auction.',
+  'Отменить аукцион?': 'Cancel the auction?', 'Лот будет закрыт, а предмет вернётся в свободный остаток.': 'The lot will be closed and the item returned to available stock.',
+  'Отменить лот': 'Cancel lot', 'Лот отменён, предмет возвращён в казну.': 'Lot cancelled and item returned to the treasury.',
+  'Не удалось отменить лот.': 'Could not cancel the lot.', 'Активен': 'Active', 'Отменён': 'Cancelled',
+  'Участники могут делать ставки до указанного времени': 'Participants can bid until the specified time',
+  'Лот виден только управляющим и ещё не принимает ставки': 'The lot is visible only to managers and is not accepting bids yet',
+  'Победитель определён, предмет списан, эквивалент жетонов зачислен в казну': 'The winner is determined, the item is written off, and the token equivalent is credited to the treasury',
+  'Лот отменён, резерв предмета освобождён': 'The lot is cancelled and the item reservation is released',
+  'Не удалось сохранить лот.': 'Could not save the lot.', 'Не удалось запустить лот.': 'Could not start the lot.',
+  'Не удалось загрузить аукцион.': 'Could not load the auction.', 'Не удалось загрузить историю ставок.': 'Could not load bid history.',
+  'Не удалось сделать ставку.': 'Could not place the bid.',
+  'Баланс по движениям': 'Movement balance', 'Текущий баланс': 'Current balance', 'Транзакций': 'Transactions',
+  'Предметов': 'Items', 'Движений': 'Movements', 'Нахрюков': 'Payouts', 'Начислений': 'Earnings',
+  'Предметов в резерве': 'Reserved items', 'Не удалось выполнить финансовую сверку.': 'Could not run financial reconciliation.',
+  'Удалить конст-пати?': 'Delete the static party?', 'Игроки из « » станут одиночками.': 'Players from “ ” will become solo players.',
+  'Не удалось загрузить медиатеку.': 'Could not load the media library.', 'Не удалось добавить публикацию.': 'Could not add the post.',
+  'Удалить публикацию?': 'Delete the post?', '« » исчезнет из раздела контента.': '“ ” will be removed from the content section.',
+  'Не удалось загрузить состав пятёрок.': 'Could not load the squad roster.', 'Не удалось создать группу.': 'Could not create the group.',
+  'Не удалось переименовать группу.': 'Could not rename the group.', 'Удалить группу?': 'Delete the group?',
+  'Не удалось изменить группу.': 'Could not change the group.', 'Игроки из « » останутся в КП без распределения.': 'Players from “ ” will remain in the static party without a squad assignment.',
+  'Выплачен': 'Paid', 'Период создан, начисления ещё не зафиксированы': 'The period is created; earnings are not fixed yet',
+  'Состав и суммы зафиксированы, золото ещё не списано': 'Roster and amounts are fixed; gold has not been withdrawn yet',
+  'Золото списано из казны, начисления закрыты': 'Gold was withdrawn from the treasury and earnings were closed',
+  'Выплата отменена, начисления освобождены': 'The payout was cancelled and earnings released',
+  'Подтвердить выплату?': 'Confirm payment?', 'Золото будет отмечено фактически выданным всем ожидающим участникам.': 'Gold will be marked as actually issued to all pending participants.',
+  'Отменить выплату?': 'Cancel the payout?', 'Связанные начисления снова станут доступны для будущей ведомости.': 'Linked earnings will become available for a future statement again.',
+  'Отменить выплату': 'Cancel payout', 'Рассчитать выплату?': 'Calculate the payout?',
+  'Состав и суммы ведомости будут зафиксированы.': 'The statement roster and amounts will be fixed.',
+  'Черновик ведомости будет удалён.': 'The statement draft will be deleted.', 'Не удалось удалить черновик.': 'Could not delete the draft.',
+  'Выдача не отмечена.': 'Payment was not recorded.', 'Золото будет отмечено фактически выданным выбранным игрокам: .': 'Gold will be marked as actually issued to the selected players: .',
+  'Не удалось загрузить начисления.': 'Could not load earnings.', 'Не удалось загрузить историю выплат.': 'Could not load payout history.',
+  'Не удалось рассчитать предварительную выплату.': 'Could not calculate the payout preview.',
+  'Фуксория': 'Fuchsia', 'Махаон': 'Swallowtail', 'Таре': 'Tape',
+  'Не удалось загрузить профиль.': 'Could not load the profile.', 'Не удалось сохранить профиль.': 'Could not save the profile.',
+  'игрок': 'player', 'игрока': 'players', 'Удалить навсегда': 'Delete permanently', 'Не удалось удалить персонажа.': 'Could not delete the character.',
+  'Персонаж « » будет удалён без возможности восстановления. Исторические записи блокируют удаление автоматически.': 'The character “ ” will be permanently deleted. Historical records automatically prevent deletion.',
+  'Персонаж « » удалён.': 'Character “ ” deleted.', 'Не удалось загрузить готовность состава.': 'Could not load roster readiness.',
+  'Поступление лута': 'Loot income', 'Выдача игроку': 'Issued to player', 'Резерв аукциона': 'Auction reservation',
+  'Снятие резерва': 'Reservation released', 'Продажа на аукционе': 'Auction sale', 'Ручная продажа': 'Manual sale',
+  'Корректировка': 'Adjustment', 'Выплата нахрюка': 'Payout payment', 'Продажа вне гильдии / пополнение': 'External sale / deposit',
+  'Ручной расход': 'Manual expense', 'Не удалось загрузить казну.': 'Could not load the treasury.',
+  'Продажа проведена, золото зачислено в казну.': 'Sale completed and gold credited to the treasury.',
+  'Не удалось провести продажу.': 'Could not complete the sale.', 'Золото добавлено в казну.': 'Gold added to the treasury.',
+  'Золото списано из казны.': 'Gold withdrawn from the treasury.', 'Не удалось провести операцию.': 'Could not complete the operation.',
+  'Не удалось загрузить список получателей.': 'Could not load the recipient list.', 'Предмет выдан игроку.': 'Item issued to the player.',
+  'Не удалось выдать предмет.': 'Could not issue the item.',
   'ОШИБКА 403': 'ERROR 403', 'Недостаточно прав': 'Insufficient permissions',
   'Этот раздел недоступен для вашей роли. Если доступ действительно нужен, обратитесь к ГЛ.': 'This section is unavailable for your role. Contact the guild leader if you need access.',
   'ОШИБКА 404': 'ERROR 404', 'Возможно, ссылка устарела или объект был удалён.': 'The link may be outdated or the item may have been deleted.',
@@ -175,16 +306,104 @@ const translations = {
   'Без привязки к активности': 'No linked activity', 'Причина / комментарий': 'Reason / comment', 'За что выдан предмет': 'Reason for issuing the item',
   'Операция сохранится в истории и уменьшит остаток на': 'The operation will be saved in history and reduce the balance by', 'Подтвердить выдачу': 'Confirm issue',
   'Сумма, золото': 'Amount, gold', 'Основание операции': 'Transaction reason', 'Например: взнос участника или покупка расходников': 'For example: member contribution or consumables purchase',
-  'Текущий баланс:': 'Current balance:', 'Операция сохранится в финансовой истории.': 'The operation will be saved in financial history.'
+  'Текущий баланс:': 'Current balance:', 'Операция сохранится в финансовой истории.': 'The operation will be saved in financial history.',
+  'золото': 'gold', 'Загрузка': 'Loading', 'Контент': 'Content',
+  'Загружаем журнал активностей…': 'Loading activity log…', 'Созданные праймы появятся в этом журнале.': 'Created primes will appear in this log.',
+  'Убрать участника?': 'Remove participant?', 'будет исключён из этой активности.': 'will be removed from this activity.', 'Убрать': 'Remove',
+  'до': 'before', 'после': 'after', 'Стоимость жетона обновлена.': 'Token value updated.', 'Обновить': 'Refresh',
+  'Стоимость жетона': 'Token value', 'Изменено:': 'Updated:', 'Стоимость одного жетона, золото': 'Value of one token, gold',
+  'Изменение цены не двигает золото и не создаёт финансовую транзакцию — меняется только эквивалент в жетонах. Уже запущенные аукционы сохраняют зафиксированный при старте курс.': 'Changing the rate does not move gold or create a financial transaction; it only changes the token equivalent. Active auctions keep the rate recorded when they started.',
+  'Обычный': 'Common', 'Необычный': 'Uncommon', 'Редкий': 'Rare', 'Уникальный': 'Unique', 'Эпический': 'Epic', 'Легендарный': 'Legendary',
+  'Реликвия': 'Relic', 'Эпоха чудес': 'Wonders', 'Эпоха сказаний': 'Tales', 'Эпоха легенд': 'Legends', 'Эпоха мифов': 'Mythic', 'Эпоха Двенадцати': 'Eternal',
+  'Убрать предмет из справочника?': 'Remove item from catalog?', 'больше нельзя будет выбрать для нового лута. Остатки и история сохранятся.': 'will no longer be available for new loot. Existing inventory and history will remain.',
+  'ГЛ': 'Guild leader', 'Микро-ГЛ': 'Micro guild leader', 'Разработчик': 'Developer', 'Участник': 'Member',
+  'У пользователя должна остаться хотя бы одна роль.': 'The user must keep at least one role.', 'Никогда': 'Never', 'нед.': 'wk',
+  'GAZ ARMORY · РУКОВОДИТЕЛЯМ': 'GAZ ARMORY · MANAGEMENT', 'Аналитика посещаемости': 'Attendance analytics',
+  'Готовим…': 'Preparing…', 'Экспорт CSV': 'Export CSV', 'Экспорт XLSX': 'Export XLSX',
+  'Собираем статистику посещаемости…': 'Compiling attendance statistics…', 'Динамика посещаемости игрока': 'Player attendance trend',
+  'Доля посещённых праймов по дням или неделям': 'Share of attended primes by day or week',
+  'Для выбранного игрока пока нет доступных праймов.': 'No eligible primes are available for the selected player yet.',
+  'Подвести итог': 'Finalize', 'Сервер не ответил. Проверьте соединение и попробуйте снова.': 'The server did not respond. Check your connection and try again.',
+  'Загружаем аукционы…': 'Loading auctions…', 'Активных лотов нет': 'No active lots', 'Новые и недавно завершённые лоты появятся здесь.': 'New and recently completed lots will appear here.',
+  'Текущая цена': 'Current price', 'До конца:': 'Time left:', 'Лидер': 'Leader', 'лидер': 'leader', 'авто': 'auto',
+  'Страницы аукционов': 'Auction pages', 'Автопродление': 'Auto-extension', 'На 2–5 минут при ставке перед закрытием': 'By 2–5 minutes when a bid is placed near closing.',
+  'Расхождений нет': 'No discrepancies', 'Требует внимания': 'Needs attention', 'Критическое расхождение': 'Critical discrepancy',
+  'Проверяем журналы движений, остатки и связанные операции…': 'Checking ledgers, balances, and linked transactions…',
+  'Результат сверки': 'Reconciliation result', 'Проверено:': 'Checked:', 'пройдено': 'passed', 'замечаний': 'issues', 'критических': 'critical',
+  'Открыть →': 'Open →', 'Проверка пройдена, расхождений не найдено': 'Check passed; no discrepancies found',
+  'Загружаем конст-пати…': 'Loading static parties…', 'Ссылка': 'Link', 'Файл': 'File', 'Новые': 'Newest', 'Популярные': 'Popular',
+  'Загружаем медиатеку…': 'Loading media library…', 'Видео': 'Video', 'Изображение': 'Image',
+  'Ссылка на видео или изображение': 'Video or image URL', 'Выбрать изображение': 'Choose image', 'До 20 МБ · JPG, PNG, GIF или WebP': 'Up to 20 MB · JPG, PNG, GIF, or WebP',
+  'Загружаем ожидаемые начисления…': 'Loading pending earnings…', 'Начислений пока нет': 'No earnings yet', 'Свободные начисления появятся после расчёта праймов.': 'Available earnings will appear after primes are calculated.',
+  'Загружаем историю ведомостей…': 'Loading statement history…', 'Ведомостей пока нет': 'No statements yet', 'Созданные ведомости выплат появятся здесь.': 'Created payout statements will appear here.',
+  'Страницы истории выплат': 'Payout history pages', 'Изменений пока нет': 'No changes yet', 'с прошлого обновления': 'since the previous update',
+  'Профиль персонажа сохранён.': 'Character profile saved.', 'Безвозвратно удалить персонажа?': 'Permanently delete character?', 'Страницы состава': 'Roster pages',
+  'Загружаем готовность состава…': 'Loading roster readiness…', 'Раздел подготовлен для следующего этапа реализации.': 'This section is ready for the next implementation stage.',
+  'Продажа предмета вне аукциона': 'Item sold outside the auction', 'Пятёрки КП': 'Party squads',
+  'Сессия завершена. Войдите снова.': 'Your session has ended. Sign in again.', 'У вас недостаточно прав для этой операции.': 'You do not have permission for this operation.',
+  'Данные уже изменились. Обновите страницу и повторите действие.': 'The data has already changed. Refresh the page and try again.',
+  'Слишком много запросов. Подождите немного и повторите действие.': 'Too many requests. Wait a moment and try again.',
+  'Сервер временно не может выполнить операцию. Попробуйте позже.': 'The server is temporarily unable to complete the operation. Try again later.'
 }
 
+Object.assign(translations, bossNames)
+
+const vueI18n = createI18n({
+  legacy: false,
+  locale: initial,
+  fallbackLocale: 'ru',
+  messages: { ru: {}, en: translations },
+  missingWarn: false,
+  fallbackWarn: false,
+})
+
 const entries = Object.entries(translations).sort((a, b) => b[0].length - a[0].length)
+const phraseUnsafeKeys = new Set(['Не удалось'])
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+const phraseEntries = entries
+  .filter(([source]) => !phraseUnsafeKeys.has(source) && source.trim().length > 1)
+  .map(([source, target]) => {
+    const trimmed = source.trim()
+    const leftBoundary = /^[\p{L}\p{N}]/u.test(trimmed) ? '(?<![\\p{L}\\p{N}])' : ''
+    const rightBoundary = /[\p{L}\p{N}]$/u.test(trimmed) ? '(?![\\p{L}\\p{N}])' : ''
+    return [new RegExp(`${leftBoundary}${escapeRegExp(trimmed)}${rightBoundary}`, 'gu'), target]
+  })
 const originals = new WeakMap()
 let observer
 
-function translate(value) {
+export function translate(value) {
   if (locale.value === 'ru' || !value) return value
-  return entries.reduce((text, [ru, en]) => text.split(ru).join(en), value)
+  return translateToEnglish(value)
+}
+
+function translateToEnglish(value) {
+  const leading = value.match(/^\s*/)?.[0] ?? ''
+  const trailing = value.match(/\s*$/)?.[0] ?? ''
+  const source = value.trim()
+  if (Object.hasOwn(translations, source)) return `${leading}${translations[source]}${trailing}`
+
+  // Vue joins static labels and interpolated values into one text node. Known
+  // phrases inside such nodes are translated only at Unicode word boundaries.
+  return phraseEntries.reduce(
+    (text, [pattern, target]) => text.replace(pattern, target),
+    value,
+  )
+}
+
+export function hasEnglishTranslation(value) {
+  return typeof value !== 'string' || !/[А-Яа-яЁё]/.test(translateToEnglish(value))
+}
+
+export function translateExact(value) {
+  if (locale.value === 'ru' || typeof value !== 'string' || !value) return value
+  const leading = value.match(/^\s*/)?.[0] ?? ''
+  const trailing = value.match(/\s*$/)?.[0] ?? ''
+  const source = value.trim()
+  return Object.hasOwn(translations, source) ? `${leading}${translations[source]}${trailing}` : value
 }
 
 function visit(root, restore = false) {
@@ -220,13 +439,15 @@ function renderLanguage() {
 export function setLocale(value) {
   if (!supported.includes(value) || value === locale.value) return
   locale.value = value
+  vueI18n.global.locale.value = value
   localStorage.setItem(STORAGE_KEY, value)
   renderLanguage()
   window.dispatchEvent(new CustomEvent('locale-changed', { detail: value }))
 }
 
 export function installI18n(app) {
-  app.config.globalProperties.$t = translate
+  app.use(vueI18n)
+  app.config.globalProperties.$legacyT = translate
   app.config.globalProperties.$locale = readonly(locale)
   observer = new MutationObserver(mutations => {
     observer.disconnect()
@@ -240,4 +461,5 @@ export function installI18n(app) {
   document.documentElement.lang = locale.value
 }
 
+export function getLocale() { return locale.value }
 export function useLocale() { return { locale: readonly(locale), setLocale, t: translate } }

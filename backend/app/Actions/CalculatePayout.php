@@ -20,7 +20,7 @@ final class CalculatePayout
         return DB::transaction(function () use ($payout, $activityIds): Payout {
             $locked = Payout::query()->lockForUpdate()->findOrFail($payout->id);
             if ($locked->status !== 'draft') {
-                throw ValidationException::withMessages(['payout' => 'Рассчитать можно только черновик.']);
+                throw ValidationException::withMessages(['payout' => __('domain.payout.draft_only')]);
             }
 
             $earnings = PrimePlayerEarning::query()
@@ -35,7 +35,7 @@ final class CalculatePayout
                 ->get();
 
             if ($earnings->isEmpty()) {
-                throw ValidationException::withMessages(['payout' => 'За выбранный период нет свободных начислений.']);
+                throw ValidationException::withMessages(['payout' => __('domain.payout.no_available_earnings')]);
             }
 
             $activityIds = $earnings->pluck('activity_id')->unique()->values();

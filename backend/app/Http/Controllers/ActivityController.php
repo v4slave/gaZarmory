@@ -34,8 +34,8 @@ final class ActivityController extends Controller
         $this->authorize('create', Activity::class);
         $data=$request->validate(['activity_definition_id'=>['required','exists:activity_definitions,id'],'occurred_at'=>['required','date'],'gold_value'=>['nullable','integer','min:0']]);
         $definition=ActivityDefinition::query()->findOrFail($data['activity_definition_id']);
-        abort_unless($definition->type->value === 'prime', 422, 'Можно создавать только основные праймы.');
-        if($definition->type->value !== 'prime' && array_key_exists('gold_value',$data) && $data['gold_value']!==null) throw ValidationException::withMessages(['gold_value'=>'Золото допустимо только для прайма.']);
+        abort_unless($definition->type->value === 'prime', 422, __('domain.activity.prime_only'));
+        if($definition->type->value !== 'prime' && array_key_exists('gold_value',$data) && $data['gold_value']!==null) throw ValidationException::withMessages(['gold_value'=>__('domain.activity.gold_prime_only')]);
         $activity=Activity::query()->create($data+['created_by'=>$request->user()->id]);
         $this->audit->record('activity.created',$activity,null,$activity->getAttributes());
         return response()->json($activity->load('definition'),201);
@@ -46,8 +46,8 @@ final class ActivityController extends Controller
     public function update(Request $request, Activity $activity)
     {
         $this->authorize('update',$activity);
-        abort_if($activity->completed_at,409,'Завершённая активность immutable.');
-        abort_if($activity->earnings()->exists(),409,'Прайм с начислениями immutable.');
+        abort_if($activity->completed_at,409,__('domain.activity.completed_locked'));
+        abort_if($activity->earnings()->exists(),409,__('domain.activity.earnings_locked'));
         $data=$request->validate(['occurred_at'=>['sometimes','date'],'gold_value'=>['sometimes','nullable','integer','min:0']]);
         $old=$activity->only(array_keys($data)); $activity->update($data); $this->audit->record('activity.updated',$activity,$old,$data);
         return $activity->refresh()->load('definition');
@@ -58,11 +58,11 @@ final class ActivityController extends Controller
         $this->authorize('delete',$activity);
         DB::transaction(function () use ($activity, $request): void {
             $locked = Activity::query()->with('loot')->lockForUpdate()->findOrFail($activity->id);
-            abort_if($locked->completed_at || $locked->earnings()->exists(), 409, 'Удалить можно только незавершённый черновик без начислений.');
+            abort_if($locked->completed_at || $locked->earnings()->exists(), 409, __('domain.activity.delete_draft_only'));
             foreach ($locked->loot as $loot) {
                 $item = TreasuryItem::query()->where('item_name', $loot->item_name)->lockForUpdate()->first();
                 if (!$item || $item->available_quantity < $loot->quantity) {
-                    throw ValidationException::withMessages(['activity' => "Лут «{$loot->item_name}» уже использован. Сначала отмените связанную операцию."]);
+                    throw ValidationException::withMessages(['activity' => __('domain.activity.loot_already_used', ['item' => $loot->item_name])]);
                 }
                 $item->decrement('quantity', $loot->quantity);
                 TreasuryItemTransaction::query()->create(['treasury_item_id'=>$item->id,'type'=>'adjustment','quantity_delta'=>-$loot->quantity,'source_activity_id'=>$locked->id,'reason'=>'Удаление черновика активности','created_by'=>$request->user()->id]);
@@ -81,26 +81,26 @@ final class ActivityController extends Controller
     public function addPlayers(Request $request, Activity $activity)
     {
         $this->authorize('update',$activity);
-        abort_if($activity->completed_at,409,'Завершённая активность immutable.');
+        abort_if($activity->completed_at,409,__('domain.activity.completed_locked'));
         $ids=$request->validate(['player_ids'=>['required','array','min:1'],'player_ids.*'=>['integer','distinct','exists:players,id']])['player_ids'];
-        DB::transaction(function()use($activity,$ids){$locked=Activity::query()->lockForUpdate()->findOrFail($activity->id);abort_if($locked->completed_at,409,'Завершённая активность immutable.');abort_if($locked->earnings()->exists(),409,'Состав рассчитанного прайма immutable.');$locked->players()->syncWithoutDetaching($ids);});
+        DB::transaction(function()use($activity,$ids){$locked=Activity::query()->lockForUpdate()->findOrFail($activity->id);abort_if($locked->completed_at,409,__('domain.activity.completed_locked'));abort_if($locked->earnings()->exists(),409,__('domain.activity.participants_locked'));$locked->players()->syncWithoutDetaching($ids);});
         return $activity->load('players');
     }
 
     public function removePlayer(Activity $activity, int $playerId)
     {
         $this->authorize('update',$activity);
-        abort_if($activity->completed_at,409,'Завершённая активность immutable.');
-        DB::transaction(function()use($activity,$playerId){$locked=Activity::query()->lockForUpdate()->findOrFail($activity->id);abort_if($locked->completed_at,409,'Завершённая активность immutable.');abort_if($locked->earnings()->exists(),409,'Состав рассчитанного прайма immutable.');$locked->players()->detach($playerId);});return response()->noContent();
+        abort_if($activity->completed_at,409,__('domain.activity.completed_locked'));
+        DB::transaction(function()use($activity,$playerId){$locked=Activity::query()->lockForUpdate()->findOrFail($activity->id);abort_if($locked->completed_at,409,__('domain.activity.completed_locked'));abort_if($locked->earnings()->exists(),409,__('domain.activity.participants_locked'));$locked->players()->detach($playerId);});return response()->noContent();
     }
 
     public function complete(Request $request, Activity $activity, CalculatePrimeShares $action)
     {
         $this->authorize('update', $activity);
         $activity->load('definition');
-        abort_if($activity->definition->type->value !== 'mini_activity', 422, 'Этой кнопкой завершается только мини-прайм.');
-        abort_if($activity->completed_at && $activity->earnings()->exists(), 409, 'Мини-прайм уже завершён.');
-        abort_if($activity->lootImports()->where('status', 'draft')->exists(), 422, 'Сначала подтвердите черновик импорта лута.');
+        abort_if($activity->definition->type->value !== 'mini_activity', 422, __('domain.activity.complete_mini_only'));
+        abort_if($activity->completed_at && $activity->earnings()->exists(), 409, __('domain.activity.mini_already_completed'));
+        abort_if($activity->lootImports()->where('status', 'draft')->exists(), 422, __('domain.activity.confirm_loot_import_first'));
 
         return $action->execute($activity);
     }
@@ -113,9 +113,9 @@ final class ActivityController extends Controller
         return DB::transaction(function () use ($request, $activity, $data): Activity {
             $locked = Activity::query()->lockForUpdate()->findOrFail($activity->id);
             $earnings = $locked->earnings()->lockForUpdate()->get();
-            abort_if($earnings->isEmpty(), 409, 'У активности нет рассчитанных начислений для отмены.');
-            abort_if($earnings->contains(fn ($earning) => $earning->status !== 'pending'), 409, 'Исправление запрещено: хотя бы одно начисление уже выплачено или отменено.');
-            abort_if($earnings->contains(fn ($earning) => $earning->payout_id !== null), 409, 'Исправление запрещено: начисления уже включены в нахрюк. Сначала отмените невыплаченный нахрюк.');
+            abort_if($earnings->isEmpty(), 409, __('domain.activity.no_earnings_to_cancel'));
+            abort_if($earnings->contains(fn ($earning) => $earning->status !== 'pending'), 409, __('domain.activity.earnings_not_pending'));
+            abort_if($earnings->contains(fn ($earning) => $earning->payout_id !== null), 409, __('domain.activity.earnings_in_payout'));
 
             $snapshot = [
                 'reason' => $data['reason'],

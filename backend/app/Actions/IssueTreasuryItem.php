@@ -27,11 +27,11 @@ final class IssueTreasuryItem
             $recipient = Player::query()->lockForUpdate()->findOrFail($recipientPlayerId);
 
             if (!$recipient->is_active) {
-                throw ValidationException::withMessages(['recipient_player_id' => 'Нельзя выдать предмет неактивному игроку.']);
+                throw ValidationException::withMessages(['recipient_player_id' => __('domain.treasury.inactive_recipient')]);
             }
             if ($quantity > $lockedItem->available_quantity) {
                 throw ValidationException::withMessages([
-                    'quantity' => 'Недостаточно свободного количества. Доступно: '.$lockedItem->available_quantity.'.',
+                    'quantity' => __('domain.treasury.insufficient_quantity', ['available' => $lockedItem->available_quantity]),
                 ]);
             }
             if ($sourceActivityId !== null) {

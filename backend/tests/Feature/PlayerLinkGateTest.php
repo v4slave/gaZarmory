@@ -20,7 +20,10 @@ final class PlayerLinkGateTest extends TestCase
         parent::actingAs($user);
         $this->getJson('/api/me')->assertOk();
         $this->getJson('/api/me/player-options')->assertOk();
-        $this->getJson('/api/players')->assertForbidden()
+        $this->withHeader('Accept-Language', 'ru')->getJson('/api/players')->assertForbidden()
             ->assertJsonPath('message', 'Сначала привяжите игрового персонажа.');
+
+        $this->withHeader('Accept-Language', 'en')->getJson('/api/players')->assertForbidden()
+            ->assertJsonPath('message', 'Link a game character first.');
     }
 }

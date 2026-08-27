@@ -37,7 +37,7 @@ final class ActivityDefinitionController extends Controller
     {
         abort_unless($request->user()->canAdministrate(), 403);
         $data=$request->validate(['icon' => ['required','image','mimes:png,jpg,jpeg,webp,gif','max:4096'],'updated_at'=>['nullable','date']]);
-        if(isset($data['updated_at'])&&!$activityDefinition->updated_at->equalTo($data['updated_at']))throw \Illuminate\Validation\ValidationException::withMessages(['updated_at'=>'Активность уже изменена другим пользователем. Обновите страницу.']);
+        if(isset($data['updated_at'])&&!$activityDefinition->updated_at->equalTo($data['updated_at']))throw \Illuminate\Validation\ValidationException::withMessages(['updated_at'=>__('domain.activity.definition_stale')]);
         $oldPath = $activityDefinition->icon_path;
         $newPath = $request->file('icon')->store('activity-definitions', 'public');
         $activityDefinition->update(['icon_path' => $newPath]);
@@ -50,7 +50,7 @@ final class ActivityDefinitionController extends Controller
     {
         abort_unless($request->user()->canAdministrate(), 403);
         $data=$request->validate(['updated_at'=>['nullable','date']]);
-        if(isset($data['updated_at'])&&!$activityDefinition->updated_at->equalTo($data['updated_at']))throw \Illuminate\Validation\ValidationException::withMessages(['updated_at'=>'Активность уже изменена другим пользователем. Обновите страницу.']);
+        if(isset($data['updated_at'])&&!$activityDefinition->updated_at->equalTo($data['updated_at']))throw \Illuminate\Validation\ValidationException::withMessages(['updated_at'=>__('domain.activity.definition_stale')]);
         $oldPath = $activityDefinition->icon_path;
         if ($oldPath) Storage::disk('public')->delete($oldPath);
         $activityDefinition->update(['icon_path' => null]);

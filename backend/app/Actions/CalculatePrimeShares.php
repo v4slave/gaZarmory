@@ -14,9 +14,9 @@ final class CalculatePrimeShares
     {
         return DB::transaction(function()use($activity){
             $locked=Activity::query()->lockForUpdate()->with(['definition','players','loot'])->findOrFail($activity->id);
-            if(!in_array($locked->definition->type,[ActivityType::Prime,ActivityType::MiniActivity],true))throw ValidationException::withMessages(['activity'=>'Для этого типа события начисления недоступны.']);
-            if($locked->earnings()->exists())throw ValidationException::withMessages(['activity'=>'Эта активность уже рассчитана.']);
-            if($locked->players->isEmpty())throw ValidationException::withMessages(['players'=>'Добавьте хотя бы одного участника.']);
+            if(!in_array($locked->definition->type,[ActivityType::Prime,ActivityType::MiniActivity],true))throw ValidationException::withMessages(['activity'=>__('domain.activity.earnings_unavailable')]);
+            if($locked->earnings()->exists())throw ValidationException::withMessages(['activity'=>__('domain.activity.already_calculated')]);
+            if($locked->players->isEmpty())throw ValidationException::withMessages(['players'=>__('domain.activity.participant_required')]);
             $goldValue=$locked->loot->sum(fn($item)=>$item->quantity*$item->unit_price);
             $result=$this->calculator->calculate($goldValue,$locked->players->count());
             $locked->update(['gold_value'=>$goldValue,'completed_at'=>now()]);

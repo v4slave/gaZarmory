@@ -15,6 +15,72 @@ use Illuminate\Support\Facades\DB;
 
 final class FinancialReconciliationController extends Controller
 {
+    private const ENGLISH_PHRASES = [
+        'Сумма транзакций не совпадает с текущим балансом' => 'Transaction total does not match the current balance',
+        'Сверка последовательности всех движений и текущего баланса' => 'Reconciliation of all transactions against the current balance',
+        'Сумма движений каждого предмета против текущего остатка' => 'Item movement totals compared with current stock',
+        'Сверка начислений, строк игроков, итогов и списаний золота' => 'Reconciliation of earnings, player rows, totals, and gold withdrawals',
+        'Зарезервированные остатки против активных лотов' => 'Reserved stock compared with active lots',
+        'Просроченные аукционы и давно не изменявшиеся черновики' => 'Expired auctions and stale drafts',
+        'Отрицательные значения и логически невозможные состояния' => 'Negative values and logically impossible states',
+        'Количество или денежное значение вне допустимого диапазона' => 'Quantity or monetary value is outside the allowed range',
+        'Статус нахрюка paid, но есть строки с другим статусом' => 'The payout status is paid, but some player rows have a different status',
+        'Статус paid при пустом payout_id' => 'The status is paid while payout_id is empty',
+        'не подтверждён более суток' => 'has not been confirmed for over a day',
+        'не завершена более 7 дней' => 'has remained unfinished for over 7 days',
+        'истёк, но остаётся активным' => 'has expired but remains active',
+        'ссылается на отсутствующий нахрюк' => 'references a missing payout',
+        'не совпадает с активными аукционами' => 'does not match active auctions',
+        'не совпадает с движениями' => 'does not match item movements',
+        'сумма игроков не совпадает' => 'player total does not match',
+        'начисления не совпадают' => 'earnings do not match',
+        'не все строки игроков оплачены' => 'not all player rows are paid',
+        'неверное списание золота' => 'incorrect gold withdrawal',
+        'старше 7 дней' => 'is older than 7 days',
+        'завис в статусе ' => 'is stuck in status ',
+        'Разрыв баланса в транзакции #' => 'Balance discontinuity in transaction #',
+        'Отрицательный баланс после транзакции #' => 'Negative balance after transaction #',
+        'Некорректное значение в аукционе #' => 'Invalid value in auction #',
+        'Отрицательное начисление #' => 'Negative earning #',
+        'Отрицательное значение у «' => 'Negative value for “',
+        'Начисление #' => 'Earning #',
+        'Аукцион #' => 'Auction #',
+        'Черновик аукциона #' => 'Auction draft #',
+        'Нахрюк #' => 'Payout #',
+        'Импорт лута #' => 'Loot import #',
+        'Активность #' => 'Activity #',
+        'Резерв «' => 'Reservation for “',
+        'Золото по транзакциям' => 'Gold transaction balance',
+        'Предметы по движениям' => 'Item movement balance',
+        'Начисления и нахрюки' => 'Earnings and payouts',
+        'Резервы аукционов' => 'Auction reservations',
+        'Незавершённые операции' => 'Unfinished operations',
+        'Подозрительные значения' => 'Suspicious values',
+        'Активные лоты требуют ' => 'Active lots require ',
+        ', зарезервировано ' => ', reserved ',
+        ' превышает остаток' => ' exceeds stock',
+        'Ожидалось ' => 'Expected ',
+        ', записано ' => ', recorded ',
+        'По движениям ' => 'Movement total ',
+        ', текущий баланс ' => ', current balance ',
+        ', в казне ' => ', treasury stock ',
+        'Игрокам ' => 'Player rows ',
+        'Начисления ' => 'Earnings ',
+        ', итог ' => ', total ',
+        ', списано ' => ', withdrawn ',
+        'Резерв ' => 'Reserved ',
+        ', остаток ' => ', stock ',
+        ', цена ' => ', value ',
+        'Завершение ' => 'Ends at ',
+        'Создана ' => 'Created at ',
+        'Создан ' => 'Created at ',
+        'Не изменялся с ' => 'Unchanged since ',
+        'Баланс ' => 'Balance ',
+        'Сумма ' => 'Amount ',
+        ' оплачено без нахрюка' => ' was paid without a payout',
+        '»' => '”',
+    ];
+
     public function __invoke(Request $request)
     {
         abort_unless($request->user()->canHandleTreasuryItems(), 403);
@@ -27,6 +93,7 @@ final class FinancialReconciliationController extends Controller
             $this->staleCheck(),
             $this->suspiciousCheck(),
         ];
+        if (app()->isLocale('en')) $checks = $this->localize($checks);
         $issues = collect($checks)->sum('issues_count');
         $critical = collect($checks)->sum('critical_count');
 
@@ -152,5 +219,21 @@ final class FinancialReconciliationController extends Controller
     private function issue(string $severity, string $title, string $details, ?string $entityType = null, ?int $entityId = null): array
     {
         return compact('severity','title','details','entityType','entityId');
+    }
+
+    private function localize(array $checks): array
+    {
+        foreach ($checks as &$check) {
+            $check['title'] = strtr($check['title'], self::ENGLISH_PHRASES);
+            $check['description'] = strtr($check['description'], self::ENGLISH_PHRASES);
+            foreach ($check['issues'] as &$issue) {
+                $issue['title'] = strtr($issue['title'], self::ENGLISH_PHRASES);
+                $issue['details'] = strtr($issue['details'], self::ENGLISH_PHRASES);
+            }
+            unset($issue);
+        }
+        unset($check);
+
+        return $checks;
     }
 }

@@ -123,7 +123,7 @@ final class MediaPostController extends Controller
         if (preg_match('/\.(jpe?g|png|gif|webp)(?:\?|$)/i', $url))
             return ['kind'=>'image','provider'=>'direct','source_url'=>$url,'embed_url'=>null,'thumbnail_url'=>$url];
 
-        throw ValidationException::withMessages(['url' => 'Поддерживаются YouTube, Rutube, Vimeo и прямые ссылки на видео или изображения.']);
+        throw ValidationException::withMessages(['url' => __('domain.media.unsupported_url')]);
     }
 
     private function resolveTitle(string $url, array $media): string

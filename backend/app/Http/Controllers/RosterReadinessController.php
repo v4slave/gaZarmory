@@ -31,7 +31,7 @@ final class RosterReadinessController extends Controller
         $partyGroupId = $user->hasRole(UserRole::PartyLeader) && !$user->canManageGuild()
             ? $user->player?->group_id
             : null;
-        if ($user->hasRole(UserRole::PartyLeader) && !$user->canManageGuild()) abort_unless($partyGroupId, 403, 'PL не привязан к конст-пати.');
+        if ($user->hasRole(UserRole::PartyLeader) && !$user->canManageGuild()) abort_unless($partyGroupId, 403, __('domain.party.leader_not_linked'));
 
         $query = Player::query()->where('is_active', true)->with(['group:id,name', 'user:id,discord_id,discord_username,discord_display_name,discord_avatar,role,roles']);
         if ($partyGroupId) $query->where('group_id', $partyGroupId);

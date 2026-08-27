@@ -199,13 +199,13 @@ final class PlayerController extends Controller
 
             if ($lockedPlayer->user_id !== null) {
                 throw ValidationException::withMessages([
-                    'player' => ['Сначала отвяжите персонажа от Discord-профиля.'],
+                    'player' => [__('domain.profile.unlink_before_delete')],
                 ]);
             }
 
             if ($this->hasHistory($lockedPlayer->id)) {
                 throw ValidationException::withMessages([
-                    'player' => ['У персонажа есть история активностей, выплат, казны или аукционов. Его можно только ликвидировать с сохранением истории.'],
+                    'player' => [__('domain.profile.has_history')],
                 ]);
             }
 

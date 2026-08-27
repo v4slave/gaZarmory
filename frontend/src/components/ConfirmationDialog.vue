@@ -1,8 +1,10 @@
 <script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useLocale } from '../i18n.js'
 import { useConfirmationStore } from '../stores/confirmation.js'
 
 const confirmation = useConfirmationStore()
+const { t } = useLocale()
 const enteredText = ref('')
 const cancelButton = ref(null)
 const textInput = ref(null)
@@ -15,7 +17,6 @@ function approve() {
   confirmation.finish(true)
 }
 function onKeydown(event) {
-  if (event.key === 'Escape' && confirmation.open) cancel()
   if (event.key !== 'Tab' || !confirmation.open) return
   const focusable = [...dialog.value.querySelectorAll('button:not(:disabled), input:not(:disabled)')]
   if (!focusable.length) return
@@ -42,20 +43,20 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 <template>
   <Teleport to="body">
-    <div v-if="confirmation.open" class="confirmation-backdrop" @mousedown.self="cancel">
+    <div v-if="confirmation.open" class="confirmation-backdrop">
       <section ref="dialog" class="confirmation-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirmation-title" aria-describedby="confirmation-description">
         <header>
           <span aria-hidden="true">{{ confirmation.danger ? '!' : '?' }}</span>
-          <h2 id="confirmation-title">{{ confirmation.title }}</h2>
+          <h2 id="confirmation-title">{{ t(confirmation.title) }}</h2>
         </header>
-        <p id="confirmation-description">{{ confirmation.message }}</p>
+        <p id="confirmation-description">{{ t(confirmation.message) }}</p>
         <label v-if="confirmation.expectedText">
-          Для подтверждения введите <strong>{{ confirmation.expectedText }}</strong>
+          {{ t('Для подтверждения введите') }} <strong>{{ confirmation.expectedText }}</strong>
           <input ref="textInput" v-model="enteredText" autocomplete="off" @keydown.enter.prevent="approve">
         </label>
         <footer>
-          <button ref="cancelButton" type="button" @click="cancel">{{ confirmation.cancelLabel }}</button>
-          <button type="button" :class="confirmation.danger ? 'danger' : 'primary'" :disabled="Boolean(confirmation.expectedText) && enteredText !== confirmation.expectedText" @click="approve">{{ confirmation.confirmLabel }}</button>
+          <button ref="cancelButton" type="button" @click="cancel">{{ t(confirmation.cancelLabel) }}</button>
+          <button type="button" :class="confirmation.danger ? 'danger' : 'primary'" :disabled="Boolean(confirmation.expectedText) && enteredText !== confirmation.expectedText" @click="approve">{{ t(confirmation.confirmLabel) }}</button>
         </footer>
       </section>
     </div>

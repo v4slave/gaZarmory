@@ -3,6 +3,7 @@ import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { api } from '../api.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import AsyncState from '../components/AsyncState.vue'
+import { formatInteger } from '../utils/format.js'
 
 const loading = ref(true)
 const error = ref('')
@@ -24,7 +25,7 @@ async function load() {
   finally { loading.value = false }
 }
 function resetFilters() { Object.keys(filters).forEach(key => { filters[key] = '' }) }
-function delta(value) { const number = Number(value); return `${number > 0 ? '+' : ''}${number.toLocaleString('ru-RU')}` }
+function delta(value) { const number = Number(value); return `${number > 0 ? '+' : ''}${formatInteger(number)}` }
 function missing(player) { return assets.filter(([key]) => !player[key]).map(([, label]) => label) }
 watch(filters, () => { clearTimeout(timer); timer = setTimeout(load, 250) })
 onMounted(load)
@@ -36,7 +37,7 @@ onMounted(load)
 
     <div class="readiness-summary">
       <article><span>В выборке</span><strong>{{ data.summary.players ?? 0 }}</strong><small>игроков</small></article>
-      <article><span>Средний ГС</span><strong>{{ Number(data.summary.average_gear_score ?? 0).toLocaleString('ru-RU') }}</strong><small>по текущему фильтру</small></article>
+      <article><span>Средний ГС</span><strong>{{ formatInteger(data.summary.average_gear_score ?? 0) }}</strong><small>по текущему фильтру</small></article>
       <article><span>Полностью оснащены</span><strong>{{ data.summary.ready ?? 0 }}</strong><small>все отметки профиля</small></article>
     </div>
 
@@ -54,7 +55,7 @@ onMounted(load)
     <div v-if="!loading&&!error&&data.players.length" class="readiness-list">
       <article v-for="player in data.players" :key="player.id" class="panel readiness-player">
         <RouterLink class="readiness-identity" :to="`/players/${player.id}`"><PlayerAvatar :player="player" size="small"/><span><strong>{{ player.nickname }}</strong><span class="readiness-player-meta"><small>{{ player.group?.name ?? 'Без консты' }}</small><small :class="['class-tag', `class-${player.class}`]">{{ classLabels[player.class] }}</small></span></span></RouterLink>
-        <div class="readiness-gear"><span><small>ГС</small><b>{{ Number(player.gear_score).toLocaleString('ru-RU') }}</b></span><span><small>Неделя</small><b :class="Number(player.gear_score_week_delta) >= 0 ? 'positive' : 'negative'">{{ delta(player.gear_score_week_delta) }}</b></span><span><small>Месяц</small><b :class="Number(player.gear_score_month_delta) >= 0 ? 'positive' : 'negative'">{{ delta(player.gear_score_month_delta) }}</b></span></div>
+        <div class="readiness-gear"><span><small>ГС</small><b>{{ formatInteger(player.gear_score) }}</b></span><span><small>Неделя</small><b :class="Number(player.gear_score_week_delta) >= 0 ? 'positive' : 'negative'">{{ delta(player.gear_score_week_delta) }}</b></span><span><small>Месяц</small><b :class="Number(player.gear_score_month_delta) >= 0 ? 'positive' : 'negative'">{{ delta(player.gear_score_month_delta) }}</b></span></div>
         <div class="readiness-equipment"><div class="readiness-assets"><span v-for="asset in assets" :key="asset[0]" :class="player[asset[0]] ? 'available' : 'missing'" :title="asset[1]">{{ player[asset[0]] ? '✓' : '×' }} {{ asset[1] }}</span></div><p v-if="missing(player).length" class="readiness-missing"><b>Не хватает:</b> {{ missing(player).join(', ') }}</p><p v-else class="readiness-complete">✓ Оснащение заполнено полностью</p></div>
       </article>
     </div>

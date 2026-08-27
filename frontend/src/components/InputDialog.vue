@@ -1,8 +1,10 @@
 <script setup>
 import { nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useLocale } from '../i18n.js'
 import { useInputDialogStore } from '../stores/input-dialog.js'
 
 const dialogStore = useInputDialogStore()
+const { t } = useLocale()
 const value = ref('')
 const dialog = ref(null)
 const input = ref(null)
@@ -11,7 +13,6 @@ let previousFocus
 function cancel() { dialogStore.finish(null) }
 function submit() { dialogStore.finish(value.value) }
 function onKeydown(event) {
-  if (event.key === 'Escape' && dialogStore.open) cancel()
   if (event.key !== 'Tab' || !dialogStore.open) return
   const focusable = [...dialog.value.querySelectorAll('button:not(:disabled), input:not(:disabled)')]
   const first = focusable[0], last = focusable.at(-1)
@@ -37,14 +38,14 @@ onBeforeUnmount(() => document.removeEventListener('keydown', onKeydown))
 
 <template>
   <Teleport to="body">
-    <div v-if="dialogStore.open" class="input-dialog-backdrop" @mousedown.self="cancel">
+    <div v-if="dialogStore.open" class="input-dialog-backdrop">
       <form ref="dialog" class="input-dialog" role="dialog" aria-modal="true" aria-labelledby="input-dialog-title" :aria-describedby="dialogStore.message ? 'input-dialog-description' : undefined" @submit.prevent="submit">
-        <h2 id="input-dialog-title">{{ dialogStore.title }}</h2>
-        <p v-if="dialogStore.message" id="input-dialog-description">{{ dialogStore.message }}</p>
-        <label>{{ dialogStore.label }}
+        <h2 id="input-dialog-title">{{ t(dialogStore.title) }}</h2>
+        <p v-if="dialogStore.message" id="input-dialog-description">{{ t(dialogStore.message) }}</p>
+        <label>{{ t(dialogStore.label) }}
           <input ref="input" v-model="value" :type="dialogStore.inputType" :min="dialogStore.min" :max="dialogStore.max" :step="dialogStore.step" :maxlength="dialogStore.maxLength" required autocomplete="off">
         </label>
-        <footer><button type="button" @click="cancel">Отмена</button><button class="primary">{{ dialogStore.confirmLabel }}</button></footer>
+        <footer><button type="button" @click="cancel">{{ t('Отмена') }}</button><button class="primary">{{ t(dialogStore.confirmLabel) }}</button></footer>
       </form>
     </div>
   </Teleport>

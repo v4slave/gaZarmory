@@ -21,7 +21,7 @@ final class CreateManualTreasuryTransaction
 
             if ($newBalance < 0) {
                 throw ValidationException::withMessages([
-                    'amount' => 'Недостаточно золота в казне. Доступно: '.$balance.'.',
+                    'amount' => __('domain.treasury.insufficient_gold', ['available' => $balance]),
                 ]);
             }
 

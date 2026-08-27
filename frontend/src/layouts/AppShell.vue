@@ -8,9 +8,10 @@ import AppIcon from '../components/AppIcon.vue'
 import { useLocale } from '../i18n.js'
 import { preloadManagementPages } from '../router/index.js'
 import { canPreloadManagementPages } from '../router/access.js'
+import { formatDateTime } from '../utils/format.js'
 const auth = useAuthStore()
 const route = useRoute()
-const { locale, setLocale } = useLocale()
+const { locale, setLocale, t } = useLocale()
 const menuOpen = ref(false)
 const showLinker = ref(false)
 const selectedPlayerId = ref('')
@@ -99,25 +100,25 @@ async function linkProfile() {
 </script>
 
 <template>
-  <div v-if="!auth.authenticated || !auth.user?.player" class="language-switcher language-switcher-floating" role="group" aria-label="Язык интерфейса">
+  <div v-if="!auth.authenticated || !auth.user?.player" class="language-switcher language-switcher-floating" role="group" :aria-label="t('Язык интерфейса')">
     <button type="button" :class="{ active: locale === 'ru' }" :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
     <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
   </div>
-  <div v-if="auth.loading" class="access-gate"><div class="access-card"><span class="access-loader"></span><p>Проверяем авторизацию…</p></div></div>
-  <div v-else-if="!auth.authenticated" class="access-gate"><div class="access-card guest-card"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><p class="eyebrow">ARCHEAGE GUILD MANAGEMENT</p><h1>GAZ ARMORY</h1><button class="primary access-primary" @click="auth.login">Войти через Discord</button></div></div>
-  <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><p class="eyebrow">ПЕРВЫЙ ВХОД</p><template v-if="auth.user?.pending_player_link_request"><h1>Заявка отправлена</h1><p class="muted">Персонаж «{{ auth.user.pending_player_link_request.player?.nickname }}». Дождитесь подтверждения ГЛ или администратора.</p><p class="muted">Статус проверяется автоматически — доступ откроется без обновления страницы.</p></template><template v-else><h1>Привяжите персонажа</h1><p class="muted">Выберите персонажа и отправьте заявку. Разделы гильдии откроются после подтверждения.</p><button class="primary access-primary" @click="openLinker">Выбрать персонажа</button></template><button class="access-logout" @click="auth.logout">Выйти</button></div></div>
+  <div v-if="auth.loading" class="access-gate"><div class="access-card"><span class="access-loader"></span><p>{{ t('Проверяем авторизацию…') }}</p></div></div>
+  <div v-else-if="!auth.authenticated" class="access-gate"><div class="access-card guest-card"><img src="/hamster-armory.png" :alt="t('Хомяк GAZ ARMORY')"><p class="eyebrow">ARCHEAGE GUILD MANAGEMENT</p><h1>GAZ ARMORY</h1><button class="primary access-primary" @click="auth.login">{{ t('Войти через Discord') }}</button></div></div>
+  <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/hamster-armory.png" :alt="t('Хомяк GAZ ARMORY')"><p class="eyebrow">{{ t('ПЕРВЫЙ ВХОД') }}</p><template v-if="auth.user?.pending_player_link_request"><h1>{{ t('Заявка отправлена') }}</h1><p class="muted">{{ t('Персонаж') }} «{{ auth.user.pending_player_link_request.player?.nickname }}». {{ t('Дождитесь подтверждения ГЛ или администратора.') }}</p><p class="muted">{{ t('Статус проверяется автоматически — доступ откроется без обновления страницы.') }}</p></template><template v-else><h1>{{ t('Привяжите персонажа') }}</h1><p class="muted">{{ t('Выберите персонажа и отправьте заявку. Разделы гильдии откроются после подтверждения.') }}</p><button class="primary access-primary" @click="openLinker">{{ t('Выбрать персонажа') }}</button></template><button class="access-logout" @click="auth.logout">{{ t('Выйти') }}</button></div></div>
   <div v-else class="shell">
     <aside :class="{ open: menuOpen }">
       <div class="brand">
-        <img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY">
+        <img src="/hamster-armory.png" :alt="t('Хомяк GAZ ARMORY')">
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
-      <nav><div class="nav-section"><span class="nav-section-title">Основное</span><RouterLink v-for="link in primaryLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true"><AppIcon :name="link.icon"/></i><span>{{ link.label }}</span></RouterLink></div><div class="nav-section"><span class="nav-section-title">Экономика</span><RouterLink v-for="link in economyLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true"><AppIcon :name="link.icon"/></i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></div></nav>
-      <nav class="management-nav"><div class="nav-section"><span class="nav-section-title">Управление</span>
-        <RouterLink v-if="auth.canViewReadiness" class="admin" to="/roster-readiness"><i class="nav-icon" aria-hidden="true">◉</i><span>Готовность состава</span></RouterLink>
-        <RouterLink v-if="auth.canViewReadiness" class="admin" to="/attendance-analytics"><i class="nav-icon" aria-hidden="true">↗</i><span>Посещаемость</span></RouterLink>
-        <RouterLink v-if="auth.canHandleTreasuryItems" class="admin" to="/financial-reconciliation"><i class="nav-icon" aria-hidden="true">✓</i><span>Финансовая сверка</span></RouterLink>
-        <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>Админка</span></RouterLink>
+      <nav><div class="nav-section"><span class="nav-section-title">{{ t('Основное') }}</span><RouterLink v-for="link in primaryLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true"><AppIcon :name="link.icon"/></i><span>{{ t(link.label) }}</span></RouterLink></div><div class="nav-section"><span class="nav-section-title">{{ t('Экономика') }}</span><RouterLink v-for="link in economyLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true"><AppIcon :name="link.icon"/></i><span>{{ t(link.label) }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></div></nav>
+      <nav class="management-nav"><div class="nav-section"><span class="nav-section-title">{{ t('Управление') }}</span>
+        <RouterLink v-if="auth.canViewReadiness" class="admin" to="/roster-readiness"><i class="nav-icon" aria-hidden="true">◉</i><span>{{ t('Готовность состава') }}</span></RouterLink>
+        <RouterLink v-if="auth.canViewReadiness" class="admin" to="/attendance-analytics"><i class="nav-icon" aria-hidden="true">↗</i><span>{{ t('Посещаемость') }}</span></RouterLink>
+        <RouterLink v-if="auth.canHandleTreasuryItems" class="admin" to="/financial-reconciliation"><i class="nav-icon" aria-hidden="true">✓</i><span>{{ t('Финансовая сверка') }}</span></RouterLink>
+        <RouterLink v-if="auth.canAdmin" class="admin" to="/admin"><i class="nav-icon" aria-hidden="true">⚙</i><span>{{ t('Админка') }}</span></RouterLink>
       </div></nav>
       <RouterLink v-if="auth.user?.player" class="aside-profile" :to="`/players/${auth.user.player.id}`">
         <PlayerAvatar :player="{ nickname: auth.user.player.nickname, user: auth.user }"/>
@@ -125,38 +126,38 @@ async function linkProfile() {
         <b aria-hidden="true">›</b>
       </RouterLink>
     </aside>
-    <button v-if="menuOpen" class="mobile-nav-backdrop" type="button" aria-label="Закрыть меню" @click="menuOpen=false"></button>
+    <button v-if="menuOpen" class="mobile-nav-backdrop" type="button" :aria-label="t('Закрыть меню')" @click="menuOpen=false"></button>
     <main>
       <header>
-        <button class="mobile-menu-button" type="button" :aria-expanded="menuOpen" aria-label="Открыть меню" @click="menuOpen=!menuOpen"><span></span><span></span><span></span></button>
+        <button class="mobile-menu-button" type="button" :aria-expanded="menuOpen" :aria-label="t('Открыть меню')" @click="menuOpen=!menuOpen"><span></span><span></span><span></span></button>
         <RouterLink class="mobile-brand" to="/dashboard">GAZ ARMORY</RouterLink>
         <div class="header-spacer"></div>
-        <div class="language-switcher" role="group" aria-label="Язык интерфейса">
+        <div class="language-switcher" role="group" :aria-label="t('Язык интерфейса')">
           <button type="button" :class="{ active: locale === 'ru' }" :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
           <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
         </div>
-        <div v-if="auth.authenticated" class="notification-center"><button class="notification-bell" type="button" aria-label="Уведомления" @click="notificationOpen=!notificationOpen;loadNotifications()"><AppIcon name="bell"/><b v-if="unreadNotifications">{{ unreadNotifications>99?'99+':unreadNotifications }}</b></button><div v-if="notificationOpen" class="notification-popover"><header><div><h2>Уведомления</h2><small>{{ unreadNotifications }} непрочитанных</small></div><button v-if="unreadNotifications" @click="markAllNotifications">Прочитать все</button></header><div v-if="notificationItems.length" class="notification-list"><component :is="item.data.url?'RouterLink':'div'" v-for="item in notificationItems" :key="item.id" :to="item.data.url||undefined" :class="{unread:!item.read_at}" @click="markNotification(item)"><span><AppIcon :name="notificationIcon(item.type)"/></span><div><strong>{{ item.data.title }}</strong><p>{{ item.data.message }}</p><small>{{ new Date(item.created_at).toLocaleString('ru-RU') }}</small></div></component></div><p v-else class="empty">Уведомлений пока нет.</p></div></div>
+        <div v-if="auth.authenticated" class="notification-center"><button class="notification-bell" type="button" :aria-label="t('Уведомления')" @click="notificationOpen=!notificationOpen;loadNotifications()"><AppIcon name="bell"/><b v-if="unreadNotifications">{{ unreadNotifications>99?'99+':unreadNotifications }}</b></button><div v-if="notificationOpen" class="notification-popover"><header><div><h2>{{ t('Уведомления') }}</h2><small>{{ unreadNotifications }} {{ t('непрочитанных') }}</small></div><button v-if="unreadNotifications" @click="markAllNotifications">{{ t('Прочитать все') }}</button></header><div v-if="notificationItems.length" class="notification-list"><component :is="item.data.url?'RouterLink':'div'" v-for="item in notificationItems" :key="item.id" :to="item.data.url||undefined" :class="{unread:!item.read_at}" @click="markNotification(item)"><span><AppIcon :name="notificationIcon(item.type)"/></span><div><strong>{{ t(item.data.title) }}</strong><p>{{ t(item.data.message) }}</p><small>{{ formatDateTime(item.created_at) }}</small></div></component></div><p v-else class="empty">{{ t('Уведомлений пока нет.') }}</p></div></div>
         <RouterLink v-if="auth.user?.player" class="user-link header-user-profile" :to="`/players/${auth.user.player.id}`">{{ auth.user.discord_display_name || auth.user.discord_username }}</RouterLink>
-        <button v-else-if="auth.user" class="user-unlinked" title="Привязать игровой профиль" @click="openLinker">{{ auth.user.discord_display_name || auth.user.discord_username }} · привязать профиль</button>
-        <button v-if="auth.authenticated" @click="auth.logout">Выйти</button>
-        <button v-else-if="!auth.loading" class="primary" @click="auth.login">Войти через Discord</button>
+        <button v-else-if="auth.user" class="user-unlinked" :title="t('Привязать игровой профиль')" @click="openLinker">{{ auth.user.discord_display_name || auth.user.discord_username }} · {{ t('привязать профиль') }}</button>
+        <button v-if="auth.authenticated" @click="auth.logout">{{ t('Выйти') }}</button>
+        <button v-else-if="!auth.loading" class="primary" @click="auth.login">{{ t('Войти через Discord') }}</button>
       </header>
       <RouterView :key="route.fullPath" />
     </main>
   </div>
   <div v-if="showLinker" class="modal">
     <form class="form-card" @submit.prevent="linkProfile">
-      <h2>Привязать игровой профиль</h2>
-      <p class="muted">Выберите своего персонажа. Заявку проверит ГЛ или администратор.</p>
-      <label>Игровой никнейм
+      <h2>{{ t('Привязать игровой профиль') }}</h2>
+      <p class="muted">{{ t('Выберите своего персонажа. Заявку проверит ГЛ или администратор.') }}</p>
+      <label>{{ t('Игровой никнейм') }}
         <select v-model="selectedPlayerId" required>
-          <option value="" disabled>Выберите персонажа</option>
+          <option value="" disabled>{{ t('Выберите персонажа') }}</option>
           <option v-for="player in freePlayers" :key="player.id" :value="player.id">{{ player.nickname }}</option>
         </select>
       </label>
-      <p v-if="!playerOptionsLoading&&!freePlayers.length" class="empty">Свободных активных профилей не найдено.</p>
-      <p v-if="linkError" class="notice error">{{ linkError }}</p>
-      <div class="form-actions"><button type="button" @click="showLinker=false">Отмена</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ linking?'Отправка…':'Отправить заявку' }}</button></div>
+      <p v-if="!playerOptionsLoading&&!freePlayers.length" class="empty">{{ t('Свободных активных профилей не найдено.') }}</p>
+      <p v-if="linkError" class="notice error">{{ t(linkError) }}</p>
+      <div class="form-actions"><button type="button" @click="showLinker=false">{{ t('Отмена') }}</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ t(linking?'Отправка…':'Отправить заявку') }}</button></div>
     </form>
   </div>
 </template>

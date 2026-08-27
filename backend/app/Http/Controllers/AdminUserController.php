@@ -55,26 +55,26 @@ final class AdminUserController extends Controller
         $willHaveDeveloper = in_array(UserRole::Developer->value, $newRoles, true);
         if ($hadDeveloper !== $willHaveDeveloper) {
             if (! $request->user()->hasRole(UserRole::Developer)) {
-                throw ValidationException::withMessages(['roles' => 'Назначать роль Разработчик может только другой Разработчик.']);
+                throw ValidationException::withMessages(['roles' => __('domain.admin.developer_assignment_restricted')]);
             }
             if ($request->user()->is($managedUser)) {
-                throw ValidationException::withMessages(['roles' => 'Нельзя изменить собственную роль Разработчика через админку.']);
+                throw ValidationException::withMessages(['roles' => __('domain.admin.cannot_change_own_developer_role')]);
             }
         }
         $wasLeader = in_array(UserRole::GuildLeader->value, $managedRoles, true);
         $willBeLeader = in_array(UserRole::GuildLeader->value, $newRoles, true);
         $isTransfer = ! $wasLeader && $willBeLeader;
         if ($isTransfer && ! $request->user()->hasRole(UserRole::GuildLeader)) {
-            throw ValidationException::withMessages(['roles' => 'Передать роль ГЛ может только действующий ГЛ.']);
+            throw ValidationException::withMessages(['roles' => __('domain.admin.guild_leader_transfer_restricted')]);
         }
         if ($wasLeader && ! $willBeLeader) {
-            throw ValidationException::withMessages(['roles' => 'Роль ГЛ снимается только при её передаче другому пользователю.']);
+            throw ValidationException::withMessages(['roles' => __('domain.admin.guild_leader_removed_by_transfer')]);
         }
 
         $updated = DB::transaction(function () use ($request, $managedUser, $newRoles, $data, $audit, $isTransfer): User {
             $lockedUser = User::query()->lockForUpdate()->findOrFail($managedUser->id);
             if (isset($data['updated_at']) && ! $lockedUser->updated_at->equalTo($data['updated_at'])) {
-                throw ValidationException::withMessages(['updated_at' => 'Данные пользователя уже изменены другим администратором. Обновите страницу.']);
+                throw ValidationException::withMessages(['updated_at' => __('domain.admin.user_stale')]);
             }
             $oldRoles = $lockedUser->roles ?: [$lockedUser->role->value];
 
@@ -86,7 +86,7 @@ final class AdminUserController extends Controller
             if ($isTransfer) {
                 $leaders = User::query()->whereJsonContains('roles', UserRole::GuildLeader->value)->lockForUpdate()->get();
                 if (! $leaders->contains('id', $request->user()->id)) {
-                    throw ValidationException::withMessages(['roles' => 'Вы больше не являетесь ГЛ. Обновите страницу.']);
+                    throw ValidationException::withMessages(['roles' => __('domain.admin.guild_leader_role_lost')]);
                 }
                 foreach ($leaders as $leader) {
                     $leaderOldRoles = $leader->roles ?: [$leader->role->value];
@@ -121,13 +121,13 @@ final class AdminUserController extends Controller
     {
         $this->authorizeAdministrator($request);
         if ($request->user()->is($managedUser)) {
-            throw ValidationException::withMessages(['user' => 'Нельзя удалить собственный аккаунт.']);
+            throw ValidationException::withMessages(['user' => __('domain.admin.cannot_delete_self')]);
         }
         $managedRoles = $managedUser->roles ?: [$managedUser->role->value];
         $actorCanManageElevated = $request->user()->hasRole(UserRole::GuildLeader)
             || $request->user()->hasRole(UserRole::Developer);
         if (! $actorCanManageElevated && array_intersect($managedRoles, [UserRole::GuildLeader->value, UserRole::Developer->value])) {
-            throw ValidationException::withMessages(['user' => 'Микро-ГЛ не может удалить ГЛ или Разработчика.']);
+            throw ValidationException::withMessages(['user' => __('domain.admin.micro_leader_delete_restricted')]);
         }
 
         DB::transaction(function () use ($managedUser, $audit): void {
@@ -138,14 +138,14 @@ final class AdminUserController extends Controller
                     ->whereJsonContains('roles', UserRole::GuildLeader->value)
                     ->lockForUpdate()->get(['id'])->count();
                 if ($leadersCount <= 1) {
-                    throw ValidationException::withMessages(['user' => 'Нельзя удалить последнего ГЛ.']);
+                    throw ValidationException::withMessages(['user' => __('domain.admin.last_guild_leader')]);
                 }
             }
 
             foreach (['activities', 'activity_loot', 'treasury_item_transactions', 'treasury_transactions', 'auctions', 'payouts', 'loot_imports'] as $table) {
                 if (DB::table($table)->where('created_by', $lockedUser->id)->exists()) {
                     throw ValidationException::withMessages([
-                        'user' => 'Пользователь уже проводил операции. Его нельзя удалить, чтобы не повредить историю; отвяжите от него персонажа.',
+                        'user' => __('domain.admin.user_has_history'),
                     ]);
                 }
             }

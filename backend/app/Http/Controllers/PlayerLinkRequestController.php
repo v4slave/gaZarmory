@@ -30,9 +30,9 @@ final class PlayerLinkRequestController extends Controller
 
         $approved = DB::transaction(function () use ($request, $playerLinkRequest, $link, $audit): PlayerLinkRequest {
             $locked = PlayerLinkRequest::query()->lockForUpdate()->findOrFail($playerLinkRequest->id);
-            if ($locked->status !== 'pending') throw ValidationException::withMessages(['request' => 'Заявка уже обработана.']);
+            if ($locked->status !== 'pending') throw ValidationException::withMessages(['request' => __('domain.profile.request_processed')]);
             $user = User::query()->lockForUpdate()->findOrFail($locked->user_id);
-            if ($user->player()->exists()) throw ValidationException::withMessages(['request' => 'Пользователь уже привязан к другому персонажу.']);
+            if ($user->player()->exists()) throw ValidationException::withMessages(['request' => __('domain.profile.user_already_linked')]);
 
             $link->execute($locked->player, $locked->user_id, true);
             $locked->update(['status' => 'approved', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
@@ -50,7 +50,7 @@ final class PlayerLinkRequestController extends Controller
 
         $rejected = DB::transaction(function () use ($request, $playerLinkRequest, $audit): PlayerLinkRequest {
             $locked = PlayerLinkRequest::query()->lockForUpdate()->findOrFail($playerLinkRequest->id);
-            if ($locked->status !== 'pending') throw ValidationException::withMessages(['request' => 'Заявка уже обработана.']);
+            if ($locked->status !== 'pending') throw ValidationException::withMessages(['request' => __('domain.profile.request_processed')]);
             $locked->update(['status' => 'rejected', 'reviewed_by' => $request->user()->id, 'reviewed_at' => now()]);
             $audit->record('player_link_request.rejected', $locked, ['status' => 'pending'], ['status' => 'rejected', 'player_id' => $locked->player_id, 'user_id' => $locked->user_id]);
 

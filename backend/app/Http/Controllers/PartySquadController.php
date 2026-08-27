@@ -66,11 +66,11 @@ final class PartySquadController extends Controller
         $this->ensureSquad($request, $group, $squad);
         $data = $request->validate(['player_id' => ['required','integer','exists:players,id']]);
         $player = Player::query()->findOrFail($data['player_id']);
-        if ($player->group_id !== $group->id || !$player->is_active) throw ValidationException::withMessages(['player_id' => 'Игрок не входит в эту конст-пати.']);
+        if ($player->group_id !== $group->id || !$player->is_active) throw ValidationException::withMessages(['player_id' => __('domain.party.player_not_member')]);
         DB::transaction(function () use ($squad, $player): void {
             $locked = PartySquad::query()->whereKey($squad)->lockForUpdate()->firstOrFail();
             if (!$locked->players()->whereKey($player)->exists() && $locked->players()->count() >= 5) {
-                throw ValidationException::withMessages(['player_id' => 'В группе уже 5 игроков.']);
+                throw ValidationException::withMessages(['player_id' => __('domain.party.squad_full')]);
             }
             DB::table('party_squad_players')->where('player_id', $player->id)->delete();
             $locked->players()->attach($player->id);

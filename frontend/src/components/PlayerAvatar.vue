@@ -1,7 +1,9 @@
 <script setup>
 import { computed } from 'vue'
+import { useLocale } from '../i18n.js'
 
 const props = defineProps({ player: { type: Object, default: null }, size: { type: String, default: 'medium' } })
+const { t } = useLocale()
 const user = computed(() => props.player?.user ?? null)
 const label = computed(() => props.player?.nickname || user.value?.discord_display_name || user.value?.discord_username || '?')
 const avatarUrl = computed(() => {
@@ -14,7 +16,7 @@ const avatarUrl = computed(() => {
 
 <template>
   <span :class="['player-avatar', `player-avatar-${size}`]" :title="label">
-    <img v-if="avatarUrl" :src="avatarUrl" :alt="`Аватар ${label}`" loading="lazy" decoding="async" referrerpolicy="no-referrer" @error="$event.currentTarget.remove()">
+    <img v-if="avatarUrl" :src="avatarUrl" :alt="`${t('Аватар')} ${label}`" loading="lazy" decoding="async" referrerpolicy="no-referrer" @error="$event.currentTarget.remove()">
     <span>{{ label.slice(0, 1).toUpperCase() }}</span>
   </span>
 </template>

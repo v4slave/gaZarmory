@@ -18,8 +18,8 @@ final class ActivityLootController extends Controller
     public function store(Request $request, Activity $activity, AuditService $audit): JsonResponse
     {
         abort_unless($request->user()->canManageGuild(), 403);
-        abort_if($activity->completed_at, 409, 'Завершённая активность immutable.');
-        abort_if($activity->earnings()->exists(), 409, 'Лут рассчитанного прайма immutable.');
+        abort_if($activity->completed_at, 409, __('domain.activity.completed_locked'));
+        abort_if($activity->earnings()->exists(), 409, __('domain.activity.calculated_loot_locked'));
         $data = $request->validate([
             'loot_catalog_item_id' => ['required', 'integer', 'exists:loot_catalog_items,id'],
             'unit_price' => ['required', 'integer', 'min:0'],
@@ -30,8 +30,8 @@ final class ActivityLootController extends Controller
 
         $loot = DB::transaction(function () use ($activity, $data, $catalogItem, $iconPath, $request, $audit): ActivityLoot {
             $lockedActivity = Activity::query()->lockForUpdate()->findOrFail($activity->id);
-            abort_if($lockedActivity->completed_at, 409, 'Завершённая активность immutable.');
-            abort_if($lockedActivity->earnings()->exists(), 409, 'Лут рассчитанного прайма immutable.');
+            abort_if($lockedActivity->completed_at, 409, __('domain.activity.completed_locked'));
+            abort_if($lockedActivity->earnings()->exists(), 409, __('domain.activity.calculated_loot_locked'));
             $loot = ActivityLoot::query()->create([
                 'activity_id' => $lockedActivity->id,
                 'loot_catalog_item_id' => $catalogItem->id,
@@ -73,12 +73,12 @@ final class ActivityLootController extends Controller
 
         DB::transaction(function () use ($activity, $loot, $request, $audit): void {
             $lockedActivity = Activity::query()->lockForUpdate()->findOrFail($activity->id);
-            abort_if($lockedActivity->completed_at, 409, 'Из завершённой активности нельзя удалить лут.');
-            abort_if($lockedActivity->earnings()->exists(), 409, 'Лут рассчитанного прайма нельзя изменить.');
+            abort_if($lockedActivity->completed_at, 409, __('domain.activity.loot_remove_completed'));
+            abort_if($lockedActivity->earnings()->exists(), 409, __('domain.activity.calculated_loot_locked'));
             $lockedLoot = ActivityLoot::query()->lockForUpdate()->findOrFail($loot->id);
             $item = TreasuryItem::query()->where('item_name', $lockedLoot->item_name)->lockForUpdate()->first();
             if (!$item || $item->available_quantity < $lockedLoot->quantity) {
-                throw ValidationException::withMessages(['loot' => 'Предмет уже зарезервирован, продан или выдан. Сначала отмените связанную операцию.']);
+                throw ValidationException::withMessages(['loot' => __('domain.activity.loot_in_use')]);
             }
             $item->decrement('quantity', $lockedLoot->quantity);
             TreasuryItemTransaction::query()->create([
@@ -105,8 +105,8 @@ final class ActivityLootController extends Controller
 
         return DB::transaction(function () use ($activity, $loot, $data, $audit): ActivityLoot {
             $lockedActivity = Activity::query()->lockForUpdate()->findOrFail($activity->id);
-            abort_if($lockedActivity->completed_at, 409, 'Сначала откройте активность для исправления.');
-            abort_if($lockedActivity->earnings()->exists(), 409, 'Сначала отмените рассчитанные начисления.');
+            abort_if($lockedActivity->completed_at, 409, __('domain.activity.open_for_correction_first'));
+            abort_if($lockedActivity->earnings()->exists(), 409, __('domain.activity.cancel_earnings_first'));
             $lockedLoot = ActivityLoot::query()->lockForUpdate()->findOrFail($loot->id);
             $old = ['unit_price' => $lockedLoot->unit_price];
             $lockedLoot->update($data);

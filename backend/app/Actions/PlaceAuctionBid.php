@@ -9,14 +9,14 @@ final class PlaceAuctionBid
  {
   return DB::transaction(function()use($auction,$player,$amount){
    $locked=Auction::query()->with('item:id,item_name')->lockForUpdate()->findOrFail($auction->id);
-   if($locked->status!=='active')throw ValidationException::withMessages(['auction'=>'Лот не активен.']);
-   if($locked->ends_at->isPast())throw ValidationException::withMessages(['auction'=>'Время приёма ставок завершено.']);
+   if($locked->status!=='active')throw ValidationException::withMessages(['auction'=>__('domain.auction.inactive')]);
+   if($locked->ends_at->isPast())throw ValidationException::withMessages(['auction'=>__('domain.auction.bidding_closed')]);
    $previous=AuctionBid::query()->with('player.user:id,discord_id')->where('auction_id',$locked->id)->orderByDesc('id')->lockForUpdate()->first();
    if($previous&&!AuctionAutoBid::query()->where('auction_id',$locked->id)->exists())AuctionAutoBid::query()->create(['auction_id'=>$locked->id,'player_id'=>$previous->player_id,'max_amount'=>$previous->amount]);
    $minimum=$previous?(int)$previous->amount+(int)$locked->minimum_step:(int)$locked->starting_bid;
-   if($amount<$minimum)throw ValidationException::withMessages(['amount'=>'Минимальная максимальная ставка: '.$minimum.' жетонов.']);
+   if($amount<$minimum)throw ValidationException::withMessages(['amount'=>__('domain.auction.minimum_bid',['amount'=>$minimum])]);
    $own=AuctionAutoBid::query()->where('auction_id',$locked->id)->where('player_id',$player->id)->lockForUpdate()->first();
-   if($own&&$amount<=(int)$own->max_amount)throw ValidationException::withMessages(['amount'=>'Новый максимум должен быть выше предыдущего: '.$own->max_amount.'.']);
+   if($own&&$amount<=(int)$own->max_amount)throw ValidationException::withMessages(['amount'=>__('domain.auction.maximum_too_low',['amount'=>$own->max_amount])]);
    if($own)$own->update(['max_amount'=>$amount]);else AuctionAutoBid::query()->create(['auction_id'=>$locked->id,'player_id'=>$player->id,'max_amount'=>$amount]);
    $limits=AuctionAutoBid::query()->where('auction_id',$locked->id)->with('player.user:id,discord_id')->orderByDesc('max_amount')->orderBy('created_at')->orderBy('id')->lockForUpdate()->get();
    $winner=$limits->first();$second=$limits->get(1);

@@ -29,6 +29,13 @@ final class FinancialReconciliationTest extends TestCase
         $this->assertGreaterThan(0, $checks['gold']['issues_count']);
         $this->assertGreaterThan(0, $checks['items']['issues_count']);
         $this->assertStringContainsString($item->item_name, $checks['items']['issues'][0]['title']);
+
+        $english = $this->actingAs($leader)->withHeader('Accept-Language', 'en')
+            ->getJson('/api/financial-reconciliation')->assertOk();
+        $englishChecks = collect($english->json('checks'))->keyBy('key');
+        $this->assertSame('Gold transaction balance', $englishChecks['gold']['title']);
+        $this->assertSame('Item movement balance', $englishChecks['items']['title']);
+        $this->assertStringNotContainsString('не совпадает', $englishChecks['items']['issues'][0]['title']);
     }
 
     public function test_reconciliation_is_read_only(): void

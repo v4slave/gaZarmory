@@ -48,6 +48,10 @@ final class AttendanceAnalyticsTest extends TestCase
             ->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
         $this->actingAs($manager)->get('/api/attendance-analytics/export?period=7&format=xlsx')
             ->assertOk()->assertDownload();
+        $english = $this->actingAs($manager)->withHeader('Accept-Language', 'en')
+            ->get('/api/attendance-analytics/export?period=7&format=csv');
+        $english->assertOk();
+        self::assertStringContainsString('Player;"Static party";Attended;Available;"Attendance, %"', $english->streamedContent());
     }
 
     public function test_legacy_calculated_prime_without_completed_at_is_included(): void

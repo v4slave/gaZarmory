@@ -15,7 +15,7 @@ final class EnsurePlayerLinked
         if ($user?->canAdministrate()) return $next($request);
 
         $userId = $user?->getAuthIdentifier();
-        abort_unless($userId && Player::query()->where('user_id', $userId)->exists(), 403, 'Сначала привяжите игрового персонажа.');
+        abort_unless($userId && Player::query()->where('user_id', $userId)->exists(), 403, __('domain.profile.link_required'));
 
         return $next($request);
     }

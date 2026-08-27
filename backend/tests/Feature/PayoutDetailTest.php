@@ -65,6 +65,11 @@ final class PayoutDetailTest extends TestCase
         $payout->players()->create(['player_id'=>$player->id,'nickname_snapshot'=>$player->nickname,'prime_attendance_percentage_snapshot'=>100,'primes_count'=>1,'mini_activities_count'=>0,'amount'=>250,'status'=>'pending']);
         $this->actingAs($leader)->get('/api/payouts/'.$payout->id.'/export?format=csv&status=pending')->assertOk()->assertDownload();
         $this->actingAs($leader)->get('/api/payouts/'.$payout->id.'/export?format=xlsx&search=Exported')->assertOk()->assertDownload();
+        $english = $this->actingAs($leader)->withHeader('Accept-Language', 'en')
+            ->get('/api/payouts/'.$payout->id.'/export?format=csv&status=pending');
+        $english->assertOk();
+        self::assertStringContainsString('Player;"Attendance, %";Primes;Amount;Status;"Paid at"', $english->streamedContent());
+        self::assertStringContainsString(';Pending;', $english->streamedContent());
     }
 
     public function test_empty_draft_can_be_deleted(): void

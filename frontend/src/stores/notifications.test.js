@@ -1,7 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { apiErrorMessage } from './notifications.js'
+import { setLocale } from '../i18n.js'
 
 describe('apiErrorMessage', () => {
+  beforeEach(() => setLocale('ru'))
   it('prefers the first validation error', () => {
     expect(apiErrorMessage({ response: { status: 422, data: { errors: { amount: ['Сумма некорректна.'] } } } })).toBe('Сумма некорректна.')
   })
