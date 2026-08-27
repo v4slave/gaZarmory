@@ -68,3 +68,4 @@ button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible
 .earnings-unavailable > .payout-roster { display:none; }
 .history-unavailable > .payout-history-panel,
 .history-unavailable > .payout-history-panel + .roster-pagination { display:none; }
+.report-loading > :not(.page-heading):not(.async-state) { display:none; }

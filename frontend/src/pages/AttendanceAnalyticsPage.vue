@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { api } from '../api.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
+import AsyncState from '../components/AsyncState.vue'
 
 const loading = ref(true), exporting = ref(''), error = ref('')
 const data = ref({ summary:{}, period:{}, players:[], events:[], groups:[], inactive:[], timeline:[], options:{groups:[],definitions:[],players:[]} })
@@ -29,11 +30,11 @@ watch(filters,()=>{clearTimeout(timer);timer=setTimeout(load,250)})
 onMounted(load)
 </script>
 
-<template><section>
+<template><section :class="{ 'report-loading': loading||error }">
   <div class="page-heading attendance-heading"><div><p class="eyebrow">GAZ ARMORY · РУКОВОДИТЕЛЯМ</p><h1>Аналитика посещаемости</h1></div><div class="attendance-export"><button :disabled="exporting" @click="download('csv')">{{ exporting==='csv'?'Готовим…':'Экспорт CSV' }}</button><button class="primary" :disabled="exporting" @click="download('xlsx')">{{ exporting==='xlsx'?'Готовим…':'Экспорт XLSX' }}</button></div></div>
   <div class="panel attendance-filters"><label>Период<select v-model="filters.period"><option value="7">7 дней</option><option value="30">30 дней</option><option value="90">90 дней</option><option value="all">Всё время</option></select></label><label>Конста<select v-model="filters.group_id"><option value="">Все консты</option><option v-for="group in data.options.groups" :key="group.id" :value="group.id">{{ group.name }}</option></select></label><label>Событие<select v-model="filters.definition_id"><option value="">Все праймы</option><option v-for="definition in data.options.definitions" :key="definition.id" :value="definition.id">{{ definition.name }}</option></select></label><label>Динамика игрока<select v-model="filters.player_id"><option v-for="player in data.options.players" :key="player.id" :value="player.id">{{ player.nickname }}</option></select></label></div>
-  <p v-if="error" class="notice error">{{ error }}</p><div v-if="loading" class="panel empty">Собираем статистику…</div>
-  <template v-else>
+  <AsyncState :loading="loading" :error="error" loading-text="Собираем статистику посещаемости…" @retry="load" />
+  <template v-if="!loading&&!error">
     <div class="attendance-summary"><article><span>Общая посещаемость</span><strong>{{ Number(data.summary.percentage??0).toLocaleString('ru-RU') }}%</strong><small>Посещено {{ data.summary.attended??0 }} из {{ data.summary.available??0 }} доступных праймов</small></article><article><span>Праймов в периоде</span><strong>{{ data.period.total_primes??0 }}</strong><small>только завершённые события</small></article><article><span>Игроков в выборке</span><strong>{{ data.summary.players??0 }}</strong><small>активный состав</small></article></div>
 
     <div class="panel attendance-timeline"><div class="panel-title"><div><h2>Динамика посещаемости игрока</h2><p class="muted">Доля посещённых праймов по дням или неделям</p></div></div><div v-if="data.timeline.length" class="timeline-bars"><div v-for="point in data.timeline" :key="point.label"><span class="timeline-value">{{ point.percentage }}%</span><span class="timeline-track"><i :style="{height:`${Math.max(3,point.percentage/maxTimeline*100)}%`}"></i></span><small>{{ periodLabel(point.label) }}</small><em>{{ point.attended }}/{{ point.available }}</em></div></div><p v-else class="empty">Для выбранного игрока пока нет доступных праймов.</p></div>

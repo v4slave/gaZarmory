@@ -28,6 +28,10 @@ const AdminEconomyPage = page('AdminEconomyPage')
 const AdminIntegrationsPage = page('AdminIntegrationsPage')
 const MediaPage = page('MediaPage')
 
+export function preloadManagementPages() {
+  return Promise.all([RosterReadinessPage(), AttendanceAnalyticsPage()])
+}
+
 const routes = [
   { path: '/', redirect: '/dashboard' },
   { path: '/dashboard', component: DashboardPage, meta: { title: 'Дашборд' } },

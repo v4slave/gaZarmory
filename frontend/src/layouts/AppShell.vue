@@ -6,6 +6,8 @@ import { useAuthStore } from '../stores/auth.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import AppIcon from '../components/AppIcon.vue'
 import { useLocale } from '../i18n.js'
+import { preloadManagementPages } from '../router/index.js'
+import { canPreloadManagementPages } from '../router/access.js'
 const auth = useAuthStore()
 const route = useRoute()
 const { locale, setLocale } = useLocale()
@@ -68,6 +70,15 @@ function handleVisibilityChange(){
   updatePlayerLinkPolling()
 }
 watch(()=>[auth.authenticated,auth.user?.player?.id,auth.user?.pending_player_link_request?.id],updatePlayerLinkPolling,{immediate:true})
+let managementPagesPreloaded = false
+watch(() => auth.user, user => {
+  const allowed = canPreloadManagementPages(user)
+  if (!allowed || managementPagesPreloaded) return
+  managementPagesPreloaded = true
+  const preload = () => preloadManagementPages().catch(() => {})
+  if ('requestIdleCallback' in window) window.requestIdleCallback(preload, { timeout: 2000 })
+  else window.setTimeout(preload, 500)
+}, { immediate: true })
 onMounted(()=>{handleVisibilityChange();window.addEventListener('auction-count-changed',updateAuctionCount);document.addEventListener('visibilitychange',handleVisibilityChange)})
 onBeforeUnmount(()=>{stopNotificationPolling();stopPlayerLinkPolling();window.removeEventListener('auction-count-changed',updateAuctionCount);document.removeEventListener('visibilitychange',handleVisibilityChange)})
 async function openLinker() {
