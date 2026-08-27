@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
+import AppIcon from '../components/AppIcon.vue'
 import { useLocale } from '../i18n.js'
 const auth = useAuthStore()
 const route = useRoute()
@@ -20,22 +21,22 @@ const notificationOpen=ref(false),notificationItems=ref([]),unreadNotifications=
 let notificationTicker
 let playerLinkTicker
 const primaryLinks = [
-  { to: '/dashboard', label: 'Дашборд', icon: '⌂' },
-  { to: '/roster', label: 'Состав', icon: '♙' },
-  { to: '/groups', label: 'Конст-пати', icon: '♜' },
-  { to: '/activities', label: 'Активности', icon: '⚔' },
-  { to: '/media', label: 'Контент', icon: '▶' },
+  { to: '/dashboard', label: 'Дашборд', icon: 'home' },
+  { to: '/roster', label: 'Состав', icon: 'users' },
+  { to: '/groups', label: 'Конст-пати', icon: 'groups' },
+  { to: '/activities', label: 'Активности', icon: 'sword' },
+  { to: '/media', label: 'Контент', icon: 'play' },
 ]
 const economyLinks = [
-  { to: '/treasury', label: 'Казна', icon: '▣' },
-  { to: '/auctions', label: 'Аукционы', icon: '♢' },
-  { to: '/payouts', label: 'Нахрюк', icon: '🐷' },
+  { to: '/treasury', label: 'Казна', icon: 'treasury' },
+  { to: '/auctions', label: 'Аукционы', icon: 'auction' },
+  { to: '/payouts', label: 'Нахрюк', icon: 'payout' },
 ]
 async function loadActiveAuctions(){if(!auth.user?.player)return;try{activeAuctions.value=(await api.get('/api/auctions/active-count')).data.count}catch{activeAuctions.value=0}}
 async function loadNotifications(){if(!auth.authenticated)return;try{const data=(await api.get('/api/notifications')).data;notificationItems.value=data.items;unreadNotifications.value=data.unread_count}catch{/* Background refresh retries on the next interval. */}}
 async function markNotification(item){if(!item.read_at){await api.post(`/api/notifications/${item.id}/read`);item.read_at=new Date().toISOString();unreadNotifications.value=Math.max(0,unreadNotifications.value-1)}notificationOpen.value=false}
 async function markAllNotifications(){await api.post('/api/notifications/read-all');notificationItems.value.forEach(item=>item.read_at??=new Date().toISOString());unreadNotifications.value=0}
-function notificationIcon(type){return({link_request:'♙',auction_started:'♢',auction_finished:'◆',auction_outbid:'!',payout_calculated:'🐷',insufficient_gold:'▣',activity_upcoming:'⚔'})[type]??'•'}
+function notificationIcon(type){return({link_request:'users',auction_started:'auction',auction_finished:'auction',auction_outbid:'warning',payout_calculated:'payout',insufficient_gold:'treasury',activity_upcoming:'sword'})[type]??'info'}
 function updateAuctionCount(event){activeAuctions.value=Number(event.detail)||0}
 watch(() => route.fullPath, () => { menuOpen.value = false })
 watch(() => auth.authenticated, authenticated => {
@@ -100,7 +101,7 @@ async function linkProfile() {
         <img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY">
         <div>GAZ ARMORY<small>ArcheAge guild</small></div>
       </div>
-      <nav><div class="nav-section"><span class="nav-section-title">Основное</span><RouterLink v-for="link in primaryLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span></RouterLink></div><div class="nav-section"><span class="nav-section-title">Экономика</span><RouterLink v-for="link in economyLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true">{{ link.icon }}</i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></div></nav>
+      <nav><div class="nav-section"><span class="nav-section-title">Основное</span><RouterLink v-for="link in primaryLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true"><AppIcon :name="link.icon"/></i><span>{{ link.label }}</span></RouterLink></div><div class="nav-section"><span class="nav-section-title">Экономика</span><RouterLink v-for="link in economyLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true"><AppIcon :name="link.icon"/></i><span>{{ link.label }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></div></nav>
       <nav class="management-nav"><div class="nav-section"><span class="nav-section-title">Управление</span>
         <RouterLink v-if="auth.canViewReadiness" class="admin" to="/roster-readiness"><i class="nav-icon" aria-hidden="true">◉</i><span>Готовность состава</span></RouterLink>
         <RouterLink v-if="auth.canViewReadiness" class="admin" to="/attendance-analytics"><i class="nav-icon" aria-hidden="true">↗</i><span>Посещаемость</span></RouterLink>
@@ -123,7 +124,7 @@ async function linkProfile() {
           <button type="button" :class="{ active: locale === 'ru' }" :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
           <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
         </div>
-        <div v-if="auth.authenticated" class="notification-center"><button class="notification-bell" type="button" aria-label="Уведомления" @click="notificationOpen=!notificationOpen;loadNotifications()">🔔<b v-if="unreadNotifications">{{ unreadNotifications>99?'99+':unreadNotifications }}</b></button><div v-if="notificationOpen" class="notification-popover"><header><div><h2>Уведомления</h2><small>{{ unreadNotifications }} непрочитанных</small></div><button v-if="unreadNotifications" @click="markAllNotifications">Прочитать все</button></header><div v-if="notificationItems.length" class="notification-list"><component :is="item.data.url?'RouterLink':'div'" v-for="item in notificationItems" :key="item.id" :to="item.data.url||undefined" :class="{unread:!item.read_at}" @click="markNotification(item)"><span>{{ notificationIcon(item.type) }}</span><div><strong>{{ item.data.title }}</strong><p>{{ item.data.message }}</p><small>{{ new Date(item.created_at).toLocaleString('ru-RU') }}</small></div></component></div><p v-else class="empty">Уведомлений пока нет.</p></div></div>
+        <div v-if="auth.authenticated" class="notification-center"><button class="notification-bell" type="button" aria-label="Уведомления" @click="notificationOpen=!notificationOpen;loadNotifications()"><AppIcon name="bell"/><b v-if="unreadNotifications">{{ unreadNotifications>99?'99+':unreadNotifications }}</b></button><div v-if="notificationOpen" class="notification-popover"><header><div><h2>Уведомления</h2><small>{{ unreadNotifications }} непрочитанных</small></div><button v-if="unreadNotifications" @click="markAllNotifications">Прочитать все</button></header><div v-if="notificationItems.length" class="notification-list"><component :is="item.data.url?'RouterLink':'div'" v-for="item in notificationItems" :key="item.id" :to="item.data.url||undefined" :class="{unread:!item.read_at}" @click="markNotification(item)"><span><AppIcon :name="notificationIcon(item.type)"/></span><div><strong>{{ item.data.title }}</strong><p>{{ item.data.message }}</p><small>{{ new Date(item.created_at).toLocaleString('ru-RU') }}</small></div></component></div><p v-else class="empty">Уведомлений пока нет.</p></div></div>
         <RouterLink v-if="auth.user?.player" class="user-link header-user-profile" :to="`/players/${auth.user.player.id}`">{{ auth.user.discord_display_name || auth.user.discord_username }}</RouterLink>
         <button v-else-if="auth.user" class="user-unlinked" title="Привязать игровой профиль" @click="openLinker">{{ auth.user.discord_display_name || auth.user.discord_username }} · привязать профиль</button>
         <button v-if="auth.authenticated" @click="auth.logout">Выйти</button>

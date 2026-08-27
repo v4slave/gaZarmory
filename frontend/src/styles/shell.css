@@ -1,0 +1,24 @@
+.shell { display: grid; grid-template-columns: 240px 1fr; min-height: 100vh; }
+aside { position:sticky;top:0;height:100vh;overflow-y:auto;align-self:start;border-right: 1px solid #321010; padding: 24px 18px; background: rgba(3, 3, 3, .94); display: flex; flex-direction: column; }
+.brand { display: flex; align-items: center; gap: 12px; font-weight: 800; letter-spacing: .055em; color: #fff; }
+.brand img { width: 50px; height: 50px; object-fit: cover; object-position: 50% 25%; border: 1px solid #7d1414; border-radius: 8px; box-shadow: 0 0 18px rgba(229, 35, 35, .28); }
+.brand small { display: block; margin-top: 4px; color: #ad5656; font-weight: 500; font-size: 9px; text-transform: uppercase; }
+nav { display: grid; gap: 5px; margin-top: 45px; }
+nav a, .admin { color: #aaa4a4; text-decoration: none; padding: 11px 13px; border-radius: 6px; border-left: 2px solid transparent; transition: .18s ease; }
+nav a { display:flex;align-items:center;justify-content:space-between;gap:10px; }
+.nav-count { display:grid;place-items:center;min-width:21px;height:21px;padding:0 6px;border:1px solid #9c682f;border-radius:999px;color:#241506;background:#d39a50;font-size:10px;line-height:1;box-shadow:0 0 12px rgba(211,154,80,.2); }
+nav a:hover, .admin:hover { color: #fff; background: #170707; }
+nav a.router-link-active { color: #ff5a5a; background: linear-gradient(90deg, #2a0909, #130606); border-left-color: #e42626; box-shadow: inset 0 0 20px rgba(196, 24, 24, .08); }
+.admin { margin-top: auto; }
+main { min-width: 0; }
+main>header { height: 72px; border-bottom: 1px solid #321010; display: flex; justify-content: flex-end; align-items: center; gap: 16px; padding: 0 38px; background: rgba(5, 5, 5, .55); }
+main>header button { color: #ddd; background: #0c0707; border: 1px solid #592020; padding: 9px 14px; border-radius: 5px; }
+main>header .primary { color: #fff; border-color: #d22121; background: linear-gradient(135deg, #df2929, #941313); box-shadow: 0 0 18px rgba(210, 33, 33, .2); }
+.user-link { color:#f1dada;text-decoration:none;border-bottom:1px dashed #7d2a2a; }
+.user-link:hover { color:#ff6565; }
+.user-unlinked { color:#ff9a9a;background:#210909;border-color:#772424; }
+section { padding: 48px 42px; max-width: 1400px; }
+.eyebrow { color: #e03a3a; font-size: 11px; letter-spacing: .2em; }
+h1 { margin: 6px 0 4px; font-family: inherit; font-size: 38px; font-weight: 500; }
+.muted, .empty { color: #8f8585; }
+

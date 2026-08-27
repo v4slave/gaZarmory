@@ -12,6 +12,8 @@ use App\Models\PrimePlayerEarning;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Database\Events\QueryExecuted;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 final class PayoutDetailTest extends TestCase
@@ -26,6 +28,9 @@ final class PayoutDetailTest extends TestCase
         $payout = Payout::query()->create(['period_from'=>'2026-08-01','period_to'=>'2026-08-16','status'=>'calculated','total_amount'=>150,'created_by'=>$leader->id]);
         $payout->players()->create(['player_id'=>$includedPlayer->id,'nickname_snapshot'=>$includedPlayer->nickname,'prime_attendance_percentage_snapshot'=>50,'primes_count'=>1,'mini_activities_count'=>2,'amount'=>150,'status'=>'pending']);
 
+        $this->actingAs($leader)->getJson('/api/payouts?per_page=5')->assertOk()
+            ->assertJsonPath('data.0.id', $payout->id)
+            ->assertJsonPath('data.0.players_count', 1);
         $this->actingAs($leader)->getJson('/api/payouts/'.$payout->id)->assertOk()->assertJsonPath('players.0.nickname_snapshot',$includedPlayer->nickname);
         $this->actingAs($includedUser)->getJson('/api/payouts/'.$payout->id)->assertOk();
         $this->actingAs($otherUser)->getJson('/api/payouts/'.$payout->id)->assertForbidden();
@@ -132,6 +137,77 @@ final class PayoutDetailTest extends TestCase
         $this->assertDatabaseHas('prime_player_earnings', ['id' => $earning->id, 'payout_id' => $payoutId, 'status' => 'paid']);
         $this->assertDatabaseHas('payout_players', ['payout_id' => $payoutId, 'player_id' => $player->id, 'status' => 'paid', 'amount' => 400]);
         self::assertSame(600, (int) TreasuryTransaction::query()->latest('id')->value('balance_after'));
+    }
+
+    public function test_mass_payment_loads_all_earning_details_in_one_query(): void
+    {
+        $leader = $this->user(UserRole::GuildLeader);
+        $definition = ActivityDefinition::query()->create([
+            'name' => 'Batch payout '.uniqid(),
+            'type' => 'prime',
+            'is_active' => true,
+        ]);
+        $activity = Activity::query()->create([
+            'activity_definition_id' => $definition->id,
+            'occurred_at' => now()->subDay(),
+            'gold_value' => 300,
+            'completed_at' => now()->subDay()->addHour(),
+            'created_by' => $leader->id,
+        ]);
+        $payout = Payout::query()->create([
+            'period_from' => now()->subDay()->toDateString(),
+            'period_to' => now()->toDateString(),
+            'status' => 'calculated',
+            'total_amount' => 300,
+            'created_by' => $leader->id,
+        ]);
+
+        $playerIds = [];
+        foreach (['BatchOne', 'BatchTwo', 'BatchThree'] as $prefix) {
+            [, $player] = $this->memberWithPlayer($prefix);
+            $playerIds[] = $player->id;
+            $payout->players()->create([
+                'player_id' => $player->id,
+                'nickname_snapshot' => $player->nickname,
+                'prime_attendance_percentage_snapshot' => 100,
+                'primes_count' => 1,
+                'mini_activities_count' => 0,
+                'amount' => 100,
+                'status' => 'pending',
+            ]);
+            PrimePlayerEarning::query()->create([
+                'activity_id' => $activity->id,
+                'player_id' => $player->id,
+                'payout_id' => $payout->id,
+                'nickname_snapshot' => $player->nickname,
+                'prime_gold_value_snapshot' => 300,
+                'participants_count_snapshot' => 3,
+                'player_share' => 100,
+                'status' => 'pending',
+            ]);
+        }
+        TreasuryTransaction::query()->create([
+            'type' => 'manual_income',
+            'amount' => 1000,
+            'balance_after' => 1000,
+            'description' => 'Mass payment balance',
+            'created_by' => $leader->id,
+        ]);
+
+        $earningDetailQueries = 0;
+        DB::listen(function (QueryExecuted $query) use (&$earningDetailQueries): void {
+            $sql = strtolower($query->sql);
+            if (str_starts_with(ltrim($sql), 'select') && str_contains($sql, 'from "prime_player_earnings"')) {
+                $earningDetailQueries++;
+            }
+        });
+
+        $this->actingAs($leader)
+            ->postJson('/api/payouts/'.$payout->id.'/pay-players', ['player_ids' => $playerIds])
+            ->assertOk()
+            ->assertJsonPath('status', 'paid');
+
+        self::assertSame(1, $earningDetailQueries);
     }
 
     public function test_activity_from_cancelled_payout_can_be_calculated_again_across_months(): void

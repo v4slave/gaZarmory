@@ -13,7 +13,7 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 final class AuctionController extends Controller
 {
-    public function index(Request $request){$manager=$request->user()->canCreateAuctions();return Auction::query()->with(['item','winner.user:id,discord_id,discord_username,discord_display_name,discord_avatar','topBid.player.user:id,discord_id,discord_username,discord_display_name,discord_avatar'])->withCount('bids')->where(fn($q)=>$q->where('status','!=','finished')->orWhere('finished_at','>=',now()->subDays(3)))->when(!$manager,fn($q)=>$q->whereIn('status',['active','finished']))->when($manager&&$request->filled('status'),fn($q)=>$q->where('status',$request->string('status')->toString()))->orderByDesc('id')->get();}
+    public function index(Request $request){$manager=$request->user()->canCreateAuctions();$data=$request->validate(['per_page'=>['nullable','integer','min:6','max:30']]);return Auction::query()->with(['item','winner.user:id,discord_id,discord_username,discord_display_name,discord_avatar','topBid.player.user:id,discord_id,discord_username,discord_display_name,discord_avatar'])->withCount('bids')->where(fn($q)=>$q->where('status','!=','finished')->orWhere('finished_at','>=',now()->subDays(3)))->when(!$manager,fn($q)=>$q->whereIn('status',['active','finished']))->when($manager&&$request->filled('status'),fn($q)=>$q->where('status',$request->string('status')->toString()))->orderByDesc('id')->paginate($data['per_page']??12);}
     public function activeCount(){return response()->json(['count'=>Auction::query()->where('status','active')->count()]);}
     public function show(Request $request,Auction $auction)
     {
@@ -24,7 +24,10 @@ final class AuctionController extends Controller
 
         abort_if(!$request->user()->canCreateAuctions() && !$visibleToMember, 404);
 
-        return $auction->load(['item','winner.user:id,discord_id,discord_username,discord_display_name,discord_avatar','bids'=>fn($q)=>$q->with('player.user:id,discord_id,discord_username,discord_display_name,discord_avatar')->orderByDesc('amount')->orderBy('created_at')->orderBy('id')]);
+        $data=$request->validate(['bids_page'=>['nullable','integer','min:1'],'bids_per_page'=>['nullable','integer','min:10','max:50']]);
+        $auction->load(['item','winner.user:id,discord_id,discord_username,discord_display_name,discord_avatar','topBid.player.user:id,discord_id,discord_username,discord_display_name,discord_avatar']);
+        $bids=$auction->bids()->with('player.user:id,discord_id,discord_username,discord_display_name,discord_avatar')->orderByDesc('amount')->orderBy('created_at')->orderBy('id')->paginate($data['bids_per_page']??20,['*'],'bids_page',$data['bids_page']??1);
+        return response()->json($auction->toArray()+['bids'=>$bids->items(),'bids_meta'=>['current_page'=>$bids->currentPage(),'last_page'=>$bids->lastPage(),'total'=>$bids->total()]]);
     }
     public function store(Request $request,AuditService $audit)
     {

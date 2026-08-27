@@ -23,7 +23,7 @@ class User extends Authenticatable
     public function hasRole(UserRole|string $role): bool
     {
         $value = $role instanceof UserRole ? $role->value : $role;
-        $roles = $this->roles ?: [$this->role->value];
+        $roles = $this->roles ?: [$this->role?->value ?? UserRole::Member->value];
         return in_array($value, $roles, true);
     }
 

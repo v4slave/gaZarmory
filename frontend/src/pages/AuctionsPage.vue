@@ -4,6 +4,7 @@ import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 import TokenAmount from '../components/TokenAmount.vue'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
+import AsyncState from '../components/AsyncState.vue'
 
 const auth = useAuthStore()
 const auctions = ref([])
@@ -11,9 +12,12 @@ const items = ref([])
 const showForm = ref(false)
 const editingId = ref(null)
 const error = ref('')
+const loadError = ref('')
+const loading = ref(true)
 const busy = ref(false)
 const clock = ref(Date.now())
 const selectedAuction = ref(null)
+const selectedBidsPage = ref(1)
 const modalMode = ref('bid')
 const bidAmount = ref(0)
 const modalError = ref('')
@@ -21,9 +25,37 @@ const modalBusy = ref(false)
 const archive = ref(null)
 let ticker, liveTicker
 
+function stopPolling() {
+  window.clearInterval(ticker)
+  window.clearInterval(liveTicker)
+  ticker = undefined
+  liveTicker = undefined
+}
+
+function startPolling() {
+  stopPolling()
+  if (document.visibilityState !== 'visible') return
+  ticker = window.setInterval(() => { clock.value = Date.now() }, 1000)
+  liveTicker=window.setInterval(async()=>{try{await loadAll();if(selectedAuction.value)selectedAuction.value=(await api.get(`/api/auctions/${selectedAuction.value.id}`,{params:{bids_page:selectedBidsPage.value,bids_per_page:20}})).data}catch{/* Keep the last successful live state. */}},5000)
+}
+
+async function handleVisibilityChange() {
+  if (document.visibilityState === 'visible') {
+    clock.value = Date.now()
+    try { await loadAll();if(selectedAuction.value)await loadSelectedBids(selectedBidsPage.value) } catch {/* Keep the last successful state. */}
+  }
+  startPolling()
+}
+
 const form = reactive({ treasury_item_id: '', quantity: 1, starting_bid: 0, minimum_step: 1, extension_minutes: 3, ends_at: '' })
-const activeCount = computed(() => auctions.value.filter((auction) => auction.status === 'active').length)
-const selectedTopBid = computed(() => selectedAuction.value?.bids?.[0] ?? null)
+const activeCount = ref(0)
+const pagination = ref({ current_page: 1, last_page: 1, total: 0 })
+const pageNumbers = computed(() => {
+  const start = Math.max(1, Math.min(pagination.value.current_page - 2, pagination.value.last_page - 4))
+  const end = Math.min(pagination.value.last_page, start + 4)
+  return Array.from({ length: end - start + 1 }, (_, index) => start + index)
+})
+const selectedTopBid = computed(() => selectedAuction.value?.top_bid ?? selectedAuction.value?.bids?.[0] ?? null)
 const minimumBid = computed(() => selectedTopBid.value
   ? Number(selectedTopBid.value.amount) + Number(selectedAuction.value.minimum_step)
   : Number(selectedAuction.value?.starting_bid ?? 0))
@@ -68,12 +100,21 @@ function editDraft(lot) {
   showForm.value = true
 }
 
-async function loadAll() {
-  const [auctionResponse, treasuryResponse] = await Promise.all([api.get('/api/auctions'), api.get('/api/treasury/items')])
-  auctions.value = auctionResponse.data
-  items.value = treasuryResponse.data
-  window.dispatchEvent(new CustomEvent('auction-count-changed', { detail: activeCount.value }))
+async function loadAll(page = pagination.value.current_page) {
+  loadError.value = ''
+  try {
+    const [auctionResponse, treasuryResponse, countResponse] = await Promise.all([api.get('/api/auctions', { params: { page, per_page: 12 } }), api.get('/api/treasury/items'), api.get('/api/auctions/active-count')])
+    auctions.value = auctionResponse.data.data
+    pagination.value = { current_page: auctionResponse.data.current_page, last_page: auctionResponse.data.last_page, total: auctionResponse.data.total }
+    activeCount.value = Number(countResponse.data.count)
+    items.value = treasuryResponse.data
+    window.dispatchEvent(new CustomEvent('auction-count-changed', { detail: activeCount.value }))
+  } catch (exception) {
+    if (!auctions.value.length) loadError.value = exception.response?.data?.message ?? 'Сервер не ответил. Проверьте соединение и попробуйте снова.'
+  } finally { loading.value = false }
 }
+
+async function retryLoad() { loading.value = true; await loadAll() }
 
 async function save() {
   busy.value = true
@@ -102,12 +143,21 @@ async function openAuctionModal(auction, mode = 'bid') {
   modalBusy.value = true
   selectedAuction.value = auction
   try {
-    const response = await api.get(`/api/auctions/${auction.id}`)
+    selectedBidsPage.value = 1
+    const response = await api.get(`/api/auctions/${auction.id}`, { params: { bids_page: 1, bids_per_page: 20 } })
     selectedAuction.value = response.data
     bidAmount.value = minimumBid.value
   } catch (exception) {
     modalError.value = exception.response?.data?.message ?? 'Не удалось загрузить аукцион.'
   } finally { modalBusy.value = false }
+}
+
+async function loadSelectedBids(page) {
+  if (!selectedAuction.value) return
+  modalBusy.value = true
+  try { selectedAuction.value = (await api.get(`/api/auctions/${selectedAuction.value.id}`, { params: { bids_page: page, bids_per_page: 20 } })).data;selectedBidsPage.value=selectedAuction.value.bids_meta.current_page }
+  catch (exception) { modalError.value = exception.response?.data?.message ?? 'Не удалось загрузить историю ставок.' }
+  finally { modalBusy.value = false }
 }
 
 function closeAuctionModal() {
@@ -120,7 +170,8 @@ async function placeBid() {
   modalError.value = ''
   try {
     await api.post(`/api/auctions/${selectedAuction.value.id}/bid`, { amount: Number(bidAmount.value) })
-    selectedAuction.value=(await api.get(`/api/auctions/${selectedAuction.value.id}`)).data
+    selectedAuction.value=(await api.get(`/api/auctions/${selectedAuction.value.id}`, { params: { bids_page: 1, bids_per_page: 20 } })).data
+    selectedBidsPage.value=1
     bidAmount.value=minimumBid.value
     await loadAll()
   } catch (exception) {
@@ -130,10 +181,10 @@ async function placeBid() {
 
 onMounted(async () => {
   await loadAll()
-  ticker = window.setInterval(() => { clock.value = Date.now() }, 1000)
-  liveTicker=window.setInterval(async()=>{try{await loadAll();if(selectedAuction.value)selectedAuction.value=(await api.get(`/api/auctions/${selectedAuction.value.id}`)).data}catch{/* Keep the last successful live state. */}},5000)
+  startPolling()
+  document.addEventListener('visibilitychange', handleVisibilityChange)
 })
-onUnmounted(() => {window.clearInterval(ticker);window.clearInterval(liveTicker)})
+onUnmounted(() => {stopPolling();document.removeEventListener('visibilitychange', handleVisibilityChange)})
 async function openArchive(){archive.value=(await api.get('/api/auctions/archive')).data}
 </script>
 
@@ -147,7 +198,8 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
     <p v-if="error" class="error-banner">{{ error }}</p>
     <div class="auction-count-pill">{{ activeCount }} активных лотов</div>
 
-    <div class="auction-grid-v2">
+    <AsyncState :loading="loading" :error="loadError" :empty="!auctions.length" loading-text="Загружаем аукционы…" empty-title="Активных лотов нет" empty-text="Новые и недавно завершённые лоты появятся здесь." @retry="retryLoad" />
+    <div v-if="!loading&&!loadError&&auctions.length" class="auction-grid-v2">
       <article v-for="auction in auctions" :key="auction.id" class="panel auction-lot-v2">
         <div class="auction-card-head">
           <div class="auction-item-compact">
@@ -182,8 +234,8 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
           <button class="auction-history-button" title="История ставок" aria-label="История ставок" @click="openAuctionModal(auction, 'history')">↶</button>
         </div>
       </article>
-      <div v-if="!auctions.length" class="panel empty-state">Активных и недавно завершённых лотов нет.</div>
     </div>
+    <nav v-if="!loading&&!loadError&&pagination.last_page > 1" class="roster-pagination" aria-label="Страницы аукционов"><button :disabled="pagination.current_page === 1" @click="loadAll(pagination.current_page - 1)">‹</button><button v-for="page in pageNumbers" :key="page" :class="{ active: page === pagination.current_page }" @click="loadAll(page)">{{ page }}</button><button :disabled="pagination.current_page === pagination.last_page" @click="loadAll(pagination.current_page + 1)">›</button></nav>
 
     <div v-if="selectedAuction" class="modal">
       <form v-if="modalMode === 'bid'" class="form-card auction-modal-card" @submit.prevent="placeBid">
@@ -205,9 +257,10 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
         <header class="auction-modal-head"><div><h2>История ставок</h2><small>{{ selectedAuction.item?.item_name }}</small></div><button type="button" class="modal-close" @click="closeAuctionModal">×</button></header>
         <p v-if="modalBusy">Загрузка…</p>
         <div v-else-if="selectedAuction.bids?.length" class="auction-bid-list">
-          <div v-for="(bid, index) in selectedAuction.bids" :key="bid.id" :class="{ 'top-bid-row': index === 0 }"><span class="bid-player"><b>#{{ index + 1 }}</b><PlayerAvatar :player="bid.player" size="tiny"/><span>{{ bid.player?.nickname ?? '—' }}</span><em v-if="index === 0">♛ лидер</em><small v-if="bid.is_auto">авто</small></span><TokenAmount :value="bid.amount" /></div>
+          <div v-for="(bid, index) in selectedAuction.bids" :key="bid.id" :class="{ 'top-bid-row': bid.id === selectedTopBid?.id }"><span class="bid-player"><b>#{{ (selectedBidsPage-1)*20+index+1 }}</b><PlayerAvatar :player="bid.player" size="tiny"/><span>{{ bid.player?.nickname ?? '—' }}</span><em v-if="bid.id === selectedTopBid?.id">♛ лидер</em><small v-if="bid.is_auto">авто</small></span><TokenAmount :value="bid.amount" /></div>
         </div>
         <p v-else class="muted">Ставок пока нет.</p>
+        <nav v-if="selectedAuction.bids_meta?.last_page>1" class="roster-pagination" aria-label="Страницы истории ставок"><button :disabled="selectedBidsPage===1" @click="loadSelectedBids(selectedBidsPage-1)">‹</button><span>{{ selectedBidsPage }} / {{ selectedAuction.bids_meta.last_page }}</span><button :disabled="selectedBidsPage===selectedAuction.bids_meta.last_page" @click="loadSelectedBids(selectedBidsPage+1)">›</button></nav>
       </section>
     </div>
 

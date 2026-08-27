@@ -34,14 +34,15 @@ final class AuctionVisibilityTest extends TestCase
         $expiredFinished->forceFill(['finished_at' => now()->subDays(4)])->save();
 
         $response = $this->actingAs($member)->getJson('/api/auctions')->assertOk();
-        $ids = collect($response->json())->pluck('id');
+        $ids = collect($response->json('data'))->pluck('id');
 
         self::assertTrue($ids->contains($active->id));
         self::assertTrue($ids->contains($recentFinished->id));
         self::assertFalse($ids->contains($draft->id));
         self::assertFalse($ids->contains($cancelled->id));
         self::assertFalse($ids->contains($expiredFinished->id));
-        $this->actingAs($member)->getJson('/api/auctions/'.$recentFinished->id)->assertOk();
+        $this->actingAs($member)->getJson('/api/auctions/'.$recentFinished->id)->assertOk()
+            ->assertJsonStructure(['bids', 'bids_meta' => ['current_page', 'last_page', 'total']]);
         $this->actingAs($member)->getJson('/api/auctions/'.$draft->id)->assertNotFound();
         $this->actingAs($member)->getJson('/api/auctions/'.$expiredFinished->id)->assertNotFound();
     }
@@ -58,7 +59,7 @@ final class AuctionVisibilityTest extends TestCase
         $active = $this->auction($item, $manager, 'active');
         $draft = $this->auction($item, $manager, 'draft');
 
-        $ids = collect($this->actingAs($manager)->getJson('/api/auctions')->assertOk()->json())->pluck('id');
+        $ids = collect($this->actingAs($manager)->getJson('/api/auctions')->assertOk()->json('data'))->pluck('id');
         self::assertTrue($ids->contains($active->id));
         self::assertTrue($ids->contains($draft->id));
         $this->actingAs($manager)->getJson('/api/auctions/active-count')
@@ -83,7 +84,7 @@ final class AuctionVisibilityTest extends TestCase
         $expired = $this->auction($item, $manager, 'finished');
         $expired->forceFill(['finished_at' => now()->subDays(4)])->save();
 
-        $ids = collect($this->actingAs($manager)->getJson('/api/auctions')->assertOk()->json())->pluck('id');
+        $ids = collect($this->actingAs($manager)->getJson('/api/auctions')->assertOk()->json('data'))->pluck('id');
 
         self::assertTrue($ids->contains($recent->id));
         self::assertFalse($ids->contains($expired->id));

@@ -11,7 +11,10 @@ final class EnsurePlayerLinked
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $userId = $request->user()?->getAuthIdentifier();
+        $user = $request->user();
+        if ($user?->canAdministrate()) return $next($request);
+
+        $userId = $user?->getAuthIdentifier();
         abort_unless($userId && Player::query()->where('user_id', $userId)->exists(), 403, 'Сначала привяжите игрового персонажа.');
 
         return $next($request);
