@@ -67,6 +67,7 @@ final class DashboardController extends Controller
         $tokens = fn (int $value): int => $tokenUnitValue > 0 ? intdiv($value, $tokenUnitValue) : 0;
         $activePlayers = Player::query()->where('is_active', true);
         $classDistribution = (clone $activePlayers)->select('class', DB::raw('COUNT(*) as total'))->groupBy('class')->pluck('total', 'class');
+        $weeklyEvents = $this->upcomingEvents();
 
         return [
             'gold' => $gold,
@@ -80,7 +81,8 @@ final class DashboardController extends Controller
             'average_gear_score' => (int) round((clone $activePlayers)->avg('gear_score') ?? 0),
             'class_distribution' => $classDistribution,
             'treasury_dynamics' => $this->treasuryDynamics($currentInventoryValue),
-            'upcoming_events' => $this->upcomingEvents(),
+            'upcoming_events' => array_slice($weeklyEvents, 0, 6),
+            'weekly_events' => $weeklyEvents,
             'attendance_period_days' => 30,
             'attendance_top' => $attendanceTop,
             'recent_activities' => Activity::query()
@@ -174,6 +176,6 @@ final class DashboardController extends Controller
             }
         }
 
-        return $events->sortBy('starts_at')->take(6)->values()->all();
+        return $events->sortBy('starts_at')->values()->all();
     }
 }
