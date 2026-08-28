@@ -71,6 +71,7 @@ const translations = {
   'Оперативное состояние гильдии': 'Guild status at a glance', 'Фактический баланс': 'Actual balance',
   'Дроп с РБ / жетоны': 'Boss loot / tokens', 'Эквивалент в золоте': 'Gold equivalent',
   'Ожидаемый нахрюк / жетоны': 'Expected payout / tokens', 'Средний ГС гильдии': 'Average guild GS',
+  'Да, спиздили. Потому что интерфейс классный и дашборд, а сама идея пришла от армори таргетов': 'Yes, we ripped it off. Because the interface and dashboard are great, while the idea itself came from Armory Targets',
   'Активных аукционов': 'Active auctions', 'Состав по классам': 'Roster by class',
   'Весь состав →': 'Full roster →', 'Динамика казны': 'Treasury history',
   'Стоимость предметов': 'Item value', 'Динамика золота и стоимости предметов за 14 дней': 'Gold and item value over 14 days',
