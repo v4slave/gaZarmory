@@ -15,7 +15,6 @@ use App\Services\AuditService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -164,37 +163,6 @@ final class PlayerController extends Controller
 
             return $player->refresh()->load(['group', 'user']);
         });
-    }
-
-    public function uploadBanner(Request $request, Player $player): Player
-    {
-        $this->authorizeBannerChange($request, $player);
-        $request->validate(['banner' => ['required', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:10240']]);
-
-        $oldPath = $player->banner_path;
-        $newPath = $request->file('banner')->store('player-banners', 'public');
-        $player->update(['banner_path' => $newPath]);
-        if ($oldPath) Storage::disk('public')->delete($oldPath);
-        $this->audit->record('player.banner_updated', $player, ['banner_path' => $oldPath], ['banner_path' => $newPath]);
-
-        return $player->refresh()->load(['group', 'user']);
-    }
-
-    public function deleteBanner(Request $request, Player $player): Player
-    {
-        $this->authorizeBannerChange($request, $player);
-        $oldPath = $player->banner_path;
-        if ($oldPath) Storage::disk('public')->delete($oldPath);
-        $player->update(['banner_path' => null]);
-        $this->audit->record('player.banner_deleted', $player, ['banner_path' => $oldPath], ['banner_path' => null]);
-
-        return $player->refresh()->load(['group', 'user']);
-    }
-
-    private function authorizeBannerChange(Request $request, Player $player): void
-    {
-        $isOwner = (int) $request->user()->player?->id === (int) $player->id;
-        abort_unless($isOwner || $request->user()->hasRole(UserRole::Developer), 403);
     }
 
     public function move(Request $request, Player $player): Player
