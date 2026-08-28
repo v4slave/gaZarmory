@@ -70,6 +70,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
 
     Route::delete('/players/{player}/permanent', [PlayerController::class, 'destroyPermanently']);
     Route::patch('/players/{player}/profile', [PlayerController::class, 'updateProfile']);
+    Route::post('/players/{player}/banner', [PlayerController::class, 'uploadBanner'])->middleware('throttle:10,1');
+    Route::delete('/players/{player}/banner', [PlayerController::class, 'deleteBanner']);
     Route::apiResource('players', PlayerController::class);
     Route::post('/players/{player}/activate', [PlayerController::class, 'activate']);
     Route::put('/players/{player}/group', [PlayerController::class, 'move']);
