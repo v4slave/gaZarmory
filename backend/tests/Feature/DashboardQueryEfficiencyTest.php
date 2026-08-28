@@ -9,6 +9,7 @@ use App\Models\ActivityDefinition;
 use App\Models\Player;
 use App\Models\PrimePlayerEarning;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -33,11 +34,18 @@ final class DashboardQueryEfficiencyTest extends TestCase
         $queries = 0;
         DB::listen(static function () use (&$queries): void { $queries++; });
 
-        $this->actingAs($user)->getJson('/api/dashboard')
+        $response = $this->actingAs($user)->getJson('/api/dashboard')
             ->assertOk()
             ->assertJsonCount(14, 'treasury_dynamics');
 
         self::assertLessThanOrEqual(16, $queries, "Dashboard executed {$queries} SQL queries.");
+
+        $eventDates = collect($response->json('weekly_events'))
+            ->map(fn (array $event): string => CarbonImmutable::parse($event['starts_at'])->toDateString())
+            ->unique()->values();
+        self::assertCount(7, $eventDates);
+        self::assertSame(1, CarbonImmutable::parse($eventDates->first())->dayOfWeekIso);
+        self::assertSame(7, CarbonImmutable::parse($eventDates->last())->dayOfWeekIso);
     }
 
     public function test_dashboard_attendance_ignores_drafts_and_includes_legacy_earnings(): void

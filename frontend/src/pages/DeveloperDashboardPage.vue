@@ -38,14 +38,7 @@ onMounted(async () => {
 
 <template>
   <div class="developer-dashboard">
-    <header class="developer-topbar">
-      <RouterLink class="developer-brand" to="/dashboard"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><span><b>GAZ ARMORY</b><small>ArcheAge guild</small></span></RouterLink>
-      <div class="developer-menus">
-        <nav><RouterLink class="active" to="/dashboard">⌂ <span>Дашборд</span></RouterLink><RouterLink to="/roster">♟ <span>Состав</span></RouterLink><RouterLink to="/groups">✦ <span>Конст-пати</span></RouterLink><RouterLink to="/activities">⚔ <span>Активности</span></RouterLink><RouterLink to="/media">▶ <span>Контент</span></RouterLink><RouterLink to="/treasury">◆ <span>Казна</span></RouterLink><RouterLink to="/auctions">⚒ <span>Аукционы</span></RouterLink></nav>
-        <nav class="secondary"><RouterLink to="/payouts">₽ <span>Нахрюк</span></RouterLink><RouterLink to="/roster-readiness">◈ <span>Готовность состава</span></RouterLink><RouterLink to="/attendance-analytics">↗ <span>Посещаемость</span></RouterLink><RouterLink to="/financial-reconciliation">✓ <span>Финансовая сверка</span></RouterLink><RouterLink to="/admin">⚙ <span>Админка</span></RouterLink></nav>
-      </div>
-    </header>
-    <main class="developer-main">
+    <div class="developer-main">
       <div class="developer-heading"><div><p>{{ t('БЛИЖАЙШИЕ СОБЫТИЯ') }}</p><h1>{{ t('Неделя гильдии') }}</h1></div><span>{{ t('Экспериментальный интерфейс') }} · developer</span></div>
       <p v-if="loading" class="developer-state">Загрузка…</p><p v-else-if="error" class="developer-state error">{{ error }}</p>
       <template v-else>
@@ -58,7 +51,7 @@ onMounted(async () => {
         </div>
         <section class="developer-ticker"><div><span>Золото в казне / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.gold) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.gold_token_count) }}</small></p></div><div><span>Дроп с РБ / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.inventory_value) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.inventory_token_count) }}</small></p></div><div><span>Ожидаемый нахрюк / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.pending_payout) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.pending_payout_token_count) }}</small></p></div><div><span>Средний ГС</span><p><b>{{ formatInteger(data.average_gear_score) }}</b></p></div><div><span>Активных аукционов</span><p><b>{{ data.active_auctions }}</b></p></div></section>
       </template>
-    </main>
+    </div>
   </div>
 </template>
 

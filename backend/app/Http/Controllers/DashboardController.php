@@ -67,7 +67,11 @@ final class DashboardController extends Controller
         $tokens = fn (int $value): int => $tokenUnitValue > 0 ? intdiv($value, $tokenUnitValue) : 0;
         $activePlayers = Player::query()->where('is_active', true);
         $classDistribution = (clone $activePlayers)->select('class', DB::raw('COUNT(*) as total'))->groupBy('class')->pluck('total', 'class');
-        $weeklyEvents = $this->upcomingEvents();
+        $weeklyEvents = $this->weeklyEvents();
+        $now = CarbonImmutable::now('Europe/Moscow');
+        $upcomingEvents = collect($weeklyEvents)
+            ->filter(fn (array $event) => CarbonImmutable::parse($event['starts_at'])->isAfter($now))
+            ->take(6)->values()->all();
 
         return [
             'gold' => $gold,
@@ -81,7 +85,7 @@ final class DashboardController extends Controller
             'average_gear_score' => (int) round((clone $activePlayers)->avg('gear_score') ?? 0),
             'class_distribution' => $classDistribution,
             'treasury_dynamics' => $this->treasuryDynamics($currentInventoryValue),
-            'upcoming_events' => array_slice($weeklyEvents, 0, 6),
+            'upcoming_events' => $upcomingEvents,
             'weekly_events' => $weeklyEvents,
             'attendance_period_days' => 30,
             'attendance_top' => $attendanceTop,
@@ -147,7 +151,7 @@ final class DashboardController extends Controller
         })->all();
     }
 
-    private function upcomingEvents(): array
+    private function weeklyEvents(): array
     {
         $schedule = [
             1 => [['10:00','Кошка'],['19:30','Кракен'],['20:30','Калидис'],['21:30','Анталлон'],['22:00','Кошка']],
@@ -159,14 +163,14 @@ final class DashboardController extends Controller
             7 => [['10:00','Кошка'],['19:30','Ксанатос'],['19:50','Анталлон'],['20:30','Левиафан'],['22:00','Кошка']],
         ];
         $now = CarbonImmutable::now('Europe/Moscow');
+        $weekStart = $now->startOfWeek();
         $definitions = ActivityDefinition::query()->whereNotNull('icon_path')->get()->keyBy(fn ($item) => mb_strtolower($item->name));
         $events = collect();
 
-        foreach (range(0, 7) as $offset) {
-            $day = $now->startOfDay()->addDays($offset);
+        foreach (range(0, 6) as $offset) {
+            $day = $weekStart->addDays($offset);
             foreach ($schedule[$day->dayOfWeekIso] as [$time, $name]) {
                 $startsAt = $day->setTimeFromTimeString($time);
-                if ($startsAt->isBefore($now)) continue;
                 $definition = $definitions->get(mb_strtolower($name));
                 $events->push([
                     'name' => $name,
