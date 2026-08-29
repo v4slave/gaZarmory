@@ -88,6 +88,32 @@ final class DashboardQueryEfficiencyTest extends TestCase
         self::assertNotSame($cats[0]['activity_id'], $cats[1]['activity_id']);
     }
 
+    public function test_calendar_contains_agl_every_four_hours_each_day(): void
+    {
+        $user = User::query()->create([
+            'discord_id' => 'dashboard-agl-'.uniqid(),
+            'discord_username' => 'dashboard-agl',
+        ]);
+        $user->forceFill(['role' => UserRole::Member, 'roles' => [UserRole::Member->value]])->save();
+        Player::query()->create([
+            'nickname' => 'DashboardAgl',
+            'class' => PlayerClass::Melee,
+            'is_active' => true,
+        ])->forceFill(['user_id' => $user->id])->save();
+
+        $aglEvents = collect($this->actingAs($user)->getJson('/api/dashboard')->assertOk()->json('weekly_events'))
+            ->where('name', 'АГЛ')
+            ->groupBy(fn (array $event): string => CarbonImmutable::parse($event['starts_at'])->toDateString());
+
+        self::assertCount(7, $aglEvents);
+        $aglEvents->each(function ($events): void {
+            self::assertSame(
+                ['03:20', '07:20', '11:20', '15:20', '19:20', '23:20'],
+                $events->map(fn (array $event): string => CarbonImmutable::parse($event['starts_at'])->format('H:i'))->values()->all(),
+            );
+        });
+    }
+
     public function test_dashboard_attendance_ignores_drafts_and_includes_legacy_earnings(): void
     {
         $user = User::query()->create(['discord_id'=>'dashboard-stats-'.uniqid(),'discord_username'=>'dashboard-stats']);
