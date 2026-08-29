@@ -5,9 +5,8 @@ import { formatInteger, localeTag } from '../utils/format.js'
 import { useLocale } from '../i18n.js'
 
 const classLabels = { melee: 'Милик', archer: 'Лук', mage: 'Маг', healer: 'Хил', bard: 'Бард', tank: 'Танк' }
-const data = ref({ gold: 0, gold_token_count: 0, inventory_value: 0, inventory_token_count: 0, pending_payout: 0, pending_payout_token_count: 0, average_gear_score: 0, active_auctions: 0, class_distribution: {}, weekly_events: [] })
+const data = ref({ gold: 0, gold_token_count: 0, inventory_value: 0, inventory_token_count: 0, pending_payout: 0, pending_payout_token_count: 0, average_gear_score: 0, active_auctions: 0, class_distribution: {}, weekly_events: [], upcoming_events: [] })
 const { t } = useLocale()
-const selected = ref(null)
 const loading = ref(true)
 const error = ref('')
 const formatDay = value => new Intl.DateTimeFormat(localeTag(), { weekday: 'short' }).format(value)
@@ -25,11 +24,13 @@ const days = computed(() => {
   }
   return [...grouped.values()].slice(0, 7)
 })
+const nearestEvent = computed(() => data.value.upcoming_events?.[0]
+  ?? data.value.weekly_events?.find(event => new Date(event.starts_at).getTime() >= Date.now())
+  ?? null)
 
 onMounted(async () => {
   try {
     data.value = (await api.get('/api/dashboard')).data
-    selected.value = data.value.weekly_events?.[0] ?? null
   } catch (requestError) {
     error.value = requestError.response?.data?.message ?? t('Не удалось загрузить дашборд.')
   } finally { loading.value = false }
@@ -43,10 +44,10 @@ onMounted(async () => {
       <p v-if="loading" class="developer-state">Загрузка…</p><p v-else-if="error" class="developer-state error">{{ error }}</p>
       <template v-else>
         <section class="developer-calendar">
-          <article v-for="day in days" :key="day.key" class="developer-day"><header><b>{{ formatDay(day.date) }}</b><small>{{ formatEventDate(day.date) }}</small></header><button v-for="event in day.events" :key="`${event.name}-${event.starts_at}`" :class="['developer-event',{active:selected?.starts_at===event.starts_at}]" @click="selected=event"><img v-if="event.icon_url" :src="event.icon_url" :alt="event.name"><span v-else>◆</span><strong>{{ event.name }}</strong><time>{{ formatEventTime(new Date(event.starts_at)) }}</time></button></article>
+          <article v-for="day in days" :key="day.key" class="developer-day"><header><b>{{ formatDay(day.date) }}</b><small>{{ formatEventDate(day.date) }}</small></header><div v-for="event in day.events" :key="`${event.name}-${event.starts_at}`" class="developer-event"><img v-if="event.icon_url" :src="event.icon_url" :alt="event.name"><span v-else>◆</span><strong>{{ event.name }}</strong><time>{{ formatEventTime(new Date(event.starts_at)) }}</time></div></article>
         </section>
         <div class="developer-after">
-          <section class="developer-selected"><template v-if="selected"><img v-if="selected.icon_url" :src="selected.icon_url" :alt="selected.name"><div><p>{{ t('ВЫБРАННОЕ СОБЫТИЕ') }}</p><h2>{{ selected.name }}</h2><span>{{ formatEventDateTime(new Date(selected.starts_at)) }}</span><RouterLink to="/activities">{{ t('Все активности') }} →</RouterLink></div></template></section>
+          <section class="developer-selected"><template v-if="nearestEvent"><img v-if="nearestEvent.icon_url" :src="nearestEvent.icon_url" :alt="nearestEvent.name"><div><p>{{ t('БЛИЖАЙШЕЕ СОБЫТИЕ') }}</p><h2>{{ nearestEvent.name }}</h2><span>{{ formatEventDateTime(new Date(nearestEvent.starts_at)) }}</span><RouterLink to="/activities">{{ t('Все активности') }} →</RouterLink></div></template><p v-else class="developer-empty">{{ t('Ближайших событий нет.') }}</p></section>
           <section class="developer-classes"><header><h2>Состав по классам</h2><RouterLink to="/roster">Весь состав →</RouterLink></header><div><span v-for="(label,key) in classLabels" :key="key"><small>{{ label }}</small><i><b :style="{width:`${Math.min(100,Number(data.class_distribution?.[key]??0)/Math.max(1,...Object.values(data.class_distribution??{}).map(Number))*100)}%`}"></b></i><strong>{{ Number(data.class_distribution?.[key]??0) }}</strong></span></div></section>
         </div>
         <section class="developer-ticker"><div><span>Золото в казне / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.gold) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.gold_token_count) }}</small></p></div><div><span>Дроп с РБ / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.inventory_value) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.inventory_token_count) }}</small></p></div><div><span>Ожидаемый нахрюк / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.pending_payout) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.pending_payout_token_count) }}</small></p></div><div><span>Средний ГС</span><p><b>{{ formatInteger(data.average_gear_score) }}</b></p></div><div><span>Активных аукционов</span><p><b>{{ data.active_auctions }}</b></p></div></section>

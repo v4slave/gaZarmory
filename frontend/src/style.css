@@ -1261,3 +1261,32 @@ html,body,#app{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif
 @media(max-width:760px){.shell{grid-template-columns:1fr}.dashboard-attribution{margin-bottom:18px;font-size:12px}.dashboard-page .stats-row{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:430px){.dashboard-page .stats-row{grid-template-columns:1fr}}
 .payout-history-panel{margin-top:14px;min-height:0}.payout-history-panel .panel-title p{margin:4px 0 0}.payout-history-panel .table-wrap{border:0}.payout-history-panel table{min-width:720px}
+
+/* Wide cinematic shell inspired by the compact ArcheAge control-room layout. */
+@media(min-width:1101px){
+  .shell{display:block;min-height:100vh}
+  .shell>aside{position:sticky;z-index:180;top:0;display:grid;width:100%;height:96px;grid-template-columns:180px minmax(0,1fr);grid-template-rows:58px 38px;padding:0 390px 0 20px;border:0;border-bottom:1px solid rgba(210,146,56,.34);background:linear-gradient(180deg,rgba(5,5,4,.98),rgba(9,7,4,.96));box-shadow:0 10px 35px rgba(0,0,0,.48)}
+  .shell>aside .brand{grid-column:1;grid-row:1/3;align-self:center;min-height:0;padding:0;gap:10px;font-size:13px;line-height:1.05}
+  .shell>aside .brand img{width:44px;height:44px;border-radius:7px}
+  .shell>aside .brand small{margin-top:4px;font-size:7px}
+  .shell>aside>nav:first-of-type{grid-column:2;grid-row:1;display:flex;align-items:stretch;gap:0;margin:0}
+  .shell>aside>nav:first-of-type .nav-section{display:flex;align-items:stretch;gap:0;padding:0;border:0}
+  .shell>aside .nav-section-title{display:none}
+  .shell>aside>nav:first-of-type a{display:flex;grid-template-columns:none;align-items:center;gap:0;min-height:0;padding:0 15px;border:0;border-bottom:2px solid transparent;border-radius:0;color:#d7cbbb;background:transparent;font-size:11px;font-weight:650;white-space:nowrap}
+  .shell>aside>nav:first-of-type a:hover{color:#fff1d4;border-bottom-color:rgba(217,155,60,.45);background:linear-gradient(180deg,transparent,rgba(103,65,23,.16))}
+  .shell>aside>nav:first-of-type a.router-link-active{color:#f0b756;border:0;border-bottom:2px solid #d69738;background:linear-gradient(180deg,transparent,rgba(128,78,19,.18));box-shadow:none}
+  .shell>aside>nav:first-of-type .nav-icon{display:none}
+  .shell>aside>nav:first-of-type .nav-count{margin-left:6px}
+  .shell>aside .management-nav{grid-column:2;grid-row:2;display:flex;align-items:start;gap:0;margin:0;padding-top:3px;border-top:1px solid rgba(154,105,42,.12)}
+  .shell>aside .management-nav .nav-section{display:flex;align-items:start;gap:6px;padding:0;border:0}
+  .shell>aside .management-nav a,.shell>aside .management-nav .admin{display:flex;grid-template-columns:none;align-items:center;gap:5px;min-height:25px;margin:0;padding:4px 9px;border:1px solid rgba(171,117,47,.28);border-radius:4px;color:#c1b5a5;background:rgba(17,14,10,.78);font-size:9px;white-space:nowrap}
+  .shell>aside .management-nav a:hover{color:#f3d9ad;border-color:rgba(216,153,61,.55);background:rgba(65,42,17,.58)}
+  .shell>aside .management-nav .nav-icon{display:grid;width:13px;height:13px;color:#d39a52;font-size:11px}
+  .shell>aside .aside-profile{display:none}
+  .shell>main{min-height:calc(100vh - 96px)}
+  .shell>main>header{position:fixed;z-index:220;top:0;right:18px;width:360px;height:58px;padding:0;border:0;background:transparent;box-shadow:none;backdrop-filter:none}
+  .shell>main>header .header-spacer{display:block;flex:1}
+  .shell>main>section{padding-top:28px}
+  .dashboard-page{max-width:1680px}
+  .dashboard-attribution{border-color:rgba(210,146,56,.46);background:linear-gradient(90deg,rgba(92,56,18,.5),rgba(12,10,7,.86));box-shadow:inset 3px 0 #d99b42,0 12px 30px rgba(0,0,0,.16)}
+}
