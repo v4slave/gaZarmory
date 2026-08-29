@@ -39,7 +39,7 @@ onMounted(async () => {
 <template>
   <div class="developer-dashboard">
     <div class="developer-main">
-      <div class="developer-heading"><div><p>{{ t('БЛИЖАЙШИЕ СОБЫТИЯ') }}</p><h1>{{ t('Неделя гильдии') }}</h1></div><span>{{ t('Экспериментальный интерфейс') }} · developer</span></div>
+      <div class="developer-heading"><div><h1>{{ t('Расписание') }}</h1></div><span>{{ t('Экспериментальный интерфейс') }} · developer</span></div>
       <p v-if="loading" class="developer-state">Загрузка…</p><p v-else-if="error" class="developer-state error">{{ error }}</p>
       <template v-else>
         <section class="developer-calendar">

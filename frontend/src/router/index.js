@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const page = (name) => () => import(`../pages/${name}.vue`)
-const DashboardPage = page('DashboardPage')
+const DashboardPage = page('DashboardEntryPage')
 const RosterPage = page('RosterPage')
 const GroupsPage = page('GroupsPage')
 const PartySquadsPage = page('PartySquadsPage')
