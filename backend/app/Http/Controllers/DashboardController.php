@@ -164,7 +164,12 @@ final class DashboardController extends Controller
         ];
         $now = CarbonImmutable::now('Europe/Moscow');
         $weekStart = $now->startOfWeek();
-        $definitions = ActivityDefinition::query()->whereNotNull('icon_path')->get()->keyBy(fn ($item) => mb_strtolower($item->name));
+        $definitions = ActivityDefinition::query()->get()->keyBy(fn ($item) => mb_strtolower($item->name));
+        $activitiesBySlot = Activity::query()
+            ->whereBetween('occurred_at', [$weekStart, $weekStart->addWeek()])
+            ->orderBy('id')
+            ->get(['id', 'activity_definition_id', 'occurred_at'])
+            ->keyBy(fn (Activity $activity): string => $activity->activity_definition_id.'|'.$activity->occurred_at->format('Y-m-d H:i'));
         $events = collect();
 
         foreach (range(0, 6) as $offset) {
@@ -172,10 +177,14 @@ final class DashboardController extends Controller
             foreach ($schedule[$day->dayOfWeekIso] as [$time, $name]) {
                 $startsAt = $day->setTimeFromTimeString($time);
                 $definition = $definitions->get(mb_strtolower($name));
+                $activity = $definition
+                    ? $activitiesBySlot->get($definition->id.'|'.$startsAt->format('Y-m-d H:i'))
+                    : null;
                 $events->push([
                     'name' => $name,
                     'starts_at' => $startsAt->toIso8601String(),
                     'icon_url' => $definition?->icon_url,
+                    'activity_id' => $activity?->id,
                 ]);
             }
         }

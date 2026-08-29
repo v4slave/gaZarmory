@@ -38,7 +38,7 @@ final class DashboardQueryEfficiencyTest extends TestCase
             ->assertOk()
             ->assertJsonCount(14, 'treasury_dynamics');
 
-        self::assertLessThanOrEqual(16, $queries, "Dashboard executed {$queries} SQL queries.");
+        self::assertLessThanOrEqual(17, $queries, "Dashboard executed {$queries} SQL queries.");
 
         $eventDates = collect($response->json('weekly_events'))
             ->map(fn (array $event): string => CarbonImmutable::parse($event['starts_at'])->toDateString())
@@ -46,6 +46,46 @@ final class DashboardQueryEfficiencyTest extends TestCase
         self::assertCount(7, $eventDates);
         self::assertSame(1, CarbonImmutable::parse($eventDates->first())->dayOfWeekIso);
         self::assertSame(7, CarbonImmutable::parse($eventDates->last())->dayOfWeekIso);
+    }
+
+    public function test_calendar_slots_link_to_activities_by_definition_date_and_time(): void
+    {
+        $user = User::query()->create([
+            'discord_id' => 'dashboard-calendar-'.uniqid(),
+            'discord_username' => 'dashboard-calendar',
+        ]);
+        $user->forceFill(['role' => UserRole::Member, 'roles' => [UserRole::Member->value]])->save();
+        Player::query()->create([
+            'nickname' => 'CalendarLinks',
+            'class' => PlayerClass::Melee,
+            'is_active' => true,
+        ])->forceFill(['user_id' => $user->id])->save();
+
+        $slots = collect($this->actingAs($user)->getJson('/api/dashboard')->assertOk()->json('weekly_events'));
+        $definitions = $slots->pluck('name')->unique()->mapWithKeys(function (string $name): array {
+            $definition = ActivityDefinition::query()->firstOrCreate(
+                ['name' => $name],
+                ['type' => 'prime', 'is_active' => true],
+            );
+            return [$name => $definition];
+        });
+        $activities = $slots->map(function (array $slot) use ($definitions, $user): Activity {
+            return Activity::query()->create([
+                'activity_definition_id' => $definitions[$slot['name']]->id,
+                'occurred_at' => CarbonImmutable::parse($slot['starts_at']),
+                'created_by' => $user->id,
+            ]);
+        });
+
+        $linked = collect($this->actingAs($user)->getJson('/api/dashboard')->assertOk()->json('weekly_events'));
+        self::assertCount($slots->count(), $linked->whereNotNull('activity_id'));
+        $linked->values()->each(function (array $slot, int $index) use ($activities): void {
+            self::assertSame($activities[$index]->id, $slot['activity_id']);
+        });
+
+        $cats = $linked->where('name', 'Кошка')->values();
+        self::assertGreaterThan(1, $cats->count());
+        self::assertNotSame($cats[0]['activity_id'], $cats[1]['activity_id']);
     }
 
     public function test_dashboard_attendance_ignores_drafts_and_includes_legacy_earnings(): void
