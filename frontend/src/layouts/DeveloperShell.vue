@@ -1,5 +1,6 @@
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useRoute } from 'vue-router'
 import AppIcon from '../components/AppIcon.vue'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import NotificationCenter from '../components/NotificationCenter.vue'
@@ -8,17 +9,19 @@ import { useLocale } from '../i18n.js'
 import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
+const route = useRoute()
 const { t } = useLocale()
-onMounted(() => auth.syncDiscordProfile())
-const primaryNavigation = [
-  { to: '/dashboard', icon: 'home', image: '/images/archeage-home.png', label: 'Главная' },
-  { to: '/roster', icon: 'users', label: 'Состав' },
-  { to: '/groups', icon: 'groups', label: 'Конст-пати' },
-  { to: '/activities', icon: 'sword', label: 'Активности' },
-  { to: '/media', icon: 'play', label: 'Контент' },
-  { to: '/treasury', icon: 'treasury', label: 'Казна' },
-  { to: '/auctions', icon: 'auction', label: 'Аукционы' },
-  { to: '/payouts', icon: 'payout', label: 'Нахрюк' },
+const menuRoot = ref(null)
+const navigationGroups = [
+  { label: 'Основное', icon: 'users', items: [
+    { to: '/roster', icon: 'users', label: 'Состав' }, { to: '/groups', icon: 'groups', label: 'Конст-пати' }, { to: '/activities', icon: 'sword', label: 'Активности' },
+  ] },
+  { label: 'Экономика', icon: 'treasury', items: [
+    { to: '/treasury', icon: 'treasury', label: 'Казна' }, { to: '/auctions', icon: 'auction', label: 'Аукционы' }, { to: '/payouts', icon: 'payout', label: 'Нахрюк' },
+  ] },
+  { label: 'Доп. функционал', icon: 'play', items: [
+    { href: 'https://archa.ge/', icon: 'sword', label: 'Калькулятор' }, { href: 'https://discord.gg/gaz', image: '/images/discord-guild.png', label: 'Discord' }, { to: '/media', icon: 'play', label: 'Контент' },
+  ] },
 ]
 const managementNavigation = [
   { to: '/roster-readiness', icon: 'readiness', label: 'Готовность состава', permission: 'canViewReadiness' },
@@ -27,6 +30,12 @@ const managementNavigation = [
   { to: '/admin', icon: 'settings', label: 'Административное пространство', permission: 'canAdmin' },
 ]
 const availableManagementNavigation = computed(() => managementNavigation.filter(item => !item.permission || auth[item.permission]))
+const groupActive = group => group.items.some(item => item.to && route.path.startsWith(item.to))
+function closeMenus() { menuRoot.value?.querySelectorAll('details[open]').forEach(menu => menu.removeAttribute('open')) }
+function closeOutside(event) { if (!menuRoot.value?.contains(event.target)) closeMenus() }
+function closeOnEscape(event) { if (event.key === 'Escape') closeMenus() }
+onMounted(() => { auth.syncDiscordProfile(); document.addEventListener('click', closeOutside); document.addEventListener('keydown', closeOnEscape) })
+onBeforeUnmount(() => { document.removeEventListener('click', closeOutside); document.removeEventListener('keydown', closeOnEscape) })
 </script>
 
 <template>
@@ -37,18 +46,17 @@ const availableManagementNavigation = computed(() => managementNavigation.filter
         <span><b>GAZ ARMORY</b><small>ArcheAge guild</small></span>
       </RouterLink>
       <div class="dev-menus">
-        <nav class="dev-primary" aria-label="Primary navigation">
-          <RouterLink v-for="item in primaryNavigation" :key="item.to" :to="item.to">
-            <img v-if="item.image" class="dev-nav-image" :src="item.image" alt=""><AppIcon v-else :name="item.icon" :size="18"/><span>{{ t(item.label) }}</span>
-          </RouterLink>
-          <span class="dev-external-links">
-            <a class="dev-tool-link" href="https://archa.ge/" target="_blank" rel="noopener noreferrer" :title="t('Открыть калькулятор')">
-              <AppIcon name="sword" :size="18"/><span>{{ t('Калькулятор') }}</span>
-            </a>
-            <a class="dev-discord-link" href="https://discord.gg/gaz" target="_blank" rel="noopener noreferrer" :title="t('Открыть Discord гильдии')">
-              <img src="/images/discord-guild.png" alt=""><span>Discord</span>
-            </a>
-          </span>
+        <nav ref="menuRoot" class="dev-primary" aria-label="Primary navigation">
+          <RouterLink to="/dashboard"><img class="dev-nav-image" src="/images/archeage-home.png" alt=""><span>{{ t('Главная') }}</span></RouterLink>
+          <details v-for="group in navigationGroups" :key="group.label" :class="['dev-menu-dropdown',{active:groupActive(group)}]">
+            <summary><AppIcon :name="group.icon" :size="18"/><span>{{ t(group.label) }}</span><b aria-hidden="true">⌄</b></summary>
+            <div>
+              <template v-for="item in group.items" :key="item.to??item.href">
+                <RouterLink v-if="item.to" :to="item.to" @click="closeMenus"><AppIcon :name="item.icon" :size="17"/><span>{{ t(item.label) }}</span></RouterLink>
+                <a v-else :href="item.href" target="_blank" rel="noopener noreferrer" @click="closeMenus"><img v-if="item.image" :src="item.image" alt=""><AppIcon v-else :name="item.icon" :size="17"/><span>{{ t(item.label) }}</span><b aria-hidden="true">↗</b></a>
+              </template>
+            </div>
+          </details>
         </nav>
         <nav v-if="availableManagementNavigation.length" class="dev-management" aria-label="Guild management">
           <RouterLink v-for="item in availableManagementNavigation" :key="item.to" :to="item.to">
@@ -78,6 +86,7 @@ const availableManagementNavigation = computed(() => managementNavigation.filter
 .dev-primary .dev-discord-link{min-width:100px;padding:0 13px;color:#bdb4a8;border-color:transparent;border-bottom-color:rgba(217,154,62,.08);border-radius:0;background:transparent}.dev-primary .dev-discord-link:hover{color:#f3e3c9;border-color:rgba(217,154,62,.28);border-bottom-color:#c98c38;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(217,154,62,.03),rgba(217,154,62,.1))}.dev-discord-link img{width:18px;height:18px;border-radius:50%;object-fit:cover}
 .dev-nav-image{width:18px;height:18px;flex:none;border-radius:50%;object-fit:cover;opacity:.72;filter:grayscale(1);transition:.16s ease}.dev-primary a:hover .dev-nav-image{opacity:.95}.dev-primary a.router-link-active .dev-nav-image{opacity:1;filter:sepia(1) saturate(1.45) brightness(1.35)}
 .dev-external-links{display:flex;align-self:stretch;margin-left:6px;border-left:1px solid rgba(217,154,62,.24)}.dev-primary .dev-external-links>a{min-width:auto;padding-inline:11px}.dev-primary .dev-tool-link{color:#d8b77f}.dev-primary .dev-tool-link:hover{color:#ffe0a7;border-color:rgba(217,154,62,.28);border-bottom-color:#c98c38;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(217,154,62,.03),rgba(217,154,62,.1))}
+.dev-menu-dropdown{position:relative;align-self:stretch}.dev-menu-dropdown summary{display:flex;align-items:center;justify-content:center;gap:8px;height:100%;min-width:128px;padding:0 14px;color:#bdb4a8;border:1px solid transparent;border-bottom-color:rgba(217,154,62,.08);cursor:pointer;list-style:none;font-size:12px;transition:.16s ease}.dev-menu-dropdown summary::-webkit-details-marker{display:none}.dev-menu-dropdown summary>b{color:#a8793d;font-size:12px;transition:transform .15s}.dev-menu-dropdown[open] summary>b{transform:rotate(180deg)}.dev-menu-dropdown:is(.active,[open]) summary{color:#efb85f;border-color:rgba(217,154,62,.42);background:linear-gradient(180deg,rgba(102,66,24,.24),rgba(46,30,13,.4))}.dev-menu-dropdown>div{position:absolute;z-index:220;top:calc(100% + 7px);left:0;display:grid;min-width:220px;padding:6px;border:1px solid rgba(229,167,74,.48);border-radius:8px;background:rgba(17,14,10,.985);box-shadow:0 18px 42px rgba(0,0,0,.55)}.dev-primary .dev-menu-dropdown>div>a{justify-content:flex-start;min-width:0;min-height:42px;padding:9px 11px;border:0;border-radius:5px;font-size:12px}.dev-primary .dev-menu-dropdown>div>a:hover,.dev-primary .dev-menu-dropdown>div>a.router-link-active{color:#f3c77f;background:rgba(103,66,25,.42);box-shadow:none}.dev-menu-dropdown>div>a>b{margin-left:auto}.dev-menu-dropdown>div>a>img{width:17px;height:17px;border-radius:50%}
 .dev-management{grid-column:2;grid-row:2;align-items:start;padding-top:3px;border-top:1px solid rgba(217,154,62,.09)}.dev-management a{min-height:31px;padding:5px 13px;border:1px solid rgba(193,139,57,.2);border-radius:5px;color:#a9a095;background:rgba(9,9,9,.78);font-size:10px}.dev-management a:hover{color:#eed8b8;border-color:rgba(217,154,62,.45);background:rgba(59,39,17,.45)}.dev-management a.router-link-active{color:#edbd72;border-color:rgba(224,161,67,.68);background:linear-gradient(180deg,rgba(74,48,20,.62),rgba(33,22,12,.72));box-shadow:inset 0 0 16px rgba(211,143,43,.08)}
 .dev-profile{grid-column:3;grid-row:1/3;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 18px}.dev-profile-link{display:flex;align-items:center;gap:9px;padding:6px 8px;border:1px solid transparent;border-radius:7px;color:#f1e8dc;text-decoration:none}.dev-profile-link:hover{border-color:rgba(193,139,57,.35);background:rgba(70,45,18,.22)}.dev-profile-link .player-avatar{flex:none}.dev-profile span b,.dev-profile span small{display:block;text-align:right}.dev-profile button{padding:9px 11px;color:#decdb3;border:1px solid rgba(193,139,57,.43);border-radius:5px;background:rgba(16,12,8,.76);white-space:nowrap}.dev-profile button:hover{color:#ffe4b0;border-color:#d99a3e;background:#2a1b0d}
 .dev-content{min-height:calc(100vh - 96px);background:transparent}.dev-content>section{width:min(1480px,calc(100% - 48px));margin-inline:auto}
@@ -87,6 +96,7 @@ const availableManagementNavigation = computed(() => managementNavigation.filter
 @media(max-width:1350px){.dev-top{grid-template-columns:180px minmax(0,1fr) 160px}.dev-profile{display:flex;padding:0 10px}.dev-profile-link span{display:none}.dev-profile button{padding-inline:9px}.dev-primary a{font-size:12px}.dev-management a{font-size:11px}}
 @media(max-width:1050px){.dev-top{position:sticky;display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:52px auto;min-height:0}.dev-brand{grid-column:1;grid-row:1;display:flex;padding:0 12px}.dev-brand img{width:38px;height:38px}.dev-brand span{display:none}.dev-profile{grid-column:2;grid-row:1;display:flex;padding:0 10px}.dev-menus{grid-column:1/-1;grid-row:2;display:grid;gap:6px;padding:0 10px 8px;overflow-x:auto}.dev-primary,.dev-management{grid-column:1;grid-row:auto;justify-content:flex-start!important;width:max-content}.dev-primary a{min-height:38px;border-radius:5px}.dev-management{padding-top:0}.dev-content{min-height:calc(100vh - 120px)}}
 @media(max-width:560px){.dev-profile-link{padding-inline:3px}.dev-profile button{padding:7px 8px;font-size:11px}.dev-menus a{gap:6px}.dev-primary a{font-size:11px}.dev-management a{font-size:10px}}
+@media(max-width:560px){.dev-menu-dropdown summary{min-width:108px;padding-inline:10px}.dev-menu-dropdown>div{position:fixed;top:102px;right:10px;left:10px;min-width:0}.dev-top.compact .dev-menu-dropdown>div{top:102px}}
 .dev-shell{color:#f7f0e6;background:linear-gradient(90deg,rgba(3,3,3,.38),rgba(5,4,3,.16) 48%,rgba(3,3,3,.36)),linear-gradient(rgba(0,0,0,.08),rgba(0,0,0,.3)),url('/images/gaz-armory-noir-background.png') center top/cover fixed}
 .dev-top{border-bottom-color:rgba(229,167,74,.42);background:linear-gradient(180deg,rgba(13,12,10,.97),rgba(17,13,9,.95));box-shadow:0 10px 34px rgba(0,0,0,.34)}
 </style>
