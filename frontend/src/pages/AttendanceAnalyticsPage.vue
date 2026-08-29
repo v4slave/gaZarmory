@@ -1,15 +1,18 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import AsyncState from '../components/AsyncState.vue'
 import { formatDate, formatDecimal } from '../utils/format.js'
 
 const loading = ref(true), exporting = ref(''), error = ref('')
+const route = useRoute(), router = useRouter()
 const data = ref({ summary:{}, period:{}, players:[], events:[], groups:[], inactive:[], timeline:[], options:{groups:[],definitions:[],players:[]} })
 const filters = reactive({ period:'30', group_id:'', definition_id:'', player_id:'', inactive_days:30 })
 const classLabels = { melee:'Милик', archer:'Лучник', mage:'Маг', healer:'Хил', bard:'Бард', tank:'Танк' }
 const maxTimeline = computed(() => Math.max(1, ...data.value.timeline.map(row => row.percentage)))
+const activeFilterCount = computed(() => Object.entries(filters).filter(([key,value]) => key !== 'inactive_days' && String(value) !== '' && !(key==='period'&&String(value)==='30')).length)
 let timer
 const params = () => Object.fromEntries(Object.entries(filters).filter(([,value]) => value !== ''))
 async function load() {
@@ -27,13 +30,17 @@ function periodLabel(label){
   const parsed=new Date(`${value}T00:00:00`)
   return Number.isNaN(parsed.getTime())?'—':formatDate(parsed,{day:'2-digit',month:'short'})
 }
-watch(filters,()=>{clearTimeout(timer);timer=setTimeout(load,250)})
-onMounted(load)
+function applyFilters(){router.replace({query:Object.fromEntries(Object.entries(filters).filter(([key,value])=>String(value)!==''&&!(key==='period'&&String(value)==='30')&&!(key==='inactive_days'&&Number(value)===30)))})}
+function resetFilters(){Object.assign(filters,{period:'30',group_id:'',definition_id:'',player_id:'',inactive_days:30});applyFilters()}
+function removeFilter(key){filters[key]=key==='period'?'30':''}
+watch(filters,()=>{clearTimeout(timer);timer=setTimeout(applyFilters,250)})
+watch(()=>route.query,()=>{Object.assign(filters,{period:String(route.query.period??'30'),group_id:String(route.query.group_id??''),definition_id:String(route.query.definition_id??''),player_id:String(route.query.player_id??''),inactive_days:Number(route.query.inactive_days??30)});load()},{deep:true})
+onMounted(()=>{Object.assign(filters,{period:String(route.query.period??'30'),group_id:String(route.query.group_id??''),definition_id:String(route.query.definition_id??''),player_id:String(route.query.player_id??''),inactive_days:Number(route.query.inactive_days??30)});load()})
 </script>
 
 <template><section :class="{ 'report-loading': loading||error }">
   <div class="page-heading attendance-heading"><div><p class="eyebrow">GAZ ARMORY · РУКОВОДИТЕЛЯМ</p><h1>Аналитика посещаемости</h1></div><div class="attendance-export"><button :disabled="exporting" @click="download('csv')">{{ exporting==='csv'?'Готовим…':'Экспорт CSV' }}</button><button class="primary" :disabled="exporting" @click="download('xlsx')">{{ exporting==='xlsx'?'Готовим…':'Экспорт XLSX' }}</button></div></div>
-  <div class="panel attendance-filters"><label>Период<select v-model="filters.period"><option value="7">7 дней</option><option value="30">30 дней</option><option value="90">90 дней</option><option value="all">Всё время</option></select></label><label>Конста<select v-model="filters.group_id"><option value="">Все консты</option><option v-for="group in data.options.groups" :key="group.id" :value="group.id">{{ group.name }}</option></select></label><label>Событие<select v-model="filters.definition_id"><option value="">Все праймы</option><option v-for="definition in data.options.definitions" :key="definition.id" :value="definition.id">{{ definition.name }}</option></select></label><label>Динамика игрока<select v-model="filters.player_id"><option v-for="player in data.options.players" :key="player.id" :value="player.id">{{ player.nickname }}</option></select></label></div>
+  <div class="panel attendance-filters filter-toolbar"><label>Период<select v-model="filters.period"><option value="7">7 дней</option><option value="30">30 дней</option><option value="90">90 дней</option><option value="all">Всё время</option></select></label><label>Конста<select v-model="filters.group_id"><option value="">Все консты</option><option v-for="group in data.options.groups" :key="group.id" :value="group.id">{{ group.name }}</option></select></label><label>Событие<select v-model="filters.definition_id"><option value="">Все праймы</option><option v-for="definition in data.options.definitions" :key="definition.id" :value="definition.id">{{ definition.name }}</option></select></label><label>Динамика игрока<select v-model="filters.player_id"><option value="">Все игроки</option><option v-for="player in data.options.players" :key="player.id" :value="player.id">{{ player.nickname }}</option></select></label><button v-if="activeFilterCount" @click="resetFilters">Сбросить · {{ activeFilterCount }}</button><span class="filter-result">{{ loading?'Обновляем…':`${data.summary.players??0} игроков` }}</span></div><div v-if="activeFilterCount" class="active-filters" aria-label="Активные фильтры"><span v-if="filters.period!=='30'">Период: <b>{{ filters.period }}</b><button aria-label="Убрать период" @click="removeFilter('period')">×</button></span><span v-if="filters.group_id">Конста выбрана<button aria-label="Убрать консту" @click="removeFilter('group_id')">×</button></span><span v-if="filters.definition_id">Событие выбрано<button aria-label="Убрать событие" @click="removeFilter('definition_id')">×</button></span><span v-if="filters.player_id">Игрок выбран<button aria-label="Убрать игрока" @click="removeFilter('player_id')">×</button></span></div>
   <AsyncState :loading="loading" :error="error" loading-text="Собираем статистику посещаемости…" @retry="load" />
   <template v-if="!loading&&!error">
     <div class="attendance-summary"><article><span>Общая посещаемость</span><strong>{{ formatDecimal(data.summary.percentage??0) }}%</strong><small>Посещено {{ data.summary.attended??0 }} из {{ data.summary.available??0 }} доступных праймов</small></article><article><span>Праймов в периоде</span><strong>{{ data.period.total_primes??0 }}</strong><small>только завершённые события</small></article><article><span>Игроков в выборке</span><strong>{{ data.summary.players??0 }}</strong><small>активный состав</small></article></div>

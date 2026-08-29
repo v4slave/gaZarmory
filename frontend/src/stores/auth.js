@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { api } from '../api.js'
 
 export const useAuthStore = defineStore('auth', {
-  state: () => ({ user: null, loading: true }),
+  state: () => ({ user: null, loading: true, connectionError: '' }),
   getters: {
     authenticated: (state) => Boolean(state.user),
     canManage: (state) => (state.user?.roles ?? [state.user?.role]).some(role => ['guild_leader', 'micro_guild_leader', 'developer'].includes(role)),
@@ -19,8 +19,12 @@ export const useAuthStore = defineStore('auth', {
   },
   actions: {
     async fetchMe() {
+      this.connectionError = ''
       try { this.user = (await api.get('/api/me')).data }
-      catch (error) { if (error.response?.status === 401) this.user = null; else throw error }
+      catch (error) {
+        if (error.response?.status === 401) this.user = null
+        else this.connectionError = 'Не удалось подключиться к серверу. Проверьте соединение и попробуйте снова.'
+      }
       finally { this.loading = false }
     },
     async syncDiscordProfile() {

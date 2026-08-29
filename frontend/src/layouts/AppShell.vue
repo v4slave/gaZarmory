@@ -5,6 +5,7 @@ import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import AppIcon from '../components/AppIcon.vue'
+import AppModal from '../components/AppModal.vue'
 import { useLocale } from '../i18n.js'
 import { preloadManagementPages } from '../router/index.js'
 import { canPreloadManagementPages } from '../router/access.js'
@@ -105,6 +106,7 @@ async function linkProfile() {
     <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
   </div>
   <div v-if="auth.loading" class="access-gate"><div class="access-card"><span class="access-loader"></span><p>{{ t('Проверяем авторизацию…') }}</p></div></div>
+  <div v-else-if="auth.connectionError" class="access-gate"><div class="access-card connection-error-card"><AppIcon name="warning" :size="34"/><p class="eyebrow">{{ t('СЕРВЕР НЕДОСТУПЕН') }}</p><h1>{{ t('Не удалось подключиться к серверу') }}</h1><p class="muted">{{ t('Проверьте соединение или состояние сервера и попробуйте снова.') }}</p><div class="connection-error-actions"><button class="primary" type="button" @click="auth.loading=true;auth.fetchMe()">{{ t('Повторить') }}</button><a class="secondary" :href="`${api.defaults.baseURL}/up`" target="_blank" rel="noopener">{{ t('Проверить статус') }}</a></div></div></div>
   <div v-else-if="!auth.authenticated" class="access-gate"><div class="access-card guest-card"><img src="/hamster-armory.png" :alt="t('Хомяк GAZ ARMORY')"><p class="eyebrow">ARCHEAGE GUILD MANAGEMENT</p><h1>GAZ ARMORY</h1><button class="primary access-primary" @click="auth.login">{{ t('Войти через Discord') }}</button></div></div>
   <div v-else-if="!auth.user?.player" class="access-gate"><div class="access-card"><img src="/hamster-armory.png" :alt="t('Хомяк GAZ ARMORY')"><p class="eyebrow">{{ t('ПЕРВЫЙ ВХОД') }}</p><template v-if="auth.user?.pending_player_link_request"><h1>{{ t('Заявка отправлена') }}</h1><p class="muted">{{ t('Персонаж') }} «{{ auth.user.pending_player_link_request.player?.nickname }}». {{ t('Дождитесь подтверждения ГЛ или администратора.') }}</p><p class="muted">{{ t('Статус проверяется автоматически — доступ откроется без обновления страницы.') }}</p></template><template v-else><h1>{{ t('Привяжите персонажа') }}</h1><p class="muted">{{ t('Выберите персонажа и отправьте заявку. Разделы гильдии откроются после подтверждения.') }}</p><button class="primary access-primary" @click="openLinker">{{ t('Выбрать персонажа') }}</button></template><button class="access-logout" @click="auth.logout">{{ t('Выйти') }}</button></div></div>
   <div v-else class="shell">
@@ -145,7 +147,7 @@ async function linkProfile() {
       <RouterView :key="route.fullPath" />
     </main>
   </div>
-  <div v-if="showLinker" class="modal">
+  <AppModal :open="showLinker" title="Привязать игровой профиль" @close="showLinker=false">
     <form class="form-card" @submit.prevent="linkProfile">
       <h2>{{ t('Привязать игровой профиль') }}</h2>
       <p class="muted">{{ t('Выберите своего персонажа. Заявку проверит ГЛ или администратор.') }}</p>
@@ -159,5 +161,5 @@ async function linkProfile() {
       <p v-if="linkError" class="notice error">{{ t(linkError) }}</p>
       <div class="form-actions"><button type="button" @click="showLinker=false">{{ t('Отмена') }}</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ t(linking?'Отправка…':'Отправить заявку') }}</button></div>
     </form>
-  </div>
+  </AppModal>
 </template>

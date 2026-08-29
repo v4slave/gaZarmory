@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { api } from '../api.js'
 import { useAuthStore } from '../stores/auth.js'
 import { useConfirmationStore } from '../stores/confirmation.js'
+import AppModal from '../components/AppModal.vue'
 import { formatDate } from '../utils/format.js'
 
 const auth = useAuthStore()
@@ -97,7 +98,7 @@ async function remove(post) { if (!await confirmation.ask({title:'Удалить
     </div>
     <div v-if="nextPage&&!loading" class="media-load-more"><button :disabled="loadingMore" @click="load(true)">{{ loadingMore ? 'Загружаем…' : 'Показать ещё' }}</button></div>
 
-    <div v-if="showAdd" class="modal media-add-modal" @click.self="showAdd=false">
+    <AppModal :open="showAdd" title="Добавить в медиатеку" :dirty="showAdd" :dismissible="!saving" @close="showAdd=false">
       <form class="form-card" @submit.prevent="submit"><button class="media-modal-close" type="button" aria-label="Закрыть" @click="showAdd=false">×</button><p class="eyebrow">Новая публикация</p><h2>Добавить в медиатеку</h2>
         <div class="media-mode"><button type="button" :class="{active:addMode==='url'}" @click="addMode='url'"><b>▶</b><span>Ссылка<small>YouTube, Rutube, Vimeo</small></span></button><button type="button" :class="{active:addMode==='file'}" @click="addMode='file'"><b>⇧</b><span>Изображение<small>Файл с устройства</small></span></button></div>
         <label v-if="addMode==='url'">Ссылка на видео или изображение<input v-model.trim="form.url" type="url" placeholder="https://youtube.com/watch?v=…" required></label>
@@ -105,8 +106,8 @@ async function remove(post) { if (!await confirmation.ask({title:'Удалить
         <label>Название <small v-if="titleLoading">получаем с платформы…</small><input v-model.trim="form.title" maxlength="160" :placeholder="titleLoading ? 'Получаем название…' : 'Название заполнится автоматически'"></label><label>Описание <small>(необязательно)</small><textarea v-model.trim="form.description" maxlength="2000" rows="3" placeholder="Добавьте немного контекста…"></textarea></label>
         <p v-if="error" class="notice error">{{ error }}</p><div class="form-actions"><button type="button" @click="showAdd=false">Отмена</button><button class="primary" :disabled="saving">{{ saving ? 'Публикуем…' : 'Опубликовать' }}</button></div>
       </form>
-    </div>
+    </AppModal>
 
-    <div v-if="active" class="modal media-viewer" @click.self="active=null"><article><button class="media-modal-close" aria-label="Закрыть" @click="active=null">×</button><div class="media-stage"><iframe v-if="active.embed_url" :src="active.embed_url" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe><video v-else-if="active.kind==='video'" :src="mediaSrc(active)" controls autoplay></video><img v-else :src="mediaSrc(active)" :alt="active.title"></div><div class="media-view-info"><div><h2>{{ active.title }}</h2><p v-if="active.description">{{ active.description }}</p><small>{{ authorName(active) }} · {{ formatDate(active.created_at) }}</small></div><a v-if="active.source_url&&active.provider!=='direct'" :href="active.source_url" target="_blank" rel="noopener">Открыть на {{ providerName[active.provider] }} ↗</a></div><footer><button :class="{active:active.liked_by_me}" @click="react(active,'like')">♥ {{ active.likes_count }}</button><button :class="{active:active.favorite_by_me}" @click="react(active,'favorite')">★ {{ active.favorites_count }}</button></footer></article></div>
+    <AppModal :open="Boolean(active)" :title="active?.title??''" @close="active=null"><article v-if="active" class="media-viewer-card"><button class="media-modal-close" aria-label="Закрыть" @click="active=null">×</button><div class="media-stage"><iframe v-if="active.embed_url" :src="active.embed_url" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe><video v-else-if="active.kind==='video'" :src="mediaSrc(active)" controls autoplay></video><img v-else :src="mediaSrc(active)" :alt="active.title"></div><div class="media-view-info"><div><h2>{{ active.title }}</h2><p v-if="active.description">{{ active.description }}</p><small>{{ authorName(active) }} · {{ formatDate(active.created_at) }}</small></div><a v-if="active.source_url&&active.provider!=='direct'" :href="active.source_url" target="_blank" rel="noopener">Открыть на {{ providerName[active.provider] }} ↗</a></div><footer><button :class="{active:active.liked_by_me}" @click="react(active,'like')">♥ {{ active.likes_count }}</button><button :class="{active:active.favorite_by_me}" @click="react(active,'favorite')">★ {{ active.favorites_count }}</button></footer></article></AppModal>
   </section>
 </template>

@@ -1,11 +1,13 @@
 <script setup>
 import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { api } from '../api.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import AsyncState from '../components/AsyncState.vue'
 import { formatInteger } from '../utils/format.js'
 
 const loading = ref(true)
+const route = useRoute(), router = useRouter()
 const error = ref('')
 const data = ref({ players: [], groups: [], summary: {} })
 const filters = reactive({ search: '', group_id: '', class: '', min_gear_score: '', max_gear_score: '', missing_asset: '' })
@@ -24,11 +26,14 @@ async function load() {
   catch (e) { error.value = e.response?.data?.message ?? 'Не удалось загрузить готовность состава.' }
   finally { loading.value = false }
 }
-function resetFilters() { Object.keys(filters).forEach(key => { filters[key] = '' }) }
+function applyFilters(){router.replace({query:Object.fromEntries(Object.entries(filters).filter(([,value])=>String(value).trim()!==''))})}
+function resetFilters() { Object.keys(filters).forEach(key => { filters[key] = '' });applyFilters() }
+function removeFilter(key){filters[key]=''}
 function delta(value) { const number = Number(value); return `${number > 0 ? '+' : ''}${formatInteger(number)}` }
 function missing(player) { return assets.filter(([key]) => !player[key]).map(([, label]) => label) }
-watch(filters, () => { clearTimeout(timer); timer = setTimeout(load, 250) })
-onMounted(load)
+watch(filters, () => { clearTimeout(timer); timer = setTimeout(applyFilters, 250) })
+watch(()=>route.query,()=>{Object.keys(filters).forEach(key=>{filters[key]=String(route.query[key]??'')});load()},{deep:true})
+onMounted(()=>{Object.keys(filters).forEach(key=>{filters[key]=String(route.query[key]??'')});load()})
 </script>
 
 <template>
@@ -48,8 +53,9 @@ onMounted(load)
       <input v-model.number="filters.min_gear_score" type="number" min="0" placeholder="ГС от">
       <input v-model.number="filters.max_gear_score" type="number" min="0" placeholder="ГС до">
       <select v-model="filters.missing_asset"><option value="">Любое оснащение</option><option v-for="asset in assets" :key="asset[0]" :value="asset[0]">Нет: {{ asset[1] }}</option></select>
-      <button v-if="activeFilterCount" type="button" @click="resetFilters">Сбросить · {{ activeFilterCount }}</button>
+      <button v-if="activeFilterCount" type="button" @click="resetFilters">Сбросить · {{ activeFilterCount }}</button><span class="filter-result">{{ loading?'Обновляем…':`${data.summary.players??0} игроков` }}</span>
     </div>
+    <div v-if="activeFilterCount" class="active-filters" aria-label="Активные фильтры"><span v-for="(value,key) in filters" v-show="String(value).trim()" :key="key">{{ key==='search'?'Поиск':key==='group_id'?'Конста':key==='class'?'Класс':key==='min_gear_score'?'ГС от':key==='max_gear_score'?'ГС до':'Нет оснащения' }}: <b>{{ value }}</b><button aria-label="Убрать фильтр" @click="removeFilter(key)">×</button></span></div>
 
     <AsyncState :loading="loading" :error="error" loading-text="Загружаем готовность состава…" @retry="load" />
     <div v-if="!loading&&!error&&data.players.length" class="readiness-list">
@@ -59,6 +65,6 @@ onMounted(load)
         <div class="readiness-equipment"><div class="readiness-assets"><span v-for="asset in assets" :key="asset[0]" :class="player[asset[0]] ? 'available' : 'missing'" :title="asset[1]">{{ player[asset[0]] ? '✓' : '×' }} {{ asset[1] }}</span></div><p v-if="missing(player).length" class="readiness-missing"><b>Не хватает:</b> {{ missing(player).join(', ') }}</p><p v-else class="readiness-complete">✓ Оснащение заполнено полностью</p></div>
       </article>
     </div>
-    <div v-if="!loading&&!error&&!data.players.length" class="panel empty">По выбранным условиям игроков не найдено.</div>
+    <div v-if="!loading&&!error&&!data.players.length" class="panel empty-state"><strong>{{ activeFilterCount?'По фильтрам ничего не найдено':'В составе пока нет игроков' }}</strong><p>{{ activeFilterCount?'Сбросьте или измените активные фильтры.':'Данные готовности появятся после добавления игроков.' }}</p><button v-if="activeFilterCount" @click="resetFilters">Сбросить фильтры</button></div>
   </section>
 </template>
