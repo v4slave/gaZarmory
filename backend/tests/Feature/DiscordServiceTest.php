@@ -72,4 +72,39 @@ final class DiscordServiceTest extends TestCase
             && $request['username'] === 'Рыжий банкир'
         );
     }
+
+    public function test_it_sends_a_rich_embed_card(): void
+    {
+        config(['services.discord.webhook_url' => 'https://discord.test/webhook']);
+        Http::fake(['discord.test/*' => Http::response(status: 204)]);
+
+        app(DiscordService::class)->send('Новый аукцион', 'Лот открыт.', 'gold', 'auctions', [
+            'url' => 'https://gaz-army.ru/auctions/42',
+            'thumbnail_url' => 'https://gaz-army.ru/storage/item.png',
+            'fields' => [['name' => 'СТАРТОВАЯ ЦЕНА', 'value' => '**720 жетонов**', 'inline' => true]],
+            'footer' => 'GAZ ARMORY · Аукцион #42',
+        ]);
+
+        Http::assertSent(fn ($request) =>
+            $request['embeds'][0]['url'] === 'https://gaz-army.ru/auctions/42'
+            && $request['embeds'][0]['thumbnail']['url'] === 'https://gaz-army.ru/storage/item.png'
+            && $request['embeds'][0]['fields'][0]['value'] === '**720 жетонов**'
+            && $request['embeds'][0]['footer']['text'] === 'GAZ ARMORY · Аукцион #42'
+        );
+    }
+
+    public function test_it_mentions_only_the_configured_member_role(): void
+    {
+        config(['services.discord.webhook_url' => 'https://discord.test/webhook']);
+        Http::fake(['discord.test/*' => Http::response(status: 204)]);
+
+        app(DiscordService::class)->send('Прайм', 'Скоро начало', 'gold', 'primes', [
+            'mention_role_id' => '123456789012345678',
+        ]);
+
+        Http::assertSent(fn ($request) =>
+            $request['content'] === '<@&123456789012345678>'
+            && $request['allowed_mentions'] === ['roles' => ['123456789012345678']]
+        );
+    }
 }

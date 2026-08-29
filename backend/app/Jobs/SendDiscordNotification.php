@@ -21,10 +21,11 @@ final class SendDiscordNotification implements ShouldQueue
         public readonly string $message,
         public readonly string $color = 'gold',
         public readonly string $channel = 'default',
+        public readonly array $options = [],
     ) {}
 
     public function handle(DiscordService $discord): void
     {
-        $discord->send($this->title, $this->message, $this->color, $this->channel);
+        $discord->send($this->title, $this->message, $this->color, $this->channel, $this->options);
     }
 }

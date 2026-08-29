@@ -8,6 +8,7 @@ use App\Models\PrimePlayerEarning;
 use App\Models\TreasuryTransaction;
 use App\Services\AuditService;
 use App\Services\ArmoryNotificationService;
+use App\Support\DiscordPayoutCard;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -39,7 +40,7 @@ final class PayPayoutPlayers
             $remaining=$locked->players()->where('status','pending')->exists();
             if(!$remaining)$locked->update(['status'=>'paid','paid_at'=>now()]);
             $this->audit->record('payout.players_paid',$locked,null,['player_ids'=>$ids->all(),'amount'=>$amount,'completed'=>!$remaining]);
-            foreach($rows as $row){$discordId=$row->player?->user?->discord_id;if(!$discordId)continue;$details=$earningsByPlayer->get($row->player_id,collect())->groupBy(fn($earning)=>$earning->activity?->definition?->name??'Активность')->map(fn($items,$name)=>'• '.$name.': **'.number_format($items->sum('player_share'),0,'',' ').'**')->implode("\n");DB::afterCommit(fn()=>SendPlayerPayoutNotification::dispatch((string)$discordId,'Выплата по нахрюку #'.$locked->id,'Вам выдано **'.number_format($row->amount,0,'',' ').' золота**.'.($details?"\n\nРасшифровка:\n".$details:'')));}
+            foreach($rows as $row){$discordId=$row->player?->user?->discord_id;if(!$discordId)continue;$breakdown=$earningsByPlayer->get($row->player_id,collect())->groupBy(fn($earning)=>$earning->activity?->definition?->name??'Активность')->map(fn($items)=>(int)$items->sum('player_share'))->all();DB::afterCommit(fn()=>SendPlayerPayoutNotification::dispatch((string)$discordId,'Выплата начислена','Золото выдано вашему персонажу. Откройте расчёт, чтобы посмотреть детали.',DiscordPayoutCard::paid($locked->id,(int)$row->amount,$breakdown)));}
             return $locked->refresh()->load('players');
         }); } catch (ValidationException $exception) { if(isset($exception->errors()['treasury'])){$recipients=$this->notifications->financialLeaders();$requester=User::query()->find($userId);if($requester)$recipients->push($requester);$this->notifications->notify($recipients,'insufficient_gold','Не хватает золота',$exception->errors()['treasury'][0],'/payouts/'.$payout->id);}throw $exception; }
     }

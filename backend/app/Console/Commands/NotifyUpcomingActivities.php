@@ -6,6 +6,7 @@ use App\Jobs\SendDiscordNotification;
 use App\Models\Activity;
 use App\Models\ArmoryNotification;
 use App\Services\ArmoryNotificationService;
+use App\Support\DiscordPrimeCard;
 use Illuminate\Console\Command;
 
 final class NotifyUpcomingActivities extends Command
@@ -18,7 +19,7 @@ final class NotifyUpcomingActivities extends Command
         $activities = Activity::query()
             ->whereNull('completed_at')
             ->whereBetween('occurred_at', [now(), now()->addMinutes(30)])
-            ->with('definition:id,name')
+            ->with('definition:id,name,icon_path')
             ->get();
         $members = $notifications->activeMembers();
 
@@ -39,7 +40,13 @@ final class NotifyUpcomingActivities extends Command
             );
 
             if (!$alreadyNotified && $members->isNotEmpty()) {
-                SendDiscordNotification::dispatch('Прайм скоро начнётся', $message, 'gold', 'primes');
+                SendDiscordNotification::dispatch(
+                    'Прайм · '.$activity->definition->name,
+                    'Сбор участников начинается. Не опаздывайте!',
+                    'gold',
+                    'primes',
+                    DiscordPrimeCard::upcoming($activity),
+                );
             }
         }
 

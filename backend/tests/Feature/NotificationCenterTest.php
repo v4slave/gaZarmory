@@ -83,6 +83,7 @@ final class NotificationCenterTest extends TestCase
 
     public function test_upcoming_activity_notification_is_not_duplicated(): void
     {
+        config(['services.discord.member_role_id' => '123456789012345678']);
         Queue::fake([SendDiscordNotification::class]);
         $user = $this->linkedUser();
         $definition = ActivityDefinition::query()->where('is_active', true)->firstOrFail();
@@ -102,8 +103,8 @@ final class NotificationCenterTest extends TestCase
             ->count());
         Queue::assertPushed(SendDiscordNotification::class, 1);
         Queue::assertPushed(fn (SendDiscordNotification $job) =>
-            $job->title === 'Прайм скоро начнётся'
-            && str_contains($job->message, $definition->name)
+            $job->title === 'Прайм · '.$definition->name
+            && $job->options['mention_role_id'] === '123456789012345678'
         );
     }
 
