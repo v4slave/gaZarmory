@@ -71,6 +71,6 @@ async function deletePlayer(player) {
       <button v-for="page in pages" :key="page" type="button" :class="{active:page===guild.pagination.current_page}" :aria-current="page===guild.pagination.current_page?'page':undefined" :disabled="guild.loading" @click="goToPage(page)">{{ page }}</button>
       <button type="button" :disabled="guild.loading||guild.pagination.current_page>=guild.pagination.last_page" @click="goToPage(guild.pagination.current_page+1)">›</button>
     </nav>
-    <div v-if="showForm" class="modal"><PlayerForm @saved="showForm = false" @cancel="showForm = false" /></div>
+    <div v-if="showForm" class="modal" @click.self="showForm = false"><PlayerForm @saved="showForm = false" @cancel="showForm = false" /></div>
   </section>
 </template>

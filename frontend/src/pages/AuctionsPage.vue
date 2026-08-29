@@ -199,7 +199,7 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
     <p v-if="error" class="error-banner">{{ error }}</p>
     <div class="auction-count-pill">{{ activeCount }} активных лотов</div>
 
-    <AsyncState :loading="loading" :error="loadError" :empty="!auctions.length" loading-text="Загружаем аукционы…" empty-title="Активных лотов нет" empty-text="Новые и недавно завершённые лоты появятся здесь." @retry="retryLoad" />
+    <AsyncState :loading="loading" :error="loadError" :empty="!auctions.length" loading-text="Загружаем аукционы…" empty-title="Активных лотов нет" empty-text="Новые и недавно завершённые лоты появятся здесь." @retry="retryLoad"><template #action><button v-if="auth.canCreateAuctions" class="primary" type="button" @click="openForm">Добавить первый лот</button></template></AsyncState>
     <div v-if="!loading&&!loadError&&auctions.length" class="auction-grid-v2">
       <article v-for="auction in auctions" :key="auction.id" class="panel auction-lot-v2">
         <div class="auction-card-head">
@@ -265,9 +265,9 @@ async function openArchive(){archive.value=(await api.get('/api/auctions/archive
       </section>
     </div>
 
-    <div v-if="showForm" class="modal">
+    <div v-if="showForm" class="modal" @click.self="showForm = false">
       <form class="form-card auction-create-card" @submit.prevent="save">
-        <h2>{{ editingId ? 'Редактировать лот' : 'Новый лот' }}</h2>
+        <header class="modal-card-header"><h2>{{ editingId ? 'Редактировать лот' : 'Новый лот' }}</h2><button type="button" class="modal-close" aria-label="Закрыть" @click="showForm=false">×</button></header>
         <label>Предмет<select v-model="form.treasury_item_id" required><option disabled value="">Выберите предмет</option><option v-for="item in items" :key="item.id" :value="item.id">{{ item.item_name }} · доступно {{ item.available_quantity }}</option></select></label>
         <label>Количество<input v-model.number="form.quantity" type="number" min="1" required></label>
         <label>Стартовая цена, жетоны<input v-model.number="form.starting_bid" type="number" min="0" required></label>

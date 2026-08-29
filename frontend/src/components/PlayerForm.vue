@@ -19,7 +19,7 @@ async function submit() {
 
 <template>
   <form class="form-card" @submit.prevent="submit">
-    <h2>Новый игрок</h2>
+    <header class="modal-card-header"><h2>Новый игрок</h2><button type="button" class="modal-close" aria-label="Закрыть" @click="$emit('cancel')">×</button></header>
     <label>Никнейм<input v-model.trim="form.nickname" required maxlength="18" pattern="[A-Za-zА-Яа-яЁё]+" title="Только русские или латинские буквы, без пробелов, цифр и специальных символов"></label>
     <label>Класс<select v-model="form.class"><option v-for="item in classes" :key="item[0]" :value="item[0]">{{ item[1] }}</option></select></label>
     <label>Конст-пати<select v-model="form.group_id"><option :value="null">Сольники</option><option v-for="group in guild.groups" :key="group.id" :value="group.id">{{ group.name }}</option></select></label>

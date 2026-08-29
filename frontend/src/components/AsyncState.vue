@@ -26,5 +26,6 @@ defineEmits(['retry'])
   </div>
   <div v-else-if="empty" class="panel async-state">
     <AppIcon name="info" :size="28" /><strong>{{ t(emptyTitle) }}</strong><p v-if="emptyText">{{ t(emptyText) }}</p>
+    <div v-if="$slots.action" class="async-state-action"><slot name="action" /></div>
   </div>
 </template>
