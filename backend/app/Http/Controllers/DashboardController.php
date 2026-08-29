@@ -187,7 +187,6 @@ final class DashboardController extends Controller
                     'name' => $name,
                     'starts_at' => $startsAt->toIso8601String(),
                     'icon_url' => $definition?->icon_url,
-                    'definition_id' => $definition?->id,
                     'activity_id' => $activity?->id,
                 ]);
             }
