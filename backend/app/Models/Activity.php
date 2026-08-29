@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use Carbon\CarbonImmutable;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -12,6 +14,10 @@ class Activity extends Model
 {
     protected $fillable = ['activity_definition_id', 'occurred_at', 'gold_value', 'created_by', 'completed_at'];
     protected function casts(): array { return ['occurred_at' => 'immutable_datetime', 'completed_at' => 'immutable_datetime', 'gold_value' => 'integer']; }
+    protected function serializeDate(DateTimeInterface $date): string
+    {
+        return CarbonImmutable::instance($date)->setTimezone('Europe/Moscow')->toIso8601String();
+    }
     public function definition(): BelongsTo { return $this->belongsTo(ActivityDefinition::class, 'activity_definition_id'); }
     public function players(): BelongsToMany { return $this->belongsToMany(Player::class, 'activity_players')->withPivot('created_at'); }
     public function loot(): HasMany { return $this->hasMany(ActivityLoot::class); }

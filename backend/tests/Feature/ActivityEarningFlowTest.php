@@ -17,6 +17,28 @@ final class ActivityEarningFlowTest extends TestCase
 {
     use DatabaseTransactions;
 
+    public function test_activity_time_keeps_the_selected_moscow_wall_clock_time(): void
+    {
+        $leader = $this->leader();
+        $definition = ActivityDefinition::query()->create([
+            'name' => 'Timezone '.uniqid(),
+            'type' => 'prime',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($leader)->postJson('/api/activities', [
+            'activity_definition_id' => $definition->id,
+            'occurred_at' => '2026-08-30T16:20:00.000Z',
+        ])->assertCreated()->assertJsonPath('occurred_at', '2026-08-30T19:20:00+03:00');
+
+        $activity = Activity::query()->findOrFail($response->json('id'));
+        self::assertSame('19:20', $activity->occurred_at->format('H:i'));
+
+        $this->actingAs($leader)->patchJson('/api/activities/'.$activity->id, [
+            'occurred_at' => '2026-08-30T17:20:00.000Z',
+        ])->assertOk()->assertJsonPath('occurred_at', '2026-08-30T20:20:00+03:00');
+    }
+
     public function test_mini_activity_distributes_loot_value_without_crediting_gold_balance(): void
     {
         $leader = $this->leader();

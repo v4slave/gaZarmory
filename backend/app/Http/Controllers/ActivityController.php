@@ -8,6 +8,7 @@ use App\Models\TreasuryItem;
 use App\Models\TreasuryItemTransaction;
 use App\Actions\CalculatePrimeShares;
 use App\Services\AuditService;
+use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -33,6 +34,7 @@ final class ActivityController extends Controller
     {
         $this->authorize('create', Activity::class);
         $data=$request->validate(['activity_definition_id'=>['required','exists:activity_definitions,id'],'occurred_at'=>['required','date'],'gold_value'=>['nullable','integer','min:0']]);
+        $data['occurred_at']=CarbonImmutable::parse($data['occurred_at'])->setTimezone(config('app.timezone'));
         $definition=ActivityDefinition::query()->findOrFail($data['activity_definition_id']);
         abort_unless($definition->type->value === 'prime', 422, __('domain.activity.prime_only'));
         if($definition->type->value !== 'prime' && array_key_exists('gold_value',$data) && $data['gold_value']!==null) throw ValidationException::withMessages(['gold_value'=>__('domain.activity.gold_prime_only')]);
@@ -49,6 +51,7 @@ final class ActivityController extends Controller
         abort_if($activity->completed_at,409,__('domain.activity.completed_locked'));
         abort_if($activity->earnings()->exists(),409,__('domain.activity.earnings_locked'));
         $data=$request->validate(['occurred_at'=>['sometimes','date'],'gold_value'=>['sometimes','nullable','integer','min:0']]);
+        if(isset($data['occurred_at']))$data['occurred_at']=CarbonImmutable::parse($data['occurred_at'])->setTimezone(config('app.timezone'));
         $old=$activity->only(array_keys($data)); $activity->update($data); $this->audit->record('activity.updated',$activity,$old,$data);
         return $activity->refresh()->load('definition');
     }
