@@ -36,7 +36,17 @@ const isNearestEvent = event => {
   if (event.id != null && nearestEvent.value.id != null) return event.id === nearestEvent.value.id
   return event.name === nearestEvent.value.name && event.starts_at === nearestEvent.value.starts_at
 }
-const eventTarget = event => event.activity_id ? `/activities/${event.activity_id}` : null
+const eventTarget = event => {
+  if (event.activity_id) return `/activities/${event.activity_id}`
+  if (event.name !== 'АГЛ' || !event.definition_id) return null
+  const date = event.starts_at.slice(0, 10)
+  return { path: '/activities', query: { definition_id: event.definition_id, date_from: date, date_to: date } }
+}
+const eventTitle = event => event.activity_id
+  ? t('Открыть созданную активность')
+  : event.name === 'АГЛ'
+    ? t('Открыть АГЛ за выбранную дату')
+    : t('Активность для этого времени ещё не создана')
 
 onMounted(async () => {
   try {
@@ -68,16 +78,16 @@ onMounted(async () => {
                   v-for="event in day.aglEvents"
                   :key="event.starts_at"
                   :to="eventTarget(event)??undefined"
-                  :title="t(eventTarget(event)?'Открыть созданную активность':'Активность для этого времени ещё не создана')"
+                  :title="eventTitle(event)"
                   :class="{active:isNearestEvent(event),linked:Boolean(eventTarget(event))}"
                 >{{ formatEventTime(new Date(event.starts_at)) }}</component>
               </div>
             </section>
-            <component :is="eventTarget(event)?'RouterLink':'div'" v-for="event in day.events" :key="`${event.name}-${event.starts_at}`" :to="eventTarget(event)??undefined" :title="t(eventTarget(event)?'Открыть созданную активность':'Активность для этого времени ещё не создана')" :class="['developer-event',{active:isNearestEvent(event),linked:Boolean(eventTarget(event))}]"><img v-if="event.icon_url" :src="event.icon_url" :alt="event.name"><span v-else>◆</span><strong>{{ event.name }}</strong><time>{{ formatEventTime(new Date(event.starts_at)) }}</time></component>
+            <component :is="eventTarget(event)?'RouterLink':'div'" v-for="event in day.events" :key="`${event.name}-${event.starts_at}`" :to="eventTarget(event)??undefined" :title="eventTitle(event)" :class="['developer-event',{active:isNearestEvent(event),linked:Boolean(eventTarget(event))}]"><img v-if="event.icon_url" :src="event.icon_url" :alt="event.name"><span v-else>◆</span><strong>{{ event.name }}</strong><time>{{ formatEventTime(new Date(event.starts_at)) }}</time></component>
           </article>
         </section>
         <div class="developer-after">
-          <section class="developer-selected"><template v-if="nearestEvent"><img v-if="nearestEvent.icon_url" :src="nearestEvent.icon_url" :alt="nearestEvent.name"><div><p>{{ t('БЛИЖАЙШЕЕ СОБЫТИЕ') }}</p><h2>{{ nearestEvent.name }}</h2><span>{{ formatEventDateTime(new Date(nearestEvent.starts_at)) }}</span><RouterLink v-if="eventTarget(nearestEvent)" :to="eventTarget(nearestEvent)">{{ t('Открыть созданную активность') }} →</RouterLink><small v-else class="developer-event-unlinked">{{ t('Активность для этого времени ещё не создана') }}</small></div></template><p v-else class="developer-empty">{{ t('Ближайших событий нет.') }}</p></section>
+          <section class="developer-selected"><template v-if="nearestEvent"><img v-if="nearestEvent.icon_url" :src="nearestEvent.icon_url" :alt="nearestEvent.name"><div><p>{{ t('БЛИЖАЙШЕЕ СОБЫТИЕ') }}</p><h2>{{ nearestEvent.name }}</h2><span>{{ formatEventDateTime(new Date(nearestEvent.starts_at)) }}</span><RouterLink v-if="eventTarget(nearestEvent)" :to="eventTarget(nearestEvent)">{{ nearestEvent.activity_id?t('Открыть созданную активность'):t('Открыть события за день') }} →</RouterLink><small v-else class="developer-event-unlinked">{{ t('Активность для этого времени ещё не создана') }}</small></div></template><p v-else class="developer-empty">{{ t('Ближайших событий нет.') }}</p></section>
           <section class="developer-classes"><header><h2>Состав по классам</h2><RouterLink to="/roster">Весь состав →</RouterLink></header><div><span v-for="(label,key) in classLabels" :key="key"><small>{{ label }}</small><i><b :style="{width:`${Math.min(100,Number(data.class_distribution?.[key]??0)/Math.max(1,...Object.values(data.class_distribution??{}).map(Number))*100)}%`}"></b></i><strong>{{ Number(data.class_distribution?.[key]??0) }}</strong></span></div></section>
         </div>
         <section class="developer-ticker"><div><span>Золото в казне / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.gold) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.gold_token_count) }}</small></p></div><div><span>Дроп с РБ / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.inventory_value) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.inventory_token_count) }}</small></p></div><div><span>Ожидаемый нахрюк / жетоны</span><p><img src="/images/gold.png" alt="Золото"><b>{{ formatInteger(data.pending_payout) }}</b><img src="/images/treasury-token.png" alt="Жетоны"><small>{{ formatInteger(data.pending_payout_token_count) }}</small></p></div><div><span>Средний ГС</span><p><b>{{ formatInteger(data.average_gear_score) }}</b></p></div><div><span>Активных аукционов</span><p><b>{{ data.active_auctions }}</b></p></div></section>

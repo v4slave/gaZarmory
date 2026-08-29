@@ -107,6 +107,7 @@ final class DashboardQueryEfficiencyTest extends TestCase
 
         self::assertCount(7, $aglEvents);
         $aglEvents->each(function ($events): void {
+            self::assertNotNull($events->first()['definition_id']);
             self::assertSame(
                 ['03:20', '07:20', '11:20', '15:20', '19:20', '23:20'],
                 $events->map(fn (array $event): string => CarbonImmutable::parse($event['starts_at'])->format('H:i'))->values()->all(),

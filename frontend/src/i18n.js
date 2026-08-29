@@ -31,7 +31,7 @@ const translations = {
   'Убрать действие': 'Remove action', 'Убрать период': 'Remove period', 'Убрать консту': 'Remove static party',
   'Все игроки': 'All players', 'Конста выбрана': 'Static party selected', 'Игрок выбран': 'Player selected',
   'Убрать фильтр': 'Remove filter',
-  'Открыть созданную активность': 'Open created activity',
+  'Открыть созданную активность': 'Open created activity', 'Открыть АГЛ за выбранную дату': 'Open JMG events for this date', 'Открыть события за день': 'Open events for this date',
   'Активность для этого времени ещё не создана': 'No activity has been created for this time yet',
   'Проверяем авторизацию…': 'Checking authentication…', 'Войти через Discord': 'Sign in with Discord',
   'ПЕРВЫЙ ВХОД': 'FIRST SIGN-IN', 'Заявка отправлена': 'Request sent',
