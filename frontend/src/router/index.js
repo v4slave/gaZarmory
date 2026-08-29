@@ -34,7 +34,7 @@ export function preloadManagementPages() {
 
 const routes = [
   { path: '/', redirect: '/dashboard' },
-  { path: '/dashboard', component: DashboardPage, meta: { title: 'Дашборд' } },
+  { path: '/dashboard', component: DashboardPage, meta: { title: 'Главная' } },
   { path: '/roster', component: RosterPage, meta: { title: 'Состав' } },
   { path: '/groups', component: GroupsPage, meta: { title: 'Конст-пати' } },
   { path: '/groups/:id/squads', component: PartySquadsPage, meta: { title: 'Пятёрки КП' } },

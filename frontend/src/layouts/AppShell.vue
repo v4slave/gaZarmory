@@ -24,7 +24,7 @@ const notificationOpen=ref(false),notificationItems=ref([]),unreadNotifications=
 let notificationTicker
 let playerLinkTicker
 const primaryLinks = [
-  { to: '/dashboard', label: 'Дашборд', icon: 'home' },
+  { to: '/dashboard', label: 'Главная', icon: 'home' },
   { to: '/roster', label: 'Состав', icon: 'users' },
   { to: '/groups', label: 'Конст-пати', icon: 'groups' },
   { to: '/activities', label: 'Активности', icon: 'sword' },

@@ -9,7 +9,7 @@ const auth = useAuthStore()
 const { t } = useLocale()
 onMounted(() => auth.syncDiscordProfile())
 const primaryNavigation = [
-  { to: '/dashboard', icon: 'home', label: 'Дашборд' },
+  { to: '/dashboard', icon: 'home', label: 'Главная' },
   { to: '/roster', icon: 'users', label: 'Состав' },
   { to: '/groups', icon: 'groups', label: 'Конст-пати' },
   { to: '/activities', icon: 'sword', label: 'Активности' },

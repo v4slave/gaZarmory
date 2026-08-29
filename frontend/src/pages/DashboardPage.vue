@@ -53,7 +53,7 @@ onBeforeUnmount(()=>window.clearInterval(timer))
 <template>
   <section class="dashboard-page">
     <p class="dashboard-attribution">Да, спиздили. Потому что интерфейс классный и дашборд, а сама идея пришла от армори таргетов</p>
-    <div class="dashboard-heading"><p class="eyebrow">GAZ ARMORY · ОБЗОР</p><h1>Дашборд</h1></div>
+    <div class="dashboard-heading"><p class="eyebrow">GAZ ARMORY · ОБЗОР</p><h1>Главная</h1></div>
     <div class="stats-row dashboard-main-stats"><StatCard label="Золото в казне / жетоны" :value="formatInteger(data.gold)" gold :secondary-value="formatInteger(data.gold_token_count)" secondary-icon="/images/treasury-token.png" secondary-alt="жетоны" note="Фактический баланс" accent/><StatCard label="Дроп с РБ / жетоны" :value="formatInteger(data.inventory_value)" gold :secondary-value="formatInteger(data.inventory_token_count)" secondary-icon="/images/treasury-token.png" secondary-alt="жетоны" note="Эквивалент в золоте"/><StatCard label="Ожидаемый нахрюк / жетоны" :value="formatInteger(data.pending_payout)" gold :secondary-value="formatInteger(data.pending_payout_token_count)" secondary-icon="/images/treasury-token.png" secondary-alt="жетоны"/><StatCard label="Средний ГС гильдии" :value="formatInteger(data.average_gear_score)"/><StatCard label="Активных аукционов" :value="data.active_auctions"/></div>
     <div class="panel class-distribution"><div class="panel-title"><h2>Состав по классам</h2><RouterLink to="/roster">Весь состав →</RouterLink></div><div><span v-for="(label,key) in classLabels" :key="key" :class="`class-${key}`"><small>{{ label }}</small><b>{{ Number(data.class_distribution?.[key]??0) }}</b></span></div></div>
     <div class="dashboard-overview-grid">
