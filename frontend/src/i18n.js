@@ -70,6 +70,7 @@ const translations = {
   'Сбросить': 'Reset', 'Применить': 'Apply', 'Фильтры': 'Filters', 'Показать': 'Show',
   'Сегодня': 'Today', 'Неделя': 'Week', 'Месяц': 'Month', 'За всё время': 'All time',
   'Игрок': 'Player', 'Игроки': 'Players', 'Участники': 'Participants', 'Группа': 'Group',
+  'Свернуть': 'Collapse', 'Показать всех': 'Show all',
   'Без консты': 'No static party', 'Все консты': 'All static parties', 'Все классы': 'All classes',
   'Милик': 'Melee', 'Лучник': 'Archer', 'Маг': 'Mage', 'Хил': 'Healer', 'Бард': 'Bard', 'Танк': 'Tank',
   'Средний ГС': 'Average GS', 'Полностью оснащены': 'Fully equipped', 'В выборке': 'In selection',
