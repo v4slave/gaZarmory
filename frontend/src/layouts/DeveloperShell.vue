@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import AppIcon from '../components/AppIcon.vue'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import NotificationCenter from '../components/NotificationCenter.vue'
@@ -18,19 +18,20 @@ const primaryNavigation = [
   { to: '/media', icon: 'play', label: 'Контент' },
   { to: '/treasury', icon: 'treasury', label: 'Казна' },
   { to: '/auctions', icon: 'auction', label: 'Аукционы' },
+  { to: '/payouts', icon: 'payout', label: 'Нахрюк' },
 ]
 const managementNavigation = [
-  { to: '/payouts', icon: 'payout', label: 'Нахрюк' },
   { to: '/roster-readiness', icon: 'readiness', label: 'Готовность состава', permission: 'canViewReadiness' },
   { to: '/attendance-analytics', icon: 'attendance', label: 'Посещаемость', permission: 'canViewReadiness' },
   { to: '/financial-reconciliation', icon: 'reconcile', label: 'Финансовая сверка', permission: 'canHandleTreasuryItems' },
   { to: '/admin', icon: 'settings', label: 'Административное пространство', permission: 'canAdmin' },
 ]
+const availableManagementNavigation = computed(() => managementNavigation.filter(item => !item.permission || auth[item.permission]))
 </script>
 
 <template>
   <div class="dev-shell">
-    <header class="dev-top">
+    <header :class="['dev-top',{compact:!availableManagementNavigation.length}]">
       <RouterLink class="dev-brand" to="/dashboard">
         <img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY">
         <span><b>GAZ ARMORY</b><small>ArcheAge guild</small></span>
@@ -40,12 +41,17 @@ const managementNavigation = [
           <RouterLink v-for="item in primaryNavigation" :key="item.to" :to="item.to">
             <img v-if="item.image" class="dev-nav-image" :src="item.image" alt=""><AppIcon v-else :name="item.icon" :size="18"/><span>{{ t(item.label) }}</span>
           </RouterLink>
-          <a class="dev-discord-link" href="https://discord.gg/gaz" target="_blank" rel="noopener noreferrer" :title="t('Открыть Discord гильдии')">
-            <img src="/images/discord-guild.png" alt=""><span>Discord</span>
-          </a>
+          <span class="dev-external-links">
+            <a class="dev-tool-link" href="https://archa.ge/" target="_blank" rel="noopener noreferrer" :title="t('Открыть калькулятор')">
+              <AppIcon name="sword" :size="18"/><span>{{ t('Калькулятор') }}</span>
+            </a>
+            <a class="dev-discord-link" href="https://discord.gg/gaz" target="_blank" rel="noopener noreferrer" :title="t('Открыть Discord гильдии')">
+              <img src="/images/discord-guild.png" alt=""><span>Discord</span>
+            </a>
+          </span>
         </nav>
-        <nav class="dev-management" aria-label="Guild management">
-          <RouterLink v-for="item in managementNavigation.filter(item => !item.permission || auth[item.permission])" :key="item.to" :to="item.to">
+        <nav v-if="availableManagementNavigation.length" class="dev-management" aria-label="Guild management">
+          <RouterLink v-for="item in availableManagementNavigation" :key="item.to" :to="item.to">
             <AppIcon :name="item.icon" :size="15"/><span>{{ t(item.label) }}</span>
           </RouterLink>
         </nav>
@@ -71,9 +77,11 @@ const managementNavigation = [
 .dev-menus{display:contents}.dev-menus nav{display:flex;justify-content:center;gap:5px;margin:0}.dev-menus a{display:flex;align-items:center;justify-content:center;gap:8px;color:#bdb4a8;text-decoration:none;white-space:nowrap;transition:.16s ease}.dev-primary{grid-column:2;grid-row:1}.dev-primary a{min-width:100px;padding:0 13px;border:1px solid transparent;border-bottom-color:rgba(217,154,62,.08);border-radius:0;background:transparent;font-size:12px}.dev-primary a:hover{color:#f3e3c9;background:linear-gradient(180deg,rgba(217,154,62,.03),rgba(217,154,62,.1))}.dev-primary a.router-link-active{color:#efb85f;border-color:rgba(217,154,62,.5);border-bottom-color:#e5a846;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(102,66,24,.3),rgba(46,30,13,.48));box-shadow:0 5px 18px rgba(188,119,28,.11),inset 0 1px rgba(255,225,173,.05)}
 .dev-primary .dev-discord-link{min-width:100px;padding:0 13px;color:#bdb4a8;border-color:transparent;border-bottom-color:rgba(217,154,62,.08);border-radius:0;background:transparent}.dev-primary .dev-discord-link:hover{color:#f3e3c9;border-color:rgba(217,154,62,.28);border-bottom-color:#c98c38;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(217,154,62,.03),rgba(217,154,62,.1))}.dev-discord-link img{width:18px;height:18px;border-radius:50%;object-fit:cover}
 .dev-nav-image{width:18px;height:18px;flex:none;border-radius:50%;object-fit:cover;opacity:.72;filter:grayscale(1);transition:.16s ease}.dev-primary a:hover .dev-nav-image{opacity:.95}.dev-primary a.router-link-active .dev-nav-image{opacity:1;filter:sepia(1) saturate(1.45) brightness(1.35)}
+.dev-external-links{display:flex;align-self:stretch;margin-left:6px;border-left:1px solid rgba(217,154,62,.24)}.dev-primary .dev-external-links>a{min-width:auto;padding-inline:11px}.dev-primary .dev-tool-link{color:#d8b77f}.dev-primary .dev-tool-link:hover{color:#ffe0a7;border-color:rgba(217,154,62,.28);border-bottom-color:#c98c38;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(217,154,62,.03),rgba(217,154,62,.1))}
 .dev-management{grid-column:2;grid-row:2;align-items:start;padding-top:3px;border-top:1px solid rgba(217,154,62,.09)}.dev-management a{min-height:31px;padding:5px 13px;border:1px solid rgba(193,139,57,.2);border-radius:5px;color:#a9a095;background:rgba(9,9,9,.78);font-size:10px}.dev-management a:hover{color:#eed8b8;border-color:rgba(217,154,62,.45);background:rgba(59,39,17,.45)}.dev-management a.router-link-active{color:#edbd72;border-color:rgba(224,161,67,.68);background:linear-gradient(180deg,rgba(74,48,20,.62),rgba(33,22,12,.72));box-shadow:inset 0 0 16px rgba(211,143,43,.08)}
 .dev-profile{grid-column:3;grid-row:1/3;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 18px}.dev-profile-link{display:flex;align-items:center;gap:9px;padding:6px 8px;border:1px solid transparent;border-radius:7px;color:#f1e8dc;text-decoration:none}.dev-profile-link:hover{border-color:rgba(193,139,57,.35);background:rgba(70,45,18,.22)}.dev-profile-link .player-avatar{flex:none}.dev-profile span b,.dev-profile span small{display:block;text-align:right}.dev-profile button{padding:9px 11px;color:#decdb3;border:1px solid rgba(193,139,57,.43);border-radius:5px;background:rgba(16,12,8,.76);white-space:nowrap}.dev-profile button:hover{color:#ffe4b0;border-color:#d99a3e;background:#2a1b0d}
 .dev-content{min-height:calc(100vh - 96px);background:transparent}.dev-content>section{width:min(1480px,calc(100% - 48px));margin-inline:auto}
+.dev-top.compact{grid-template-rows:64px;min-height:64px}.dev-top.compact .dev-brand,.dev-top.compact .dev-profile{grid-row:1}.dev-top.compact .dev-primary{grid-row:1}.dev-top.compact+.dev-content{min-height:calc(100vh - 64px)}
 @media(max-width:1350px){.dev-top{grid-template-columns:190px minmax(0,1fr)}.dev-profile{display:none}.dev-primary a{min-width:auto;padding-inline:10px}.dev-menus a{gap:5px}}
 @media(max-width:1050px){.dev-top{position:relative;display:block;min-height:0}.dev-brand,.dev-profile{display:none}.dev-menus{display:grid;gap:0;padding:8px 10px;overflow-x:auto}.dev-menus nav{justify-content:flex-start;width:max-content}.dev-primary a{min-height:40px;border-radius:5px}.dev-management{padding-top:7px}.dev-content{min-height:100vh}}
 @media(max-width:1350px){.dev-top{grid-template-columns:180px minmax(0,1fr) 160px}.dev-profile{display:flex;padding:0 10px}.dev-profile-link span{display:none}.dev-profile button{padding-inline:9px}.dev-primary a{font-size:12px}.dev-management a{font-size:11px}}
