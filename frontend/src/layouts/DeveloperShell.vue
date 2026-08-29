@@ -12,6 +12,8 @@ const auth = useAuthStore()
 const route = useRoute()
 const { t } = useLocale()
 const menuRoot = ref(null)
+const activeMenu = ref('')
+let closeTimer
 const navigationGroups = [
   { label: 'Основное', icon: 'users', items: [
     { to: '/roster', icon: 'users', label: 'Состав' }, { to: '/groups', icon: 'groups', label: 'Конст-пати' }, { to: '/activities', icon: 'sword', label: 'Активности' },
@@ -31,11 +33,14 @@ const managementNavigation = [
 ]
 const availableManagementNavigation = computed(() => managementNavigation.filter(item => !item.permission || auth[item.permission]))
 const groupActive = group => group.items.some(item => item.to && route.path.startsWith(item.to))
-function closeMenus() { menuRoot.value?.querySelectorAll('details[open]').forEach(menu => menu.removeAttribute('open')) }
+const activeNavigationGroup = computed(() => navigationGroups.find(group => group.label === activeMenu.value))
+function openMenu(label) { window.clearTimeout(closeTimer); activeMenu.value = label }
+function scheduleClose() { window.clearTimeout(closeTimer); closeTimer = window.setTimeout(closeMenus, 140) }
+function closeMenus() { window.clearTimeout(closeTimer); activeMenu.value = '' }
 function closeOutside(event) { if (!menuRoot.value?.contains(event.target)) closeMenus() }
 function closeOnEscape(event) { if (event.key === 'Escape') closeMenus() }
 onMounted(() => { auth.syncDiscordProfile(); document.addEventListener('click', closeOutside); document.addEventListener('keydown', closeOnEscape) })
-onBeforeUnmount(() => { document.removeEventListener('click', closeOutside); document.removeEventListener('keydown', closeOnEscape) })
+onBeforeUnmount(() => { window.clearTimeout(closeTimer); document.removeEventListener('click', closeOutside); document.removeEventListener('keydown', closeOnEscape) })
 </script>
 
 <template>
@@ -48,15 +53,13 @@ onBeforeUnmount(() => { document.removeEventListener('click', closeOutside); doc
       <div class="dev-menus">
         <nav ref="menuRoot" class="dev-primary" aria-label="Primary navigation">
           <RouterLink to="/dashboard"><img class="dev-nav-image" src="/images/archeage-home.png" alt=""><span>{{ t('Главная') }}</span></RouterLink>
-          <details v-for="group in navigationGroups" :key="group.label" :class="['dev-menu-dropdown',{active:groupActive(group)}]">
-            <summary><AppIcon :name="group.icon" :size="18"/><span>{{ t(group.label) }}</span><b aria-hidden="true">⌄</b></summary>
-            <div>
-              <template v-for="item in group.items" :key="item.to??item.href">
-                <RouterLink v-if="item.to" :to="item.to" @click="closeMenus"><AppIcon :name="item.icon" :size="17"/><span>{{ t(item.label) }}</span></RouterLink>
-                <a v-else :href="item.href" target="_blank" rel="noopener noreferrer" @click="closeMenus"><img v-if="item.image" :src="item.image" alt=""><AppIcon v-else :name="item.icon" :size="17"/><span>{{ t(item.label) }}</span><b aria-hidden="true">↗</b></a>
-              </template>
+          <button v-for="group in navigationGroups" :key="group.label" type="button" :class="['dev-menu-trigger',{active:groupActive(group)||activeMenu===group.label}]" :aria-expanded="activeMenu===group.label" @mouseenter="openMenu(group.label)" @mouseleave="scheduleClose" @focus="openMenu(group.label)" @click="activeMenu===group.label?closeMenus():openMenu(group.label)"><AppIcon :name="group.icon" :size="18"/><span>{{ t(group.label) }}</span><b aria-hidden="true">⌄</b></button>
+          <div v-if="activeNavigationGroup" class="dev-mega-menu" @mouseenter="openMenu(activeNavigationGroup.label)" @mouseleave="scheduleClose">
+            <div class="dev-mega-menu-inner">
+              <header><AppIcon :name="activeNavigationGroup.icon" :size="20"/><div><strong>{{ t(activeNavigationGroup.label) }}</strong><small>{{ t('Выберите раздел') }}</small></div></header>
+              <div class="dev-mega-links"><template v-for="item in activeNavigationGroup.items" :key="item.to??item.href"><RouterLink v-if="item.to" :to="item.to" @click="closeMenus"><AppIcon :name="item.icon" :size="20"/><span>{{ t(item.label) }}</span><b aria-hidden="true">→</b></RouterLink><a v-else :href="item.href" target="_blank" rel="noopener noreferrer" @click="closeMenus"><img v-if="item.image" :src="item.image" alt=""><AppIcon v-else :name="item.icon" :size="20"/><span>{{ t(item.label) }}</span><b aria-hidden="true">↗</b></a></template></div>
             </div>
-          </details>
+          </div>
         </nav>
         <nav v-if="availableManagementNavigation.length" class="dev-management" aria-label="Guild management">
           <RouterLink v-for="item in availableManagementNavigation" :key="item.to" :to="item.to">
@@ -99,4 +102,9 @@ onBeforeUnmount(() => { document.removeEventListener('click', closeOutside); doc
 @media(max-width:560px){.dev-menu-dropdown summary{min-width:108px;padding-inline:10px}.dev-menu-dropdown>div{position:fixed;top:102px;right:10px;left:10px;min-width:0}.dev-top.compact .dev-menu-dropdown>div{top:102px}}
 .dev-shell{color:#f7f0e6;background:linear-gradient(90deg,rgba(3,3,3,.38),rgba(5,4,3,.16) 48%,rgba(3,3,3,.36)),linear-gradient(rgba(0,0,0,.08),rgba(0,0,0,.3)),url('/images/gaz-armory-noir-background.png') center top/cover fixed}
 .dev-top{border-bottom-color:rgba(229,167,74,.42);background:linear-gradient(180deg,rgba(13,12,10,.97),rgba(17,13,9,.95));box-shadow:0 10px 34px rgba(0,0,0,.34)}
+.dev-menu-trigger{display:flex;align-items:center;justify-content:center;gap:8px;min-width:138px;padding:0 14px;color:#bdb4a8;border:1px solid transparent;border-bottom-color:rgba(217,154,62,.08);border-radius:0;background:transparent;font-size:12px;cursor:pointer;transition:.16s ease}.dev-menu-trigger>b{color:#a8793d;transition:transform .15s}.dev-menu-trigger:is(.active,:hover,:focus-visible){color:#efb85f;border-color:rgba(217,154,62,.42);background:linear-gradient(180deg,rgba(102,66,24,.24),rgba(46,30,13,.4));outline:0}.dev-menu-trigger[aria-expanded=true]>b{transform:rotate(180deg)}
+.dev-mega-menu{position:fixed;z-index:215;top:56px;right:0;left:0;padding:10px 24px 16px;border-block:1px solid rgba(229,167,74,.42);background:linear-gradient(180deg,rgba(20,16,11,.99),rgba(12,11,9,.985));box-shadow:0 20px 45px rgba(0,0,0,.55)}.dev-top.compact .dev-mega-menu{top:64px}.dev-mega-menu-inner{display:grid;grid-template-columns:220px minmax(0,900px);gap:22px;align-items:center;width:min(1160px,100%);margin:auto}.dev-mega-menu header{display:flex;align-items:center;gap:12px;padding:10px 18px;border-right:1px solid rgba(229,167,74,.24)}.dev-mega-menu header div{display:grid;gap:3px}.dev-mega-menu header strong{color:#f1c276;font-size:14px}.dev-mega-menu header small{color:#938777;font-size:9px}.dev-mega-menu nav{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:0}.dev-primary .dev-mega-menu nav>a{justify-content:flex-start;min-width:0;min-height:56px;padding:10px 13px;border:1px solid rgba(217,154,62,.2);border-radius:7px;color:#d6cdc1;background:rgba(255,255,255,.025);font-size:12px}.dev-primary .dev-mega-menu nav>a:hover,.dev-primary .dev-mega-menu nav>a.router-link-active{color:#f5c980;border-color:rgba(229,167,74,.55);background:rgba(103,66,25,.34);box-shadow:none}.dev-mega-menu nav>a>b{margin-left:auto}.dev-mega-menu nav>a>img{width:20px;height:20px;border-radius:50%}
+.dev-mega-links{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.dev-primary .dev-mega-links>a{display:flex;align-items:center;justify-content:flex-start;gap:8px;min-width:0;min-height:56px;padding:10px 13px;border:1px solid rgba(217,154,62,.2);border-radius:7px;color:#d6cdc1;background:rgba(255,255,255,.025);font-size:12px;text-decoration:none}.dev-primary .dev-mega-links>a:hover,.dev-primary .dev-mega-links>a.router-link-active{color:#f5c980;border-color:rgba(229,167,74,.55);background:rgba(103,66,25,.34);box-shadow:none}.dev-mega-links>a>b{margin-left:auto}.dev-mega-links>a>img{width:20px;height:20px;border-radius:50%}
+@media(max-width:700px){.dev-menu-trigger{min-width:116px;padding-inline:9px}.dev-mega-menu,.dev-top.compact .dev-mega-menu{top:102px;padding-inline:10px}.dev-mega-menu-inner{grid-template-columns:1fr;gap:5px}.dev-mega-menu header{padding:7px 4px;border-right:0}.dev-mega-menu nav{grid-template-columns:1fr}.dev-primary .dev-mega-menu nav>a{min-height:44px}}
+@media(max-width:700px){.dev-mega-links{grid-template-columns:1fr}.dev-primary .dev-mega-links>a{min-height:44px}}
 </style>
