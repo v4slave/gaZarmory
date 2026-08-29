@@ -10,6 +10,7 @@ import { preloadManagementPages } from '../router/index.js'
 import { canPreloadManagementPages } from '../router/access.js'
 import { formatDateTime } from '../utils/format.js'
 const auth = useAuthStore()
+const emit = defineEmits(['switch-interface'])
 const route = useRoute()
 const { locale, setLocale, t } = useLocale()
 const menuOpen = ref(false)
@@ -139,6 +140,7 @@ async function linkProfile() {
         <div v-if="auth.authenticated" class="notification-center"><button class="notification-bell" type="button" :aria-label="t('Уведомления')" @click="notificationOpen=!notificationOpen;loadNotifications()"><AppIcon name="bell"/><b v-if="unreadNotifications">{{ unreadNotifications>99?'99+':unreadNotifications }}</b></button><div v-if="notificationOpen" class="notification-popover"><header><div><h2>{{ t('Уведомления') }}</h2><small>{{ unreadNotifications }} {{ t('непрочитанных') }}</small></div><button v-if="unreadNotifications" @click="markAllNotifications">{{ t('Прочитать все') }}</button></header><div v-if="notificationItems.length" class="notification-list"><component :is="item.data.url?'RouterLink':'div'" v-for="item in notificationItems" :key="item.id" :to="item.data.url||undefined" :class="{unread:!item.read_at}" @click="markNotification(item)"><span><AppIcon :name="notificationIcon(item.type)"/></span><div><strong>{{ t(item.data.title) }}</strong><p>{{ t(item.data.message) }}</p><small>{{ formatDateTime(item.created_at) }}</small></div></component></div><p v-else class="empty">{{ t('Уведомлений пока нет.') }}</p></div></div>
         <RouterLink v-if="auth.user?.player" class="user-link header-user-profile" :to="`/players/${auth.user.player.id}`">{{ auth.user.discord_display_name || auth.user.discord_username }}</RouterLink>
         <button v-else-if="auth.user" class="user-unlinked" :title="t('Привязать игровой профиль')" @click="openLinker">{{ auth.user.discord_display_name || auth.user.discord_username }} · {{ t('привязать профиль') }}</button>
+        <button v-if="auth.isDeveloper" class="interface-mode-toggle" type="button" @click="emit('switch-interface')">{{ t('Интерфейс разработчика') }}</button>
         <button v-if="auth.authenticated" @click="auth.logout">{{ t('Выйти') }}</button>
         <button v-else-if="!auth.loading" class="primary" @click="auth.login">{{ t('Войти через Discord') }}</button>
       </header>

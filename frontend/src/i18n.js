@@ -202,7 +202,7 @@ const translations = {
   'Зафиксировать прайм: участников получат по . Всего начислено , остаток оценки . Золотой баланс казны не изменится.': 'Finalize the prime: participants will receive each. Total earnings , undistributed estimate . The treasury gold balance will not change.',
   'Не удалось загрузить активности.': 'Could not load activities.', 'Не удалось загрузить изображение.': 'Could not upload the image.',
   'Удалить изображение?': 'Delete the image?', 'Все активности « » останутся без картинки.': 'All “ ” activities will be left without an image.',
-  'БЛИЖАЙШИЕ СОБЫТИЯ': 'UPCOMING EVENTS', 'БЛИЖАЙШЕЕ СОБЫТИЕ': 'NEXT EVENT', 'Ближайших событий нет.': 'No upcoming events.', 'Неделя гильдии': 'Guild week', 'Расписание': 'Schedule', 'Экспериментальный интерфейс': 'Experimental interface', 'Не удалось загрузить дашборд.': 'Failed to load dashboard.',
+  'БЛИЖАЙШИЕ СОБЫТИЯ': 'UPCOMING EVENTS', 'БЛИЖАЙШЕЕ СОБЫТИЕ': 'NEXT EVENT', 'Ближайших событий нет.': 'No upcoming events.', 'Неделя гильдии': 'Guild week', 'Расписание': 'Schedule', 'Экспериментальный интерфейс': 'Experimental interface', 'Основной интерфейс': 'Main interface', 'Интерфейс разработчика': 'Developer interface', 'Не удалось загрузить дашборд.': 'Failed to load dashboard.',
   'Не удалось загрузить аудит.': 'Could not load the audit log.', 'Не удалось загрузить настройки.': 'Could not load settings.',
   'Не удалось обновить стоимость жетона.': 'Could not update the token value.', 'Не удалось проверить интеграции.': 'Could not check integrations.',
   'Не удалось загрузить лут.': 'Could not load loot.', 'Не удалось добавить предмет.': 'Could not add the item.',
