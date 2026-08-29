@@ -291,6 +291,7 @@ const translations = {
   'Этот раздел недоступен для вашей роли. Если доступ действительно нужен, обратитесь к ГЛ.': 'This section is unavailable for your role. Contact the guild leader if you need access.',
   'ОШИБКА 404': 'ERROR 404', 'Возможно, ссылка устарела или объект был удалён.': 'The link may be outdated or the item may have been deleted.',
   'Открыть меню': 'Open menu', 'Закрыть меню': 'Close menu', 'Язык интерфейса': 'Interface language',
+  'Русский': 'Russian', 'Английский': 'English',
   'Хомяк GAZ ARMORY': 'GAZ ARMORY hamster', 'Войдите через Discord, чтобы загрузить состав.': 'Sign in with Discord to load the roster.',
   'Backend недоступен. Запустите Laravel API.': 'Backend is unavailable. Start the Laravel API.', 'Backend недоступен.': 'Backend is unavailable.',
   'Не удалось загрузить конст-пати.': 'Could not load static parties.', 'Не удалось загрузить справочник событий.': 'Could not load the event catalog.',
@@ -475,11 +476,12 @@ export function installI18n(app) {
     observer.disconnect()
     for (const mutation of mutations) {
       if (mutation.type === 'characterData') visit(mutation.target)
+      else if (mutation.type === 'attributes') visit(mutation.target)
       else for (const node of mutation.addedNodes) if (node.nodeType === Node.ELEMENT_NODE || node.nodeType === Node.TEXT_NODE) visit(node)
     }
     observer.observe(document.body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['title', 'placeholder', 'aria-label', 'alt'] })
   })
-  app.mixin({ mounted: renderLanguage, updated: renderLanguage })
+  queueMicrotask(renderLanguage)
   document.documentElement.lang = locale.value
 }
 

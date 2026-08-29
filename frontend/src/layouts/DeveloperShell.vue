@@ -3,6 +3,7 @@ import { onMounted } from 'vue'
 import AppIcon from '../components/AppIcon.vue'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import NotificationCenter from '../components/NotificationCenter.vue'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import { useLocale } from '../i18n.js'
 import { useAuthStore } from '../stores/auth.js'
 
@@ -37,7 +38,7 @@ const managementNavigation = [
       <div class="dev-menus">
         <nav class="dev-primary" aria-label="Primary navigation">
           <RouterLink v-for="item in primaryNavigation" :key="item.to" :to="item.to">
-            <img v-if="item.image" class="dev-nav-image" :src="item.image" alt=""><AppIcon v-else :name="item.icon" :size="18"/><span>{{ item.label }}</span>
+            <img v-if="item.image" class="dev-nav-image" :src="item.image" alt=""><AppIcon v-else :name="item.icon" :size="18"/><span>{{ t(item.label) }}</span>
           </RouterLink>
           <a class="dev-discord-link" href="https://discord.gg/gaz" target="_blank" rel="noopener noreferrer" :title="t('Открыть Discord гильдии')">
             <img src="/images/discord-guild.png" alt=""><span>Discord</span>
@@ -45,17 +46,18 @@ const managementNavigation = [
         </nav>
         <nav class="dev-management" aria-label="Guild management">
           <RouterLink v-for="item in managementNavigation.filter(item => !item.permission || auth[item.permission])" :key="item.to" :to="item.to">
-            <AppIcon :name="item.icon" :size="15"/><span>{{ item.label }}</span>
+            <AppIcon :name="item.icon" :size="15"/><span>{{ t(item.label) }}</span>
           </RouterLink>
         </nav>
       </div>
       <div class="dev-profile">
+        <LanguageSwitcher/>
         <NotificationCenter/>
         <RouterLink class="dev-profile-link" :to="`/players/${auth.user.player.id}`" :title="t('Открыть свой профиль')">
           <PlayerAvatar :player="{ ...auth.user.player, user: auth.user }" size="small"/>
           <span><b>{{ auth.user?.discord_display_name || auth.user?.discord_username }}</b><small>{{ auth.user?.player?.nickname }}</small></span>
         </RouterLink>
-        <button type="button" @click="auth.logout">Выйти</button>
+        <button type="button" @click="auth.logout">{{ t('Выйти') }}</button>
       </div>
     </header>
     <main class="dev-content"><RouterView/></main>

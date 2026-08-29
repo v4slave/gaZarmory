@@ -6,13 +6,14 @@ import { useAuthStore } from '../stores/auth.js'
 import PlayerAvatar from '../components/PlayerAvatar.vue'
 import AppIcon from '../components/AppIcon.vue'
 import AppModal from '../components/AppModal.vue'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import { useLocale } from '../i18n.js'
 import { preloadManagementPages } from '../router/index.js'
 import { canPreloadManagementPages } from '../router/access.js'
 import { formatDateTime } from '../utils/format.js'
 const auth = useAuthStore()
 const route = useRoute()
-const { locale, setLocale, t } = useLocale()
+const { t } = useLocale()
 const menuOpen = ref(false)
 const showLinker = ref(false)
 const selectedPlayerId = ref('')
@@ -101,10 +102,7 @@ async function linkProfile() {
 </script>
 
 <template>
-  <div v-if="!auth.authenticated || !auth.user?.player" class="language-switcher language-switcher-floating" role="group" :aria-label="t('Язык интерфейса')">
-    <button type="button" :class="{ active: locale === 'ru' }" :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
-    <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
-  </div>
+  <LanguageSwitcher v-if="!auth.authenticated || !auth.user?.player" floating/>
   <div v-if="auth.loading" class="access-gate"><div class="access-card"><span class="access-loader"></span><p>{{ t('Проверяем авторизацию…') }}</p></div></div>
   <div v-else-if="auth.connectionError" class="access-gate"><div class="access-card connection-error-card"><AppIcon name="warning" :size="34"/><p class="eyebrow">{{ t('СЕРВЕР НЕДОСТУПЕН') }}</p><h1>{{ t('Не удалось подключиться к серверу') }}</h1><p class="muted">{{ t('Проверьте соединение или состояние сервера и попробуйте снова.') }}</p><div class="connection-error-actions"><button class="primary" type="button" @click="auth.loading=true;auth.fetchMe()">{{ t('Повторить') }}</button><a class="secondary" :href="`${api.defaults.baseURL}/up`" target="_blank" rel="noopener">{{ t('Проверить статус') }}</a></div></div></div>
   <div v-else-if="!auth.authenticated" class="access-gate"><div class="access-card guest-card"><img src="/hamster-armory.png" :alt="t('Хомяк GAZ ARMORY')"><p class="eyebrow">ARCHEAGE GUILD MANAGEMENT</p><h1>GAZ ARMORY</h1><button class="primary access-primary" @click="auth.login">{{ t('Войти через Discord') }}</button></div></div>
@@ -134,10 +132,7 @@ async function linkProfile() {
         <button class="mobile-menu-button" type="button" :aria-expanded="menuOpen" :aria-label="t('Открыть меню')" @click="menuOpen=!menuOpen"><span></span><span></span><span></span></button>
         <RouterLink class="mobile-brand" to="/dashboard">GAZ ARMORY</RouterLink>
         <div class="header-spacer"></div>
-        <div class="language-switcher" role="group" :aria-label="t('Язык интерфейса')">
-          <button type="button" :class="{ active: locale === 'ru' }" :aria-pressed="locale === 'ru'" @click="setLocale('ru')">RU</button>
-          <button type="button" :class="{ active: locale === 'en' }" :aria-pressed="locale === 'en'" @click="setLocale('en')">EN</button>
-        </div>
+        <LanguageSwitcher/>
         <div v-if="auth.authenticated" class="notification-center"><button class="notification-bell" type="button" :aria-label="t('Уведомления')" @click="notificationOpen=!notificationOpen;loadNotifications()"><AppIcon name="bell"/><b v-if="unreadNotifications">{{ unreadNotifications>99?'99+':unreadNotifications }}</b></button><div v-if="notificationOpen" class="notification-popover"><header><div><h2>{{ t('Уведомления') }}</h2><small>{{ unreadNotifications }} {{ t('непрочитанных') }}</small></div><button v-if="unreadNotifications" @click="markAllNotifications">{{ t('Прочитать все') }}</button></header><div v-if="notificationItems.length" class="notification-list"><component :is="item.data.url?'RouterLink':'div'" v-for="item in notificationItems" :key="item.id" :to="item.data.url||undefined" :class="{unread:!item.read_at}" @click="markNotification(item)"><span><AppIcon :name="notificationIcon(item.type)"/></span><div><strong>{{ t(item.data.title) }}</strong><p>{{ t(item.data.message) }}</p><small>{{ formatDateTime(item.created_at) }}</small></div></component></div><p v-else class="empty">{{ t('Уведомлений пока нет.') }}</p></div></div>
         <RouterLink v-if="auth.user?.player" class="user-link header-user-profile" :to="`/players/${auth.user.player.id}`">{{ auth.user.discord_display_name || auth.user.discord_username }}</RouterLink>
         <button v-else-if="auth.user" class="user-unlinked" :title="t('Привязать игровой профиль')" @click="openLinker">{{ auth.user.discord_display_name || auth.user.discord_username }} · {{ t('привязать профиль') }}</button>
