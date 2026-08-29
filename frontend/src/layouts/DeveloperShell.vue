@@ -1,14 +1,62 @@
 <script setup>
+import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth.js'
+
 const auth = useAuthStore()
+const primaryNavigation = [
+  { to: '/dashboard', icon: 'home', label: 'Дашборд' },
+  { to: '/roster', icon: 'users', label: 'Состав' },
+  { to: '/groups', icon: 'groups', label: 'Конст-пати' },
+  { to: '/activities', icon: 'sword', label: 'Активности' },
+  { to: '/media', icon: 'play', label: 'Контент' },
+  { to: '/treasury', icon: 'treasury', label: 'Казна' },
+  { to: '/auctions', icon: 'auction', label: 'Аукционы' },
+]
+const managementNavigation = [
+  { to: '/payouts', icon: 'payout', label: 'Нахрюк' },
+  { to: '/roster-readiness', icon: 'readiness', label: 'Готовность состава' },
+  { to: '/attendance-analytics', icon: 'attendance', label: 'Посещаемость' },
+  { to: '/financial-reconciliation', icon: 'reconcile', label: 'Финансовая сверка' },
+  { to: '/admin', icon: 'settings', label: 'Админка' },
+]
 </script>
-<template><div class="dev-shell"><header class="dev-top"><RouterLink class="dev-brand" to="/dashboard"><img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY"><span><b>GAZ ARMORY</b><small>ArcheAge guild</small></span></RouterLink><div class="dev-menus"><nav><RouterLink to="/dashboard">⌂ <span>Дашборд</span></RouterLink><RouterLink to="/roster">♟ <span>Состав</span></RouterLink><RouterLink to="/groups">✦ <span>Конст-пати</span></RouterLink><RouterLink to="/activities">⚔ <span>Активности</span></RouterLink><RouterLink to="/media">▶ <span>Контент</span></RouterLink><RouterLink to="/treasury">◆ <span>Казна</span></RouterLink><RouterLink to="/auctions">⚒ <span>Аукционы</span></RouterLink></nav><nav class="dev-management"><RouterLink to="/payouts">₽ <span>Нахрюк</span></RouterLink><RouterLink to="/roster-readiness">◈ <span>Готовность состава</span></RouterLink><RouterLink to="/attendance-analytics">↗ <span>Посещаемость</span></RouterLink><RouterLink to="/financial-reconciliation">✓ <span>Финансовая сверка</span></RouterLink><RouterLink to="/admin">⚙ <span>Админка</span></RouterLink></nav></div><div class="dev-profile"><span><b>{{ auth.user?.discord_display_name || auth.user?.discord_username }}</b><small>developer</small></span><button type="button" @click="auth.logout">Выйти</button></div></header><main class="dev-content"><RouterView/></main></div></template>
+
+<template>
+  <div class="dev-shell">
+    <header class="dev-top">
+      <RouterLink class="dev-brand" to="/dashboard">
+        <img src="/hamster-armory.png" alt="Хомяк GAZ ARMORY">
+        <span><b>GAZ ARMORY</b><small>ArcheAge guild</small></span>
+      </RouterLink>
+      <div class="dev-menus">
+        <nav class="dev-primary" aria-label="Primary navigation">
+          <RouterLink v-for="item in primaryNavigation" :key="item.to" :to="item.to">
+            <AppIcon :name="item.icon" :size="18"/><span>{{ item.label }}</span>
+          </RouterLink>
+        </nav>
+        <nav class="dev-management" aria-label="Guild management">
+          <RouterLink v-for="item in managementNavigation" :key="item.to" :to="item.to">
+            <AppIcon :name="item.icon" :size="15"/><span>{{ item.label }}</span>
+          </RouterLink>
+        </nav>
+      </div>
+      <div class="dev-profile">
+        <span><b>{{ auth.user?.discord_display_name || auth.user?.discord_username }}</b><small>developer</small></span>
+        <button type="button" @click="auth.logout">Выйти</button>
+      </div>
+    </header>
+    <main class="dev-content"><RouterView/></main>
+  </div>
+</template>
+
 <style scoped>
-.dev-shell{min-height:100vh;color:#f3ede3;background:linear-gradient(90deg,rgba(3,3,3,.55),rgba(5,4,3,.3) 48%,rgba(3,3,3,.54)),linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.48)),url('/images/gaz-armory-noir-background.png') center top/cover fixed}.dev-top{display:grid;grid-template-columns:250px 1fr 220px;min-height:104px;border-bottom:1px solid rgba(217,154,62,.3);background:rgba(6,6,6,.94);backdrop-filter:blur(10px)}.dev-brand{display:flex;align-items:center;gap:12px;padding:0 22px;color:#f3ede3;text-decoration:none}.dev-brand img{width:60px;height:60px;object-fit:contain}.dev-brand b,.dev-brand small{display:block}.dev-brand b{font:500 20px Georgia,serif;letter-spacing:.08em}.dev-brand small,.dev-profile small{color:#9d9180}.dev-menus{display:grid;align-content:center;gap:7px}.dev-menus nav{display:flex;justify-content:center;gap:6px}.dev-menus a{display:flex;align-items:center;gap:7px;padding:8px 11px;color:#c9bfb2;text-decoration:none;border:1px solid rgba(217,154,62,.18);border-radius:4px;background:rgba(255,255,255,.025)}.dev-menus a:hover{border-color:rgba(217,154,62,.36);background:rgba(217,154,62,.08)}.dev-menus a.router-link-active{color:#171008;border-color:#efb85f;background:linear-gradient(135deg,#efbd68,#ad702b)}.dev-management a{padding:6px 9px;color:#aaa092;background:rgba(0,0,0,.28)}.dev-profile{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:0 18px}.dev-profile span b,.dev-profile span small{display:block;text-align:right}.dev-profile button{padding:8px 10px;color:#d6cabc;border:1px solid rgba(193,139,57,.3);background:rgba(0,0,0,.35)}.dev-content{min-height:calc(100vh - 104px);background:transparent}.dev-content>section{width:min(1400px,calc(100% - 48px));margin-inline:auto}@media(max-width:1350px){.dev-top{grid-template-columns:210px 1fr}.dev-profile{display:none}.dev-menus a{padding-inline:8px}}@media(max-width:1050px){.dev-top{grid-template-columns:1fr}.dev-brand{display:none}.dev-menus{padding:10px;overflow:auto}.dev-menus nav{justify-content:flex-start;width:max-content}}
-.dev-top{min-height:88px}
-.dev-brand img{width:54px;height:54px}
-.dev-menus{gap:2px}
-.dev-menus nav:first-child a{border-radius:4px 4px 2px 2px}
-.dev-management a{border-radius:2px 2px 4px 4px}
-.dev-content{min-height:calc(100vh - 88px)}
+.dev-shell{min-height:100vh;color:#f3ede3;background:linear-gradient(90deg,rgba(3,3,3,.55),rgba(5,4,3,.3) 48%,rgba(3,3,3,.54)),linear-gradient(rgba(0,0,0,.2),rgba(0,0,0,.48)),url('/images/gaz-armory-noir-background.png') center top/cover fixed}
+.dev-top{position:sticky;z-index:180;top:0;display:grid;grid-template-columns:220px minmax(0,1fr) 190px;grid-template-rows:56px 40px;min-height:96px;border-bottom:1px solid rgba(217,154,62,.3);background:linear-gradient(180deg,rgba(5,5,5,.98),rgba(8,7,6,.965));box-shadow:0 10px 34px rgba(0,0,0,.42);backdrop-filter:blur(12px)}
+.dev-brand{grid-row:1/3;display:flex;align-items:center;gap:11px;padding:0 20px;color:#f3ede3;text-decoration:none}.dev-brand img{width:48px;height:48px;object-fit:contain}.dev-brand b,.dev-brand small{display:block}.dev-brand b{font-size:16px;letter-spacing:.07em}.dev-brand small,.dev-profile small{margin-top:3px;color:#918777;font-size:9px}
+.dev-menus{display:contents}.dev-menus nav{display:flex;justify-content:center;gap:5px;margin:0}.dev-menus a{display:flex;align-items:center;justify-content:center;gap:8px;color:#bdb4a8;text-decoration:none;white-space:nowrap;transition:.16s ease}.dev-primary{grid-column:2;grid-row:1}.dev-primary a{min-width:100px;padding:0 13px;border:1px solid transparent;border-bottom-color:rgba(217,154,62,.08);border-radius:0;background:transparent;font-size:12px}.dev-primary a:hover{color:#f3e3c9;background:linear-gradient(180deg,rgba(217,154,62,.03),rgba(217,154,62,.1))}.dev-primary a.router-link-active{color:#efb85f;border-color:rgba(217,154,62,.5);border-bottom-color:#e5a846;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(102,66,24,.3),rgba(46,30,13,.48));box-shadow:0 5px 18px rgba(188,119,28,.11),inset 0 1px rgba(255,225,173,.05)}
+.dev-management{grid-column:2;grid-row:2;align-items:start;padding-top:3px;border-top:1px solid rgba(217,154,62,.09)}.dev-management a{min-height:31px;padding:5px 13px;border:1px solid rgba(193,139,57,.2);border-radius:5px;color:#a9a095;background:rgba(9,9,9,.78);font-size:10px}.dev-management a:hover{color:#eed8b8;border-color:rgba(217,154,62,.45);background:rgba(59,39,17,.45)}.dev-management a.router-link-active{color:#edbd72;border-color:rgba(224,161,67,.68);background:linear-gradient(180deg,rgba(74,48,20,.62),rgba(33,22,12,.72));box-shadow:inset 0 0 16px rgba(211,143,43,.08)}
+.dev-profile{grid-column:3;grid-row:1/3;display:flex;align-items:center;justify-content:flex-end;gap:13px;padding:0 18px}.dev-profile span b,.dev-profile span small{display:block;text-align:right}.dev-profile button{padding:9px 13px;color:#decdb3;border:1px solid rgba(193,139,57,.43);border-radius:5px;background:rgba(16,12,8,.76)}.dev-profile button:hover{color:#ffe4b0;border-color:#d99a3e;background:#2a1b0d}
+.dev-content{min-height:calc(100vh - 96px);background:transparent}.dev-content>section{width:min(1480px,calc(100% - 48px));margin-inline:auto}
+@media(max-width:1350px){.dev-top{grid-template-columns:190px minmax(0,1fr)}.dev-profile{display:none}.dev-primary a{min-width:auto;padding-inline:10px}.dev-menus a{gap:5px}}
+@media(max-width:1050px){.dev-top{position:relative;display:block;min-height:0}.dev-brand,.dev-profile{display:none}.dev-menus{display:grid;gap:0;padding:8px 10px;overflow-x:auto}.dev-menus nav{justify-content:flex-start;width:max-content}.dev-primary a{min-height:40px;border-radius:5px}.dev-management{padding-top:7px}.dev-content{min-height:100vh}}
 </style>

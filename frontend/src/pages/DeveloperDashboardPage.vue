@@ -27,6 +27,11 @@ const days = computed(() => {
 const nearestEvent = computed(() => data.value.upcoming_events?.[0]
   ?? data.value.weekly_events?.find(event => new Date(event.starts_at).getTime() >= Date.now())
   ?? null)
+const isNearestEvent = event => {
+  if (!nearestEvent.value) return false
+  if (event.id != null && nearestEvent.value.id != null) return event.id === nearestEvent.value.id
+  return event.name === nearestEvent.value.name && event.starts_at === nearestEvent.value.starts_at
+}
 
 onMounted(async () => {
   try {
@@ -44,7 +49,7 @@ onMounted(async () => {
       <p v-if="loading" class="developer-state">Загрузка…</p><p v-else-if="error" class="developer-state error">{{ error }}</p>
       <template v-else>
         <section class="developer-calendar">
-          <article v-for="day in days" :key="day.key" class="developer-day"><header><b>{{ formatDay(day.date) }}</b><small>{{ formatEventDate(day.date) }}</small></header><div v-for="event in day.events" :key="`${event.name}-${event.starts_at}`" class="developer-event"><img v-if="event.icon_url" :src="event.icon_url" :alt="event.name"><span v-else>◆</span><strong>{{ event.name }}</strong><time>{{ formatEventTime(new Date(event.starts_at)) }}</time></div></article>
+          <article v-for="day in days" :key="day.key" class="developer-day"><header><b>{{ formatDay(day.date) }}</b><small>{{ formatEventDate(day.date) }}</small></header><div v-for="event in day.events" :key="`${event.name}-${event.starts_at}`" :class="['developer-event', { active: isNearestEvent(event) }]"><img v-if="event.icon_url" :src="event.icon_url" :alt="event.name"><span v-else>◆</span><strong>{{ event.name }}</strong><time>{{ formatEventTime(new Date(event.starts_at)) }}</time></div></article>
         </section>
         <div class="developer-after">
           <section class="developer-selected"><template v-if="nearestEvent"><img v-if="nearestEvent.icon_url" :src="nearestEvent.icon_url" :alt="nearestEvent.name"><div><p>{{ t('БЛИЖАЙШЕЕ СОБЫТИЕ') }}</p><h2>{{ nearestEvent.name }}</h2><span>{{ formatEventDateTime(new Date(nearestEvent.starts_at)) }}</span><RouterLink to="/activities">{{ t('Все активности') }} →</RouterLink></div></template><p v-else class="developer-empty">{{ t('Ближайших событий нет.') }}</p></section>
