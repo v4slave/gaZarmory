@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 use App\Enums\PlayerClass;
 use App\Enums\UserRole;
+use App\Jobs\SendDiscordNotification;
 use App\Models\Activity;
 use App\Models\ActivityDefinition;
 use App\Models\ArmoryNotification;
 use App\Models\Player;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 final class NotificationCenterTest extends TestCase
@@ -81,6 +83,7 @@ final class NotificationCenterTest extends TestCase
 
     public function test_upcoming_activity_notification_is_not_duplicated(): void
     {
+        Queue::fake([SendDiscordNotification::class]);
         $user = $this->linkedUser();
         $definition = ActivityDefinition::query()->where('is_active', true)->firstOrFail();
         $activity = Activity::query()->create([
@@ -97,6 +100,11 @@ final class NotificationCenterTest extends TestCase
             ->where('user_id', $user->id)
             ->where('dedupe_key', 'activity-upcoming-'.$activity->id)
             ->count());
+        Queue::assertPushed(SendDiscordNotification::class, 1);
+        Queue::assertPushed(fn (SendDiscordNotification $job) =>
+            $job->title === 'Прайм скоро начнётся'
+            && str_contains($job->message, $definition->name)
+        );
     }
 
     private function linkedUser(): User

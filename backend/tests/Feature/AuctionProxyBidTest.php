@@ -21,6 +21,18 @@ final class AuctionProxyBidTest extends TestCase
   $this->assertDatabaseHas('auction_auto_bids',['auction_id'=>$auction->id,'player_id'=>$firstPlayer->id,'max_amount'=>500]);
   $this->assertDatabaseHas('auction_auto_bids',['auction_id'=>$auction->id,'player_id'=>$secondPlayer->id,'max_amount'=>600]);
  }
+ public function test_bid_outside_extension_window_keeps_original_end():void
+ {
+  [$leader]=$this->user(UserRole::GuildLeader);[$member]=$this->user(UserRole::Member);
+  DB::table('treasury_token_settings')->where('id',1)->update(['token_unit_value'=>80]);
+  $item=TreasuryItem::query()->create(['item_name'=>'Long auction '.uniqid(),'quantity'=>1,'reserved_quantity'=>0,'unit_value'=>100]);
+  $originalEnd=now()->addDay();
+  $auction=Auction::query()->create(['treasury_item_id'=>$item->id,'quantity'=>1,'starting_bid'=>100,'minimum_step'=>10,'extension_minutes'=>3,'ends_at'=>$originalEnd,'status'=>'draft','created_by'=>$leader->id]);
+  $this->actingAs($leader)->postJson('/api/auctions/'.$auction->id.'/start')->assertOk();
+  $this->actingAs($member)->postJson('/api/auctions/'.$auction->id.'/bid',['amount'=>100])->assertCreated();
+  self::assertSame($originalEnd->timestamp,$auction->fresh()->ends_at->timestamp);
+  self::assertSame(0,(int)$auction->fresh()->extensions_count);
+ }
  public function test_finishing_without_bids_explicitly_releases_reservation():void
  {
   [$leader]=$this->user(UserRole::GuildLeader);$item=TreasuryItem::query()->create(['item_name'=>'No bids '.uniqid(),'quantity'=>2,'reserved_quantity'=>1,'unit_value'=>100]);$auction=Auction::query()->create(['treasury_item_id'=>$item->id,'quantity'=>1,'starting_bid'=>100,'minimum_step'=>10,'extension_minutes'=>3,'ends_at'=>now()->subMinute(),'status'=>'active','created_by'=>$leader->id]);

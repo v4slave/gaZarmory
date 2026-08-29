@@ -29,4 +29,19 @@ final class DiscordServiceTest extends TestCase
             && $request['embeds'][0]['title'] === 'Аукцион'
         );
     }
+
+    public function test_it_routes_messages_to_a_channel_webhook_with_default_fallback(): void
+    {
+        config([
+            'services.discord.webhook_url' => 'https://discord.test/default',
+            'services.discord.webhook_urls.auctions' => 'https://discord.test/auctions',
+        ]);
+        Http::fake(['discord.test/*' => Http::response(status: 204)]);
+
+        app(DiscordService::class)->send('Аукцион', 'Новый лот', 'gold', 'auctions');
+        app(DiscordService::class)->send('Прайм', 'Скоро начало', 'gold', 'primes');
+
+        Http::assertSent(fn ($request) => $request->url() === 'https://discord.test/auctions');
+        Http::assertSent(fn ($request) => $request->url() === 'https://discord.test/default');
+    }
 }

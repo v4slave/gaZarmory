@@ -15,5 +15,5 @@ final class SendPlayerPayoutNotification implements ShouldQueue
     public int $tries = 3;
     public array $backoff = [10,60,180];
     public function __construct(public readonly string $discordUserId, public readonly string $title, public readonly string $message) {}
-    public function handle(DiscordService $discord): void { $discord->sendToUser($this->discordUserId,$this->title,$this->message); }
+    public function handle(DiscordService $discord): void { $discord->sendToUser($this->discordUserId,$this->title,$this->message,'payouts'); }
 }

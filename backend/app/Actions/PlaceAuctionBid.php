@@ -23,12 +23,12 @@ final class PlaceAuctionBid
    $visible=$second?min((int)$winner->max_amount,(int)$second->max_amount+(int)$locked->minimum_step):(int)$locked->starting_bid;
    if(!$previous||$previous->player_id!==$winner->player_id||(int)$previous->amount!==$visible)$bid=AuctionBid::query()->create(['auction_id'=>$locked->id,'player_id'=>$winner->player_id,'amount'=>$visible,'is_auto'=>$winner->player_id!==$player->id||$visible<$amount]);else $bid=$previous;
    $extended=false;$oldEnds=$locked->ends_at;
-   if($locked->ends_at->diffInSeconds(now())<=$locked->extension_minutes*60){$locked->update(['ends_at'=>now()->addMinutes($locked->extension_minutes),'extensions_count'=>$locked->extensions_count+1]);$extended=true;}
+   if($locked->ends_at->lte(now()->addMinutes($locked->extension_minutes))){$locked->update(['ends_at'=>now()->addMinutes($locked->extension_minutes),'extensions_count'=>$locked->extensions_count+1]);$extended=true;}
    $this->audit->record('auction.proxy_bid_placed',$bid,null,['auction_id'=>$locked->id,'player_id'=>$player->id,'visible_amount'=>$visible,'maximum_updated'=>true,'extended'=>$extended,'old_ends_at'=>$oldEnds->toISOString(),'new_ends_at'=>$locked->fresh()->ends_at->toISOString()]);
    $notify=[];
    if($previous&&$previous->player_id!==$winner->player_id&&$previous->player?->user?->discord_id)$notify[(string)$previous->player->user->discord_id]='Вашу ставку на «'.$locked->item->item_name.'» перебили. Текущая цена: **'.number_format($visible,0,'',' ').' жетонов**.';
    if($winner->player_id!==$player->id&&$player->user?->discord_id)$notify[(string)$player->user->discord_id]='Ваш максимум на «'.$locked->item->item_name.'» автоматически перебит. Текущая цена: **'.number_format($visible,0,'',' ').' жетонов**.';
-   foreach($notify as $discordId=>$message)DB::afterCommit(function()use($discordId,$message,$locked){SendDiscordUserNotification::dispatch($discordId,'Ставка перебита',$message);$user=\App\Models\User::query()->where('discord_id',$discordId)->first();if($user)$this->notifications->notify($user,'auction_outbid','Ставка перебита',str_replace('**','',$message),'/auctions/'.$locked->id);});
+   foreach($notify as $discordId=>$message)DB::afterCommit(function()use($discordId,$message,$locked){SendDiscordUserNotification::dispatch($discordId,'Ставка перебита',$message,'auctions');$user=\App\Models\User::query()->where('discord_id',$discordId)->first();if($user)$this->notifications->notify($user,'auction_outbid','Ставка перебита',str_replace('**','',$message),'/auctions/'.$locked->id);});
    return $bid->load('player.user:id,discord_id,discord_username,discord_display_name,discord_avatar');
   });
  }
