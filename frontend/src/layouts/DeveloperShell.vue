@@ -22,7 +22,7 @@ const navigationGroups = [
     { to: '/treasury', icon: 'treasury', label: 'Казна' }, { to: '/auctions', icon: 'auction', label: 'Аукционы' }, { to: '/payouts', icon: 'payout', label: 'Нахрюк' },
   ] },
   { label: 'Доп. функционал', icon: 'play', items: [
-    { href: 'https://archa.ge/', image: '/images/archa-calculator.png', label: 'Калькулятор' }, { href: 'https://discord.gg/gaz', image: '/images/discord-guild.png', label: 'Discord' }, { to: '/media', image: '/images/content-youtube.png', label: 'Контент' },
+    { href: 'https://archa.ge/', image: '/images/archa-calculator-transparent.png', label: 'Калькулятор' }, { href: 'https://discord.gg/gaz', image: '/images/discord-guild-transparent.png', label: 'Discord' }, { to: '/media', image: '/images/content-youtube-transparent.png', label: 'Контент' },
   ] },
 ]
 const managementNavigation = [
