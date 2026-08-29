@@ -3,16 +3,16 @@ import { reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useActivitiesStore } from '../stores/activities.js'
 import { apiErrorMessage, useNotificationsStore } from '../stores/notifications.js'
+import { formatMoscowDateTimeInput, moscowLocalToIso } from '../utils/format.js'
 
 const emit = defineEmits(['cancel', 'created'])
 const router = useRouter(); const activities = useActivitiesStore(); const error = ref(''); const saving = ref(false)
 const notifications = useNotificationsStore()
-const now = new Date(); now.setMinutes(now.getMinutes() - now.getTimezoneOffset())
-const form = reactive({ activity_definition_id: '', occurred_at: now.toISOString().slice(0, 16) })
+const form = reactive({ activity_definition_id: '', occurred_at: formatMoscowDateTimeInput() })
 async function submit() {
   saving.value = true; error.value = ''
   try {
-    const payload = { ...form, activity_definition_id: Number(form.activity_definition_id), occurred_at: new Date(form.occurred_at).toISOString() }
+    const payload = { ...form, activity_definition_id: Number(form.activity_definition_id), occurred_at: moscowLocalToIso(form.occurred_at) }
     const activity = await activities.createActivity(payload)
     notifications.success('Черновик активности создан.')
     emit('created', activity)

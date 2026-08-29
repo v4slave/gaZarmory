@@ -16,6 +16,25 @@ export const useGuildStore = defineStore('guild', {
       } catch (error) { this.error = error.response?.status === 401 ? 'Войдите через Discord, чтобы загрузить состав.' : (error.response?.data?.message ?? 'Backend недоступен. Запустите Laravel API.') }
       finally { this.loading = false }
     },
+    async fetchAllPlayers(paramsOverride = {}) {
+      this.loading = true; this.error = ''
+      try {
+        const params = { ...paramsOverride, page: 1, per_page: 100 }
+        const first = (await api.get('/api/players', { params })).data
+        const lastPage = Number(first.meta?.last_page ?? first.last_page ?? 1)
+        const pages = lastPage > 1
+          ? await Promise.all(Array.from({ length: lastPage - 1 }, (_, index) =>
+            api.get('/api/players', { params: { ...params, page: index + 2 } })))
+          : []
+        this.players = [first, ...pages.map(response => response.data)].flatMap(page => page.data)
+        this.pagination = { current_page: 1, last_page: 1, total: this.players.length }
+      } catch (error) {
+        this.error = error.response?.status === 401
+          ? 'Войдите через Discord, чтобы загрузить состав.'
+          : (error.response?.data?.message ?? 'Backend недоступен. Запустите Laravel API.')
+        throw error
+      } finally { this.loading = false }
+    },
     async fetchGroups() {
       try { this.groups = (await api.get('/api/groups')).data }
       catch (error) { this.error = error.response?.data?.message ?? 'Не удалось загрузить конст-пати.' }

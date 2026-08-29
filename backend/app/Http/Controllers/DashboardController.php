@@ -169,7 +169,7 @@ final class DashboardController extends Controller
             ->whereBetween('occurred_at', [$weekStart, $weekStart->addWeek()])
             ->orderBy('id')
             ->get(['id', 'activity_definition_id', 'occurred_at'])
-            ->keyBy(fn (Activity $activity): string => $activity->activity_definition_id.'|'.$activity->occurred_at->format('Y-m-d H:i'));
+            ->keyBy(fn (Activity $activity): string => $activity->activity_definition_id.'|'.$activity->occurred_at->getTimestamp());
         $events = collect();
 
         foreach (range(0, 6) as $offset) {
@@ -178,7 +178,7 @@ final class DashboardController extends Controller
                 $startsAt = $day->setTimeFromTimeString($time);
                 $definition = $definitions->get(mb_strtolower($name));
                 $activity = $definition
-                    ? $activitiesBySlot->get($definition->id.'|'.$startsAt->format('Y-m-d H:i'))
+                    ? $activitiesBySlot->get($definition->id.'|'.$startsAt->getTimestamp())
                     : null;
                 $events->push([
                     'name' => $name,

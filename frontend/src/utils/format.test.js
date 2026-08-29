@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setLocale } from '../i18n.js'
+import { formatDateTime, formatMoscowDateTimeInput, moscowLocalToIso } from './format.js'
 import { dataAge, formatDate, formatGold, formatInteger } from './format.js'
 
 describe('locale-aware formatting', () => {
@@ -20,5 +21,13 @@ describe('locale-aware formatting', () => {
   it('localizes relative time', () => {
     setLocale('en')
     expect(dataAge(new Date(Date.now() - 30_000).toISOString())).toMatch(/sec ago$/)
+  })
+})
+
+describe('Moscow activity time', () => {
+  it('uses Moscow time for display and datetime inputs', () => {
+    expect(formatMoscowDateTimeInput('2026-08-29T07:00:00Z')).toBe('2026-08-29T10:00')
+    expect(moscowLocalToIso('2026-08-29T10:00')).toBe('2026-08-29T07:00:00.000Z')
+    expect(formatDateTime('2026-08-29T07:00:00Z')).toContain('10:00')
   })
 })

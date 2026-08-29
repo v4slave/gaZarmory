@@ -10,12 +10,23 @@ export const formatDecimal = (value, options = {}) => new Intl.NumberFormat(loca
   .format(Number(value) || 0)
 
 export const formatDate = (value, options = {}) => value
-  ? new Intl.DateTimeFormat(localeTag(), Object.keys(options).length ? options : { dateStyle: 'short' }).format(new Date(value))
+  ? new Intl.DateTimeFormat(localeTag(), { timeZone: 'Europe/Moscow', ...(Object.keys(options).length ? options : { dateStyle: 'short' }) }).format(new Date(value))
   : '—'
 
 export const formatDateTime = (value, options = {}) => value
-  ? new Intl.DateTimeFormat(localeTag(), Object.keys(options).length ? options : { dateStyle: 'short', timeStyle: 'short' }).format(new Date(value))
+  ? new Intl.DateTimeFormat(localeTag(), { timeZone: 'Europe/Moscow', ...(Object.keys(options).length ? options : { dateStyle: 'short', timeStyle: 'short' }) }).format(new Date(value))
   : '—'
+
+export const formatMoscowDateTimeInput = (value = new Date()) => {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Moscow', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
+  }).formatToParts(new Date(value))
+  const part = type => parts.find(item => item.type === type)?.value
+  return `${part('year')}-${part('month')}-${part('day')}T${part('hour')}:${part('minute')}`
+}
+
+export const moscowLocalToIso = value => new Date(`${value}:00+03:00`).toISOString()
 
 export const formatGold = value => `${formatInteger(value)} ${translate('золота')}`
 export const dataAge = value => {
