@@ -13,7 +13,7 @@ final class DiscordService
 
         $colors = ['gold' => 0xC68A2D, 'green' => 0x3BA55D, 'red' => 0xED4245];
         Http::timeout(5)->retry(2, 250)->post($webhookUrl, [
-            'username' => 'GAZ ARMORY',
+            'username' => $this->username($channel),
             'allowed_mentions' => ['parse' => []],
             'embeds' => [[
                 'title' => $title,
@@ -31,7 +31,7 @@ final class DiscordService
         $webhookUrl = $this->webhookUrl($channel);
         if (!$webhookUrl) return false;
         Http::timeout(5)->retry(2, 250)->post($webhookUrl, [
-            'username' => 'GAZ ARMORY',
+            'username' => $this->username($channel),
             'content' => '<@'.$discordUserId.'>',
             'allowed_mentions' => ['users' => [(string)$discordUserId]],
             'embeds' => [[
@@ -48,5 +48,15 @@ final class DiscordService
     {
         return config('services.discord.webhook_urls.'.$channel)
             ?: config('services.discord.webhook_url');
+    }
+
+    private function username(string $channel): string
+    {
+        return match ($channel) {
+            'auctions' => 'Рыжий аукционист',
+            'primes' => 'Рыжий почтальон',
+            'payouts' => 'Рыжий банкир',
+            default => 'GAZ ARMORY',
+        };
     }
 }

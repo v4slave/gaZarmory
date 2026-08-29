@@ -44,4 +44,32 @@ final class DiscordServiceTest extends TestCase
         Http::assertSent(fn ($request) => $request->url() === 'https://discord.test/auctions');
         Http::assertSent(fn ($request) => $request->url() === 'https://discord.test/default');
     }
+
+    public function test_it_uses_a_distinct_username_for_each_notification_channel(): void
+    {
+        config([
+            'services.discord.webhook_urls.auctions' => 'https://discord.test/auctions',
+            'services.discord.webhook_urls.primes' => 'https://discord.test/primes',
+            'services.discord.webhook_urls.payouts' => 'https://discord.test/payouts',
+        ]);
+        Http::fake(['discord.test/*' => Http::response(status: 204)]);
+
+        $discord = app(DiscordService::class);
+        $discord->send('Аукцион', 'Новый лот', 'gold', 'auctions');
+        $discord->send('Прайм', 'Скоро начало', 'gold', 'primes');
+        $discord->sendToUser('123', 'Выплата', 'Золото выдано', 'payouts');
+
+        Http::assertSent(fn ($request) =>
+            $request->url() === 'https://discord.test/auctions'
+            && $request['username'] === 'Рыжий аукционист'
+        );
+        Http::assertSent(fn ($request) =>
+            $request->url() === 'https://discord.test/primes'
+            && $request['username'] === 'Рыжий почтальон'
+        );
+        Http::assertSent(fn ($request) =>
+            $request->url() === 'https://discord.test/payouts'
+            && $request['username'] === 'Рыжий банкир'
+        );
+    }
 }
