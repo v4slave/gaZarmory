@@ -1408,6 +1408,3 @@ html,body,#app{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif
 .dev-content .payout-activity-list>a{border-color:rgba(208,146,61,.32);background:linear-gradient(90deg,rgba(52,36,19,.42),rgba(10,10,10,.92))}
 .dev-content .payout-activity-list>a:hover{border-color:var(--sketch-line-strong);background:linear-gradient(90deg,rgba(74,49,21,.5),rgba(13,12,11,.94))}
 @media(max-width:800px){.dev-content .admin-tabs a{padding-inline:13px}.dev-content .integration-grid,.dev-content .settings-grid{grid-template-columns:1fr}.dev-content .payout-detail-toolbar{display:grid;grid-template-columns:1fr 1fr}.dev-content .payout-detail-toolbar>div{grid-column:1/-1}}
-.interface-mode-toggle{color:#d8bc8d!important;border-color:rgba(193,139,57,.32)!important;background:linear-gradient(180deg,rgba(47,32,17,.75),rgba(18,14,10,.82))!important;font-size:10px!important;white-space:nowrap}
-.interface-mode-toggle:hover{color:#ffe1aa!important;border-color:#d99a3e!important;background:linear-gradient(180deg,#38240f,#21160b)!important}
-@media(max-width:1180px){.interface-mode-toggle{max-width:105px;white-space:normal!important;line-height:1.15}}

@@ -3,7 +3,6 @@ import AppIcon from '../components/AppIcon.vue'
 import { useAuthStore } from '../stores/auth.js'
 
 const auth = useAuthStore()
-const emit = defineEmits(['switch-interface'])
 const primaryNavigation = [
   { to: '/dashboard', icon: 'home', label: 'Дашборд' },
   { to: '/roster', icon: 'users', label: 'Состав' },
@@ -15,10 +14,10 @@ const primaryNavigation = [
 ]
 const managementNavigation = [
   { to: '/payouts', icon: 'payout', label: 'Нахрюк' },
-  { to: '/roster-readiness', icon: 'readiness', label: 'Готовность состава' },
-  { to: '/attendance-analytics', icon: 'attendance', label: 'Посещаемость' },
-  { to: '/financial-reconciliation', icon: 'reconcile', label: 'Финансовая сверка' },
-  { to: '/admin', icon: 'settings', label: 'Админка' },
+  { to: '/roster-readiness', icon: 'readiness', label: 'Готовность состава', permission: 'canViewReadiness' },
+  { to: '/attendance-analytics', icon: 'attendance', label: 'Посещаемость', permission: 'canViewReadiness' },
+  { to: '/financial-reconciliation', icon: 'reconcile', label: 'Финансовая сверка', permission: 'canHandleTreasuryItems' },
+  { to: '/admin', icon: 'settings', label: 'Админка', permission: 'canAdmin' },
 ]
 </script>
 
@@ -36,14 +35,13 @@ const managementNavigation = [
           </RouterLink>
         </nav>
         <nav class="dev-management" aria-label="Guild management">
-          <RouterLink v-for="item in managementNavigation" :key="item.to" :to="item.to">
+          <RouterLink v-for="item in managementNavigation.filter(item => !item.permission || auth[item.permission])" :key="item.to" :to="item.to">
             <AppIcon :name="item.icon" :size="15"/><span>{{ item.label }}</span>
           </RouterLink>
         </nav>
       </div>
       <div class="dev-profile">
-        <span><b>{{ auth.user?.discord_display_name || auth.user?.discord_username }}</b><small>developer</small></span>
-        <button class="dev-interface-switch" type="button" @click="emit('switch-interface')">Основной интерфейс</button>
+        <span><b>{{ auth.user?.discord_display_name || auth.user?.discord_username }}</b><small>{{ auth.user?.role }}</small></span>
         <button type="button" @click="auth.logout">Выйти</button>
       </div>
     </header>
@@ -57,7 +55,7 @@ const managementNavigation = [
 .dev-brand{grid-row:1/3;display:flex;align-items:center;gap:11px;padding:0 20px;color:#f3ede3;text-decoration:none}.dev-brand img{width:48px;height:48px;object-fit:contain}.dev-brand b,.dev-brand small{display:block}.dev-brand b{font-size:16px;letter-spacing:.07em}.dev-brand small,.dev-profile small{margin-top:3px;color:#918777;font-size:9px}
 .dev-menus{display:contents}.dev-menus nav{display:flex;justify-content:center;gap:5px;margin:0}.dev-menus a{display:flex;align-items:center;justify-content:center;gap:8px;color:#bdb4a8;text-decoration:none;white-space:nowrap;transition:.16s ease}.dev-primary{grid-column:2;grid-row:1}.dev-primary a{min-width:100px;padding:0 13px;border:1px solid transparent;border-bottom-color:rgba(217,154,62,.08);border-radius:0;background:transparent;font-size:12px}.dev-primary a:hover{color:#f3e3c9;background:linear-gradient(180deg,rgba(217,154,62,.03),rgba(217,154,62,.1))}.dev-primary a.router-link-active{color:#efb85f;border-color:rgba(217,154,62,.5);border-bottom-color:#e5a846;border-radius:6px 6px 0 0;background:linear-gradient(180deg,rgba(102,66,24,.3),rgba(46,30,13,.48));box-shadow:0 5px 18px rgba(188,119,28,.11),inset 0 1px rgba(255,225,173,.05)}
 .dev-management{grid-column:2;grid-row:2;align-items:start;padding-top:3px;border-top:1px solid rgba(217,154,62,.09)}.dev-management a{min-height:31px;padding:5px 13px;border:1px solid rgba(193,139,57,.2);border-radius:5px;color:#a9a095;background:rgba(9,9,9,.78);font-size:10px}.dev-management a:hover{color:#eed8b8;border-color:rgba(217,154,62,.45);background:rgba(59,39,17,.45)}.dev-management a.router-link-active{color:#edbd72;border-color:rgba(224,161,67,.68);background:linear-gradient(180deg,rgba(74,48,20,.62),rgba(33,22,12,.72));box-shadow:inset 0 0 16px rgba(211,143,43,.08)}
-.dev-profile{grid-column:3;grid-row:1/3;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 18px}.dev-profile span b,.dev-profile span small{display:block;text-align:right}.dev-profile button{padding:9px 11px;color:#decdb3;border:1px solid rgba(193,139,57,.43);border-radius:5px;background:rgba(16,12,8,.76);white-space:nowrap}.dev-profile button:hover{color:#ffe4b0;border-color:#d99a3e;background:#2a1b0d}.dev-profile .dev-interface-switch{color:#d3b988;border-color:rgba(193,139,57,.25);font-size:9px}
+.dev-profile{grid-column:3;grid-row:1/3;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 18px}.dev-profile span b,.dev-profile span small{display:block;text-align:right}.dev-profile button{padding:9px 11px;color:#decdb3;border:1px solid rgba(193,139,57,.43);border-radius:5px;background:rgba(16,12,8,.76);white-space:nowrap}.dev-profile button:hover{color:#ffe4b0;border-color:#d99a3e;background:#2a1b0d}
 .dev-content{min-height:calc(100vh - 96px);background:transparent}.dev-content>section{width:min(1480px,calc(100% - 48px));margin-inline:auto}
 @media(max-width:1350px){.dev-top{grid-template-columns:190px minmax(0,1fr)}.dev-profile{display:none}.dev-primary a{min-width:auto;padding-inline:10px}.dev-menus a{gap:5px}}
 @media(max-width:1050px){.dev-top{position:relative;display:block;min-height:0}.dev-brand,.dev-profile{display:none}.dev-menus{display:grid;gap:0;padding:8px 10px;overflow-x:auto}.dev-menus nav{justify-content:flex-start;width:max-content}.dev-primary a{min-height:40px;border-radius:5px}.dev-management{padding-top:7px}.dev-content{min-height:100vh}}
