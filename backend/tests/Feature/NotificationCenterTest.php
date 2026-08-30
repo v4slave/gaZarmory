@@ -84,29 +84,35 @@ final class NotificationCenterTest extends TestCase
 
     public function test_upcoming_activity_notification_is_not_duplicated(): void
     {
-        config(['services.discord.member_role_id' => '123456789012345678']);
-        Queue::fake([SendDiscordNotification::class]);
-        $user = $this->linkedUser();
-        $definition = ActivityDefinition::query()->where('is_active', true)->firstOrFail();
-        $activity = Activity::query()->create([
-            'activity_definition_id' => $definition->id,
-            'occurred_at' => now()->addMinutes(15),
-            'gold_value' => 0,
-            'created_by' => $user->id,
-        ]);
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-30 12:00:00', 'Europe/Moscow'));
 
-        $this->artisan('activities:notify-upcoming')->assertSuccessful();
-        $this->artisan('activities:notify-upcoming')->assertSuccessful();
+        try {
+            config(['services.discord.member_role_id' => '123456789012345678']);
+            Queue::fake([SendDiscordNotification::class]);
+            $user = $this->linkedUser();
+            $definition = ActivityDefinition::query()->where('is_active', true)->firstOrFail();
+            $activity = Activity::query()->create([
+                'activity_definition_id' => $definition->id,
+                'occurred_at' => now()->addMinutes(15),
+                'gold_value' => 0,
+                'created_by' => $user->id,
+            ]);
 
-        self::assertSame(1, ArmoryNotification::query()
-            ->where('user_id', $user->id)
-            ->where('dedupe_key', 'activity-upcoming-'.$activity->id)
-            ->count());
-        Queue::assertPushed(SendDiscordNotification::class, 1);
-        Queue::assertPushed(fn (SendDiscordNotification $job) =>
-            $job->title === 'Прайм · '.$definition->name
-            && $job->options['mention_role_id'] === '123456789012345678'
-        );
+            $this->artisan('activities:notify-upcoming')->assertSuccessful();
+            $this->artisan('activities:notify-upcoming')->assertSuccessful();
+
+            self::assertSame(1, ArmoryNotification::query()
+                ->where('user_id', $user->id)
+                ->where('dedupe_key', 'activity-upcoming-'.$activity->id)
+                ->count());
+            Queue::assertPushed(SendDiscordNotification::class, 1);
+            Queue::assertPushed(fn (SendDiscordNotification $job) =>
+                $job->title === 'Прайм · '.$definition->name
+                && $job->options['mention_role_id'] === '123456789012345678'
+            );
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
     }
 
     public function test_scheduled_prime_is_announced_without_created_activity(): void
@@ -134,6 +140,8 @@ final class NotificationCenterTest extends TestCase
             Queue::assertPushed(fn (SendDiscordNotification $job) =>
                 $job->title === 'Прайм · АГЛ'
                 && $job->options['mention_role_id'] === '123456789012345678'
+                && str_contains($job->options['fields'][2]['value'], "\n")
+                && !str_contains($job->options['fields'][2]['value'], '\\n')
             );
         } finally {
             CarbonImmutable::setTestNow();

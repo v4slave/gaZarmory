@@ -32,7 +32,7 @@ final class DiscordPrimeCard
             'fields' => [
                 ['name' => 'СТАТУС', 'value' => '**Скоро начнётся**', 'inline' => true],
                 ['name' => 'ТИП СОБЫТИЯ', 'value' => '**Прайм**', 'inline' => true],
-                ['name' => 'НАЧАЛО', 'value' => '<t:'.$timestamp.':F>\n<t:'.$timestamp.':R>', 'inline' => false],
+                ['name' => 'НАЧАЛО', 'value' => '<t:'.$timestamp.":F>\n<t:".$timestamp.':R>', 'inline' => false],
             ],
             'footer' => $activityId
                 ? 'GAZ ARMORY · Прайм #'.$activityId.' · Нажмите на заголовок, чтобы открыть событие'
