@@ -10,6 +10,7 @@ use App\Models\ActivityDefinition;
 use App\Models\ArmoryNotification;
 use App\Models\Player;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -106,6 +107,37 @@ final class NotificationCenterTest extends TestCase
             $job->title === 'Прайм · '.$definition->name
             && $job->options['mention_role_id'] === '123456789012345678'
         );
+    }
+
+    public function test_scheduled_prime_is_announced_without_created_activity(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-30 10:59:00', 'Europe/Moscow'));
+
+        try {
+            config(['services.discord.member_role_id' => '123456789012345678']);
+            Queue::fake([SendDiscordNotification::class]);
+            $user = $this->linkedUser();
+
+            $this->artisan('activities:notify-upcoming')->assertSuccessful();
+            Queue::assertNothingPushed();
+
+            CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-30 11:00:00', 'Europe/Moscow'));
+            $this->artisan('activities:notify-upcoming')->assertSuccessful();
+            $this->artisan('activities:notify-upcoming')->assertSuccessful();
+
+            self::assertSame(1, ArmoryNotification::query()
+                ->where('user_id', $user->id)
+                ->where('type', 'activity_upcoming')
+                ->where('data->message', 'АГЛ начнётся 30.08.2026 11:20.')
+                ->count());
+            Queue::assertPushed(SendDiscordNotification::class, 1);
+            Queue::assertPushed(fn (SendDiscordNotification $job) =>
+                $job->title === 'Прайм · АГЛ'
+                && $job->options['mention_role_id'] === '123456789012345678'
+            );
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
     }
 
     private function linkedUser(): User

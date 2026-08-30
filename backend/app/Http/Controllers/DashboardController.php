@@ -153,18 +153,11 @@ final class DashboardController extends Controller
 
     private function weeklyEvents(): array
     {
-        $dailyAgl = collect(['03:20', '07:20', '11:20', '15:20', '19:20', '23:20'])
-            ->map(fn (string $time): array => [$time, 'АГЛ'])
-            ->all();
-        $schedule = [
-            1 => [...$dailyAgl, ['10:00','Кошка'],['19:30','Кракен'],['20:30','Калидис'],['21:30','Анталлон'],['22:00','Кошка']],
-            2 => [...$dailyAgl, ['10:00','Кошка'],['19:30','Ксанатос'],['20:30','Левиафан'],['22:00','Кошка']],
-            3 => [...$dailyAgl, ['10:00','Кошка'],['22:00','Кошка']],
-            4 => [...$dailyAgl, ['10:00','Кошка'],['19:30','Кракен'],['20:30','Левиафан'],['22:00','Кошка']],
-            5 => [...$dailyAgl, ['10:00','Кошка'],['19:30','Ксанатос'],['20:30','Калидис'],['21:30','Анталлон'],['22:00','Кошка']],
-            6 => [...$dailyAgl, ['10:00','Кошка'],['19:30','Кракен'],['20:30','Калидис'],['22:00','Кошка']],
-            7 => [...$dailyAgl, ['10:00','Кошка'],['19:30','Ксанатос'],['19:50','Анталлон'],['20:30','Левиафан'],['22:00','Кошка']],
-        ];
+        $daily = config('guild_schedule.daily', []);
+        $weekly = config('guild_schedule.weekly', []);
+        $schedule = collect(range(1, 7))->mapWithKeys(fn (int $day): array => [
+            $day => [...$daily, ...($weekly[$day] ?? [])],
+        ])->all();
         $now = CarbonImmutable::now('Europe/Moscow');
         $weekStart = $now->startOfWeek();
         $definitions = ActivityDefinition::query()->get()->keyBy(fn ($item) => mb_strtolower($item->name));
