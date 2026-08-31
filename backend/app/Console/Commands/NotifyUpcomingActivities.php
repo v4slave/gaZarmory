@@ -91,7 +91,7 @@ final class NotifyUpcomingActivities extends Command
             $dedupeKey,
         );
 
-        if (!$alreadyNotified && $members->isNotEmpty()) {
+        if (!$alreadyNotified && $members->isNotEmpty() && $this->shouldNotifyDiscord($name)) {
             SendDiscordNotification::dispatch(
                 'Прайм · '.$name,
                 'Сбор участников начинается. Не опаздывайте!',
@@ -138,5 +138,13 @@ final class NotifyUpcomingActivities extends Command
     private function signature(string $name, CarbonImmutable $startsAt): string
     {
         return mb_strtolower($name).'|'.$startsAt->timestamp;
+    }
+
+    private function shouldNotifyDiscord(string $name): bool
+    {
+        $allowedNames = collect(config('guild_schedule.discord_notifications', []))
+            ->map(fn (string $allowedName): string => mb_strtolower(trim($allowedName)));
+
+        return $allowedNames->contains(mb_strtolower(trim($name)));
     }
 }

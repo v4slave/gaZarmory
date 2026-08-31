@@ -90,7 +90,10 @@ final class NotificationCenterTest extends TestCase
             config(['services.discord.member_role_id' => '123456789012345678']);
             Queue::fake([SendDiscordNotification::class]);
             $user = $this->linkedUser();
-            $definition = ActivityDefinition::query()->where('is_active', true)->firstOrFail();
+            $definition = ActivityDefinition::query()
+                ->where('is_active', true)
+                ->whereIn('name', config('guild_schedule.discord_notifications'))
+                ->firstOrFail();
             $activity = Activity::query()->create([
                 'activity_definition_id' => $definition->id,
                 'occurred_at' => now()->addMinutes(15),
@@ -143,6 +146,26 @@ final class NotificationCenterTest extends TestCase
                 && str_contains($job->options['fields'][2]['value'], "\n")
                 && !str_contains($job->options['fields'][2]['value'], '\\n')
             );
+        } finally {
+            CarbonImmutable::setTestNow();
+        }
+    }
+
+    public function test_unlisted_scheduled_prime_is_not_announced_in_discord(): void
+    {
+        CarbonImmutable::setTestNow(CarbonImmutable::parse('2026-08-30 19:21:00', 'Europe/Moscow'));
+
+        try {
+            Queue::fake([SendDiscordNotification::class]);
+            $user = $this->linkedUser();
+
+            $this->artisan('activities:notify-upcoming')->assertSuccessful();
+
+            Queue::assertNothingPushed();
+            self::assertSame(1, ArmoryNotification::query()
+                ->where('user_id', $user->id)
+                ->where('data->message', 'Ксанатос начнётся 30.08.2026 19:30.')
+                ->count());
         } finally {
             CarbonImmutable::setTestNow();
         }
