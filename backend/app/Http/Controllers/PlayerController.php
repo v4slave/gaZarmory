@@ -95,31 +95,66 @@ final class PlayerController extends Controller
             ->load([
                 'group',
                 'user',
-                'activities' => fn ($query) => $query
-                    ->with('definition')
-                    ->whereHas('definition', fn ($definitionQuery) => $definitionQuery->where('type', 'prime'))
-                    ->latest('occurred_at'),
             ])
             ->toArray();
 
         $profile['statistics'] = [
             'period_days' => 30,
             'primes_count' => $visitedPrimes,
-            'activities_count' => count($profile['activities']),
             'prime_attendance_percentage' => $totalPrimes > 0
                 ? round($visitedPrimes / $totalPrimes * 100, 2)
                 : 0,
             'paid_gold' => (int) (clone $earnings)->where('status', 'paid')->sum('player_share'),
             'pending_gold' => (int) (clone $earnings)->where('status', 'pending')->sum('player_share'),
         ];
-        $profile['earnings_history'] = PrimePlayerEarning::query()
+
+        return response()->json($profile);
+    }
+
+    public function activities(Request $request, Player $player): JsonResponse
+    {
+        $this->authorize('view', $player);
+        $perPage = $this->validatedPerPage($request);
+
+        return response()->json(
+            $player->activities()
+                ->with('definition:id,name,type,icon_path')
+                ->whereHas('definition', fn ($query) => $query->where('type', 'prime'))
+                ->latest('occurred_at')
+                ->paginate($perPage)
+        );
+    }
+
+    public function earnings(Request $request, Player $player): JsonResponse
+    {
+        $this->authorize('view', $player);
+        $perPage = $this->validatedPerPage($request);
+
+        return response()->json(PrimePlayerEarning::query()
             ->where('player_id', $player->id)
             ->whereHas('activity.definition', fn ($query) => $query->where('type', 'prime'))
             ->with(['activity.definition:id,name,type,icon_path','payout:id,status,paid_at'])
             ->latest('id')
-            ->get();
+            ->paginate($perPage));
+    }
 
-        return response()->json($profile);
+    public function gearScoreHistory(Request $request, Player $player): JsonResponse
+    {
+        $this->authorize('view', $player);
+        $perPage = $this->validatedPerPage($request);
+
+        return response()->json(PlayerGearScoreHistory::query()
+            ->where('player_id', $player->id)
+            ->latest('recorded_at')
+            ->latest('id')
+            ->paginate($perPage));
+    }
+
+    private function validatedPerPage(Request $request): int
+    {
+        return (int) ($request->validate([
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ])['per_page'] ?? 20);
     }
 
     public function update(UpdatePlayerRequest $request, Player $player): Player

@@ -13,12 +13,14 @@ describe('AppModal', () => {
     wrapper.unmount()
   })
 
-  it('warns before dismissing dirty content', () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(false)
+  it('shows an in-app confirmation before dismissing dirty content', async () => {
     const wrapper = mount(AppModal, { attachTo: document.body, props: { open: true, dirty: true }, slots: { default: '<input>' } })
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
-    expect(window.confirm).toHaveBeenCalledOnce()
+    await wrapper.vm.$nextTick()
+    expect(document.querySelector('[role="alertdialog"]')).not.toBeNull()
     expect(wrapper.emitted('close')).toBeUndefined()
+    document.querySelector('[role="alertdialog"] .danger').click()
+    expect(wrapper.emitted('close')).toHaveLength(1)
     wrapper.unmount()
   })
 })

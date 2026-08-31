@@ -15,9 +15,9 @@ final class CalculatePayout
 {
     public function __construct(private readonly AuditService $audit,private readonly ArmoryNotificationService $notifications) {}
 
-    public function execute(Payout $payout, ?array $activityIds = null): Payout
+    public function execute(Payout $payout, ?array $activityIds = null, ?int $distributionAmount = null): Payout
     {
-        return DB::transaction(function () use ($payout, $activityIds): Payout {
+        return DB::transaction(function () use ($payout, $activityIds, $distributionAmount): Payout {
             $locked = Payout::query()->lockForUpdate()->findOrFail($payout->id);
             if ($locked->status !== 'draft') {
                 throw ValidationException::withMessages(['payout' => __('domain.payout.draft_only')]);
@@ -53,7 +53,20 @@ final class CalculatePayout
                 ->whereDate('occurred_at', '<=', $locked->period_to)
                 ->count();
 
-            foreach ($earnings->groupBy('player_id') as $playerId => $rows) {
+            $groups = $earnings->groupBy('player_id');
+            $sourceTotal = (int) $earnings->sum('player_share');
+            $targetTotal = $distributionAmount ?? $sourceTotal;
+            $allocated = [];
+            $used = 0;
+            foreach ($groups as $playerId => $rows) {
+                $numerator = $targetTotal * (int) $rows->sum('player_share');
+                $allocated[$playerId] = ['amount' => intdiv($numerator, $sourceTotal), 'remainder' => $numerator % $sourceTotal];
+                $used += $allocated[$playerId]['amount'];
+            }
+            $remainderOrder = collect($allocated)->sort(fn ($a, $b) => $b['remainder'] <=> $a['remainder'])->keys()->values();
+            for ($index = 0; $index < $targetTotal - $used; $index++) $allocated[$remainderOrder[$index]]['amount']++;
+
+            foreach ($groups as $playerId => $rows) {
                 $earning = $rows->first();
                 $visited = Activity::query()
                     ->whereHas('definition', fn ($query) => $query->where('type', 'prime'))
@@ -68,13 +81,13 @@ final class CalculatePayout
                     'prime_attendance_percentage_snapshot' => $totalPrimes ? round($visited / $totalPrimes * 100, 2) : 0,
                     'primes_count' => $visited,
                     'mini_activities_count' => 0,
-                    'amount' => $rows->sum('player_share'),
+                    'amount' => $allocated[$playerId]['amount'],
                     'status' => 'pending',
                 ]);
             }
 
             PrimePlayerEarning::query()->whereKey($earnings->modelKeys())->update(['payout_id' => $locked->id]);
-            $total = (int) $earnings->sum('player_share');
+            $total = $targetTotal;
             $locked->update(['status' => 'calculated', 'total_amount' => $total, 'calculated_at' => now()]);
             $this->audit->record('payout.calculated', $locked, ['status' => 'draft'], ['status' => 'calculated', 'total_amount' => $total]);
             $recipientIds=$locked->players()->pluck('player_id');

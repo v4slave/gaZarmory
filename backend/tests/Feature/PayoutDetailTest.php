@@ -144,6 +144,33 @@ final class PayoutDetailTest extends TestCase
         self::assertSame(600, (int) TreasuryTransaction::query()->latest('id')->value('balance_after'));
     }
 
+    public function test_creation_accepts_manual_token_distribution_and_splits_it_proportionally(): void
+    {
+        $leader = $this->user(UserRole::GuildLeader);
+        [, $first] = $this->memberWithPlayer('TokenFirst');
+        [, $second] = $this->memberWithPlayer('TokenSecond');
+        $definition = ActivityDefinition::query()->create(['name'=>'Token split '.uniqid(),'type'=>'prime','is_active'=>true]);
+        $activity = Activity::query()->create(['activity_definition_id'=>$definition->id,'occurred_at'=>'2026-08-16 12:00:00+03','gold_value'=>300,'created_by'=>$leader->id]);
+        foreach ([[$first, 100], [$second, 200]] as [$player, $share]) {
+            $activity->players()->attach($player->id, ['created_at'=>now()]);
+            PrimePlayerEarning::query()->create(['activity_id'=>$activity->id,'player_id'=>$player->id,'nickname_snapshot'=>$player->nickname,'prime_gold_value_snapshot'=>300,'participants_count_snapshot'=>2,'player_share'=>$share,'status'=>'pending']);
+        }
+        DB::table('treasury_token_settings')->where('id', 1)->update(['token_unit_value'=>10]);
+        TreasuryTransaction::query()->create(['type'=>'manual_income','amount'=>1000,'balance_after'=>1000,'description'=>'Token split balance','created_by'=>$leader->id]);
+
+        $response = $this->actingAs($leader)->postJson('/api/payouts', [
+            'activity_ids'=>[$activity->id],
+            'distribution_amount'=>10,
+            'distribution_currency'=>'tokens',
+        ])->assertCreated()->assertJsonPath('total_amount', 100);
+
+        $payout = Payout::query()->findOrFail($response->json('id'));
+        self::assertSame(10, $payout->distribution_input_amount);
+        self::assertSame('tokens', $payout->distribution_input_currency);
+        self::assertSame(10, $payout->token_unit_value_snapshot);
+        self::assertSame([33, 67], $payout->players()->orderBy('amount')->pluck('amount')->map(fn ($value)=>(int)$value)->all());
+    }
+
     public function test_mass_payment_loads_all_earning_details_in_one_query(): void
     {
         $leader = $this->user(UserRole::GuildLeader);

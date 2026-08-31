@@ -67,7 +67,7 @@ async function deletePlayer(player) {
 
 <template>
   <section class="roster-page">
-    <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · ГИЛЬДИЯ</p><h1>Состав</h1></div><button v-if="auth.canManage" class="primary" @click="showForm = true">Добавить игрока</button></div>
+    <div class="page-heading"><div><p class="eyebrow">GAZ ARMORY · ГИЛЬДИЯ</p><h1>Состав</h1></div><button v-if="auth.canCreatePlayer" class="primary" @click="showForm = true">Добавить игрока</button></div>
     <div class="toolbar filter-toolbar"><input v-model="guild.filters.search" type="search" placeholder="Поиск по никнейму"><select v-model="guild.filters.class"><option v-for="item in classes" :key="item[0]" :value="item[0]">{{ item[1] }}</option></select><button v-if="hasFilters" class="filter-reset" type="button" @click="resetFilters">Сбросить</button><span class="filter-result">{{ guild.loading?'Обновляем…':playerCountLabel(guild.pagination?.total??0) }}</span></div>
     <div v-if="hasFilters" class="active-filters" aria-label="Активные фильтры"><span v-if="guild.filters.search">Поиск: <b>{{ guild.filters.search }}</b><button aria-label="Убрать поиск" @click="guild.filters.search=''">×</button></span><span v-if="guild.filters.class">Класс: <b>{{ labels[guild.filters.class] }}</b><button aria-label="Убрать фильтр класса" @click="guild.filters.class=''">×</button></span></div>
     <AsyncState :loading="guild.loading&&!guild.players.length" :error="guild.error" :empty="!guild.players.length" loading-text="Загружаем состав…" :empty-title="hasFilters?'По фильтрам ничего не найдено':'В составе пока нет игроков'" :empty-text="hasFilters?'Сбросьте или измените активные фильтры.':'Добавьте первого персонажа в состав гильдии.'" @retry="guild.fetchPlayers" />

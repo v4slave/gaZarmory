@@ -70,6 +70,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
 
     Route::delete('/players/{player}/permanent', [PlayerController::class, 'destroyPermanently']);
     Route::patch('/players/{player}/profile', [PlayerController::class, 'updateProfile']);
+    Route::get('/players/{player}/activities', [PlayerController::class, 'activities']);
+    Route::get('/players/{player}/earnings', [PlayerController::class, 'earnings']);
+    Route::get('/players/{player}/gear-score-history', [PlayerController::class, 'gearScoreHistory']);
     Route::apiResource('players', PlayerController::class);
     Route::post('/players/{player}/activate', [PlayerController::class, 'activate']);
     Route::put('/players/{player}/group', [PlayerController::class, 'move']);

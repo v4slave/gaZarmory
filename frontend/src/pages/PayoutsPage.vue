@@ -28,6 +28,7 @@ const busy = ref(false)
 const preview = ref(null)
 const previewLoading = ref(false)
 const selectionMode = ref('period'), selectedActivities = ref([])
+const distributionAmount = ref(null), distributionCurrency = ref('gold')
 const history = ref([])
 const historyPagination = ref({ current_page: 1, last_page: 1, total: 0 })
 const historyPages = computed(() => {
@@ -55,16 +56,16 @@ const payoutStatus = status => ({draft:'Черновик',calculated:'Рассч
 const payoutDate = value => formatDate(value)
 function openCreateForm() {
   const today = new Date(); const firstDay = new Date(today.getFullYear(), today.getMonth(), 1)
-  from.value = firstDay.toISOString().slice(0, 10); to.value = today.toISOString().slice(0, 10); selectionMode.value='period';selectedActivities.value=[];preview.value = null; error.value = ''; showForm.value = true; loadPreview()
+  from.value = firstDay.toISOString().slice(0, 10); to.value = today.toISOString().slice(0, 10); selectionMode.value='period';selectedActivities.value=[];distributionAmount.value=null;distributionCurrency.value='gold';preview.value = null; error.value = ''; showForm.value = true; loadPreview()
 }
 async function loadPreview() {
   if (!from.value || !to.value || to.value < from.value) { preview.value = null; return }
   previewLoading.value = true; error.value = ''
-  try { const params=selectionMode.value==='activities'&&selectedActivities.value.length?{activity_ids:selectedActivities.value}:{period_from:from.value,period_to:to.value};preview.value = (await api.get('/api/payouts-preview', { params })).data }
+  try { const params=selectionMode.value==='activities'&&selectedActivities.value.length?{activity_ids:selectedActivities.value}:{period_from:from.value,period_to:to.value};if(Number(distributionAmount.value)>0){params.distribution_amount=Number(distributionAmount.value);params.distribution_currency=distributionCurrency.value}preview.value = (await api.get('/api/payouts-preview', { params })).data }
   catch (e) { preview.value = null; error.value = apiErrorMessage(e, 'Не удалось рассчитать предварительную выплату.') }
   finally { previewLoading.value = false }
 }
-async function create() { busy.value = true; error.value = ''; try { const payload=selectionMode.value==='activities'?{activity_ids:selectedActivities.value}:{period_from:from.value,period_to:to.value};const created=(await api.post('/api/payouts',payload)).data;showForm.value=false;notifications.success('Ведомость создана. Подтвердите фактическую выдачу.');await router.push(`/payouts/${created.id}`) } catch (e) { error.value = apiErrorMessage(e, 'Не удалось создать ведомость.'); notifications.error(error.value) } finally { busy.value = false } }
+async function create() { busy.value = true; error.value = ''; try { const payload=selectionMode.value==='activities'?{activity_ids:selectedActivities.value}:{period_from:from.value,period_to:to.value};if(Number(distributionAmount.value)>0){payload.distribution_amount=Number(distributionAmount.value);payload.distribution_currency=distributionCurrency.value}const created=(await api.post('/api/payouts',payload)).data;showForm.value=false;notifications.success('Ведомость создана. Подтвердите фактическую выдачу.');await router.push(`/payouts/${created.id}`) } catch (e) { error.value = apiErrorMessage(e, 'Не удалось создать ведомость.'); notifications.error(error.value) } finally { busy.value = false } }
 onMounted(() => Promise.all([load(), loadHistory()]))
 </script>
 
@@ -84,6 +85,8 @@ onMounted(() => Promise.all([load(), loadHistory()]))
         <div class="payout-mode"><button type="button" :class="{active:selectionMode==='period'}" @click="selectionMode='period';loadPreview()"><b>По периоду</b><small>Все свободные начисления за даты</small></button><button type="button" :class="{active:selectionMode==='activities'}" @click="selectionMode='activities';loadPreview()"><b>Конкретные активности</b><small>Выберите нужные праймы вручную</small></button></div>
         <div v-if="selectionMode==='period'" class="payout-period-fields"><label>Период с<input v-model="from" type="date" required @change="loadPreview"></label><label>Период по<input v-model="to" type="date" :min="from" required @change="loadPreview"></label></div>
         <div v-else class="payout-activity-options"><label v-for="item in preview?.activity_options??[]" :key="item.id" :class="{selected:selectedActivities.includes(item.id)}"><input v-model="selectedActivities" type="checkbox" :value="item.id" @change="loadPreview"><img v-if="item.definition?.icon_url" :src="item.definition.icon_url" :alt="item.definition.name"><span v-else class="payout-activity-placeholder">◆</span><span class="payout-activity-copy"><strong>{{ item.definition?.name }}</strong><small>{{ formatDateTime(item.occurred_at) }}</small></span><i>{{ selectedActivities.includes(item.id)?'✓':'+' }}</i></label></div>
+        <div class="payout-distribution-fields"><label>Сумма в расплит<input v-model.number="distributionAmount" type="number" min="1" max="1000000000" step="1" placeholder="Автоматически" @change="loadPreview"></label><label>Единица<select v-model="distributionCurrency" :disabled="!distributionAmount" @change="loadPreview"><option value="gold">Золото</option><option value="tokens">Жетоны</option></select></label></div>
+        <p class="muted payout-distribution-help">Оставьте сумму пустой для автоматического расчёта. Ручная сумма распределяется пропорционально начислениям игроков.</p>
         <div v-if="previewLoading" class="preview-loading">Рассчитываем выплату…</div>
         <template v-else-if="preview"><div class="financial-preview"><div><span>Активностей</span><strong>{{ preview.activities }}</strong></div><div><span>Игроков</span><strong>{{ preview.players }}</strong></div><div><span>К выдаче</span><strong><GoldAmount :value="formatInteger(preview.amount)"/></strong></div><div><span>Баланс до</span><strong><GoldAmount :value="formatInteger(preview.balance_before)"/></strong></div><div><span>Баланс после</span><strong :class="{negative:!preview.sufficient}"><GoldAmount :value="formatInteger(preview.balance_after)"/></strong></div></div><div class="payout-preview-players"><span v-for="row in preview.rows" :key="row.player_id"><b>{{ row.nickname }}</b><small>{{ row.activities_count }} акт. · {{ formatInteger(row.amount) }} зол.</small></span></div></template>
         <p v-if="preview&&!preview.sufficient" class="notice error">В казне недостаточно реального золота.</p><p v-else-if="preview&&preview.amount===0" class="notice">В выборке нет свободных начислений.</p><p class="payout-create-note">Создание фиксирует ведомость, но не списывает золото. Фактическая выдача отмечается на следующем экране.</p><p v-if="error" class="notice error">{{ error }}</p><div class="form-actions"><button type="button" @click="showForm=false">Отмена</button><button class="primary" :disabled="busy||previewLoading||!preview?.sufficient||!preview?.amount||(selectionMode==='activities'&&!selectedActivities.length)">{{ busy ? 'Создание…' : 'Создать ведомость' }}</button></div>

@@ -4,7 +4,11 @@ namespace Tests\Feature;
 
 use App\Enums\PlayerClass;
 use App\Enums\UserRole;
+use App\Models\Activity;
+use App\Models\ActivityDefinition;
 use App\Models\Player;
+use App\Models\PlayerGearScoreHistory;
+use App\Models\PrimePlayerEarning;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\TestCase;
@@ -50,6 +54,84 @@ final class DeveloperPlayerProfileTest extends TestCase
         $this->actingAs($member)
             ->patchJson('/api/players/'.$player->id.'/profile', $this->payload())
             ->assertForbidden();
+    }
+
+    public function test_profile_summary_excludes_history_collections(): void
+    {
+        $developer = $this->userWithRole(UserRole::Developer, 'summary');
+        $player = Player::query()->create([
+            'nickname' => 'Summaryprofile',
+            'class' => PlayerClass::Mage,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($developer)
+            ->getJson('/api/players/'.$player->id)
+            ->assertOk()
+            ->assertJsonMissingPath('activities')
+            ->assertJsonMissingPath('earnings_history')
+            ->assertJsonStructure(['id', 'nickname', 'statistics']);
+    }
+
+    public function test_profile_histories_are_returned_by_paginated_endpoints(): void
+    {
+        $developer = $this->userWithRole(UserRole::Developer, 'history');
+        $player = Player::query()->create([
+            'nickname' => 'Historyprofile',
+            'class' => PlayerClass::Archer,
+            'is_active' => true,
+        ]);
+        $definition = ActivityDefinition::query()->create([
+            'name' => 'Profile history prime',
+            'type' => 'prime',
+            'is_active' => true,
+        ]);
+
+        foreach ([1, 2, 3] as $index) {
+            $activity = Activity::query()->create([
+                'activity_definition_id' => $definition->id,
+                'occurred_at' => now()->subDays(4 - $index),
+                'gold_value' => 300,
+                'created_by' => $developer->id,
+            ]);
+            $activity->players()->attach($player->id, ['created_at' => now()]);
+            PrimePlayerEarning::query()->create([
+                'activity_id' => $activity->id,
+                'player_id' => $player->id,
+                'nickname_snapshot' => $player->nickname,
+                'prime_gold_value_snapshot' => 300,
+                'participants_count_snapshot' => 1,
+                'player_share' => 100 * $index,
+                'status' => 'pending',
+            ]);
+            PlayerGearScoreHistory::query()->create([
+                'player_id' => $player->id,
+                'gear_score' => 10000 + $index,
+                'recorded_at' => now()->subDays(4 - $index),
+            ]);
+        }
+
+        $this->actingAs($developer)
+            ->getJson('/api/players/'.$player->id.'/activities?per_page=2')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('total', 3)
+            ->assertJsonPath('last_page', 2)
+            ->assertJsonPath('data.0.definition.name', 'Profile history prime');
+
+        $this->actingAs($developer)
+            ->getJson('/api/players/'.$player->id.'/earnings?per_page=2')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('total', 3)
+            ->assertJsonPath('data.0.player_share', 300);
+
+        $this->actingAs($developer)
+            ->getJson('/api/players/'.$player->id.'/gear-score-history?per_page=2')
+            ->assertOk()
+            ->assertJsonCount(2, 'data')
+            ->assertJsonPath('total', 3)
+            ->assertJsonPath('data.0.gear_score', 10003);
     }
 
     private function userWithRole(UserRole $role, string $prefix): User

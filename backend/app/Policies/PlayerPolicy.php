@@ -10,7 +10,11 @@ final class PlayerPolicy
 {
     public function viewAny(User $user): bool { return true; }
     public function view(User $user, Player $player): bool { return true; }
-    public function create(User $user): bool { return $user->canManageGuild(); }
+    public function create(User $user): bool
+    {
+        return $user->canManageGuild()
+            || ($user->hasRole(UserRole::PartyLeader) && $user->player?->group_id !== null);
+    }
     public function update(User $user, Player $player): bool { return $user->canManageGuild(); }
     public function move(User $user, Player $player): bool
     {

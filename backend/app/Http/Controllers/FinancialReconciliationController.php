@@ -152,7 +152,7 @@ final class FinancialReconciliationController extends Controller
             ->whereNotIn('payouts.status', ['draft','cancelled'])
             ->where(function ($query): void {
                 $query->whereRaw('COALESCE(player_totals.total, 0) <> payouts.total_amount')
-                    ->orWhereRaw('COALESCE(earning_totals.total, 0) <> payouts.total_amount')
+                    ->orWhere(fn ($earnings) => $earnings->whereNull('payouts.distribution_input_amount')->whereRaw('COALESCE(earning_totals.total, 0) <> payouts.total_amount'))
                     ->orWhere(fn ($paid) => $paid->where('payouts.status', 'paid')->where(fn ($invalid) => $invalid
                         ->whereRaw('COALESCE(gold_totals.total, 0) <> -payouts.total_amount')
                         ->orWhereRaw('COALESCE(player_totals.all_paid, false) = false')));
@@ -164,7 +164,7 @@ final class FinancialReconciliationController extends Controller
             $playersTotal = (int) $payout->players_total;
             $earningsTotal = (int) $payout->earnings_total;
             if ($playersTotal !== (int) $payout->total_amount) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': сумма игроков не совпадает','Игрокам '.$playersTotal.', итог '.$payout->total_amount,'payout',$payout->id);
-            if ($earningsTotal !== (int) $payout->total_amount) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': начисления не совпадают','Начисления '.$earningsTotal.', итог '.$payout->total_amount,'payout',$payout->id);
+            if ($payout->distribution_input_amount === null && $earningsTotal !== (int) $payout->total_amount) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': начисления не совпадают','Начисления '.$earningsTotal.', итог '.$payout->total_amount,'payout',$payout->id);
             if ($payout->status === 'paid') {
                 $gold = (int) $payout->gold_total;
                 if ($gold !== -(int)$payout->total_amount) $issues[] = $this->issue('critical','Нахрюк #'.$payout->id.': неверное списание золота','Ожидалось '.(-$payout->total_amount).', списано '.$gold,'payout',$payout->id);

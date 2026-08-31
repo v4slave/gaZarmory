@@ -16,7 +16,7 @@ const translations = {
   'СЕРВЕР НЕДОСТУПЕН': 'SERVER UNAVAILABLE', 'Не удалось подключиться к серверу': 'Could not connect to the server',
   'Проверьте соединение или состояние сервера и попробуйте снова.': 'Check your connection or the server status and try again.',
   'Проверить статус': 'Check status', 'Административное пространство': 'Administrative workspace',
-  'Вернуться в гильдию': 'Back to guild', 'Закрыть без сохранения изменений?': 'Close without saving changes?',
+  'Вернуться в гильдию': 'Back to guild', 'Закрыть без сохранения изменений?': 'Close without saving changes?', 'Несохранённые изменения будут потеряны.': 'Unsaved changes will be lost.', 'Остаться': 'Stay',
   'Не удалось загрузить уведомления.': 'Could not load notifications.', 'Обзор': 'Overview',
   'Обновляем…': 'Updating…', 'Активные фильтры': 'Active filters', 'Убрать поиск': 'Remove search',
   'Убрать фильтр класса': 'Remove class filter', 'По фильтрам ничего не найдено': 'No results match the filters',

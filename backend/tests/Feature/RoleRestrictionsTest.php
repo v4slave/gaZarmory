@@ -60,6 +60,33 @@ final class RoleRestrictionsTest extends TestCase
         $this->actingAs($partyLeader)->deleteJson('/api/groups/'.$group->id)->assertForbidden();
     }
 
+    public function test_party_leader_can_create_player_only_in_own_group(): void
+    {
+        $partyLeader = $this->user(UserRole::PartyLeader);
+        $ownGroup = GuildGroup::query()->create(['name' => 'Own party '.uniqid()]);
+        $otherGroup = GuildGroup::query()->create(['name' => 'Other party '.uniqid()]);
+        $partyLeader->player->update(['group_id' => $ownGroup->id]);
+
+        $nickname = 'NewcomerTest';
+        $this->actingAs($partyLeader)->postJson('/api/players', [
+            'nickname' => $nickname,
+            'class' => PlayerClass::Healer->value,
+            'group_id' => $otherGroup->id,
+        ])->assertCreated()->assertJsonPath('group_id', $ownGroup->id);
+
+        $this->assertDatabaseHas('players', ['nickname' => $nickname, 'group_id' => $ownGroup->id]);
+    }
+
+    public function test_party_leader_without_group_cannot_create_player(): void
+    {
+        $partyLeader = $this->user(UserRole::PartyLeader);
+
+        $this->actingAs($partyLeader)->postJson('/api/players', [
+            'nickname' => 'UngroupedTest',
+            'class' => PlayerClass::Mage->value,
+        ])->assertForbidden();
+    }
+
     private function user(UserRole $role): User
     {
         $suffix = str_replace('.', '', uniqid('', true));
