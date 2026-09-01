@@ -4,8 +4,38 @@ import io
 import sys
 from pathlib import Path
 
+import numpy as np
 from PIL import Image, ImageOps
 from rembg import new_session, remove
+from scipy import ndimage
+
+
+def clean_and_crop(result: bytes) -> Image.Image:
+    image = Image.open(io.BytesIO(result)).convert("RGBA")
+    alpha = np.asarray(image.getchannel("A"))
+    foreground = alpha >= 32
+    labels, count = ndimage.label(foreground, structure=np.ones((3, 3), dtype=np.uint8))
+
+    if count:
+        sizes = np.bincount(labels.ravel())
+        sizes[0] = 0
+        main_component = labels == int(sizes.argmax())
+        protected = ndimage.binary_dilation(main_component, iterations=3)
+        cleaned_alpha = np.where(protected, alpha, 0).astype(np.uint8)
+        image.putalpha(Image.fromarray(cleaned_alpha))
+
+    bounds = image.getchannel("A").getbbox()
+    if not bounds:
+        raise RuntimeError("No foreground was detected")
+
+    left, top, right, bottom = bounds
+    padding = max(12, round(max(right - left, bottom - top) * 0.04))
+    return image.crop((
+        max(0, left - padding),
+        max(0, top - padding),
+        min(image.width, right + padding),
+        min(image.height, bottom + padding),
+    ))
 
 
 def main() -> None:
@@ -20,7 +50,7 @@ def main() -> None:
         image.save(prepared, format="PNG", optimize=True)
 
     result = remove(prepared.getvalue(), session=new_session(model_name))
-    destination.write_bytes(result)
+    clean_and_crop(result).save(destination, format="PNG", optimize=True)
 
 
 if __name__ == "__main__":
