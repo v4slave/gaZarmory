@@ -352,9 +352,10 @@ async function saveProfile() {
         />
       </div>
     </div>
+    <div class="profile-equipment-row">
     <div class="panel player-assets-panel">
       <div class="panel-title">
-        <h2>Оснащение и транспорт</h2>
+        <h2>Персоналки</h2>
         <span class="muted"
           >{{ Object.keys(assetLabels).filter((key) => player[key]).length }} /
           {{ Object.keys(assetLabels).length }}</span
@@ -426,6 +427,7 @@ async function saveProfile() {
           />
         </div>
       </div>
+    </div>
     </div>
     <div class="split-grid profile profile-history-grid">
       <div class="panel">
@@ -567,7 +569,7 @@ async function saveProfile() {
         </div>
         <div class="profile-edit-section">
           <div class="profile-edit-section-title">
-            <span>✓</span><strong>Оснащение и транспорт</strong>
+            <span>✓</span><strong>Персоналки</strong>
           </div>
           <div class="profile-asset-editor">
             <label v-for="(label, key) in assetLabels" :key="key"
