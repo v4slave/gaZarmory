@@ -7,7 +7,7 @@ return [
     'rembg' => [
         'python_binary' => env('REMBG_PYTHON_BINARY', '/var/www/gaz-armory/shared/rembg/venv/bin/python'),
         'model_dir' => env('REMBG_MODEL_DIR', '/var/www/gaz-armory/shared/rembg/models'),
-        'model' => env('REMBG_MODEL', 'isnet-general-use'),
+        'model' => env('REMBG_MODEL', 'isnet-anime'),
         'timeout' => (int) env('REMBG_TIMEOUT', 90),
     ],
     'discord' => [
