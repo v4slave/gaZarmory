@@ -27,6 +27,7 @@ const AdminAuditPage = page('AdminAuditPage')
 const AdminEconomyPage = page('AdminEconomyPage')
 const AdminIntegrationsPage = page('AdminIntegrationsPage')
 const MediaPage = page('MediaPage')
+const GearImportPage = page('GearImportPage')
 
 export function preloadManagementPages() {
   return Promise.all([RosterReadinessPage(), AttendanceAnalyticsPage()])
@@ -42,6 +43,7 @@ const routes = [
   { path: '/attendance-analytics', component: AttendanceAnalyticsPage, meta: { title: 'Аналитика посещаемости', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
   { path: '/financial-reconciliation', component: FinancialReconciliationPage, meta: { title: 'Финансовая сверка', roles: ['guild_leader', 'developer'] } },
   { path: '/players/:id', component: PlayerPage, meta: { title: 'Игрок' } },
+  { path: '/gear-import', component: GearImportPage, meta: { title: 'Импорт экипировки' } },
   { path: '/activities', component: ActivitiesPage, meta: { title: 'Активности' } },
   { path: '/activities/:id', component: ActivityPage, meta: { title: 'Активность' } },
   { path: '/media', component: MediaPage, meta: { title: 'Контент' } },

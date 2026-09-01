@@ -52,6 +52,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::patch('/me/player/class', [SelfPlayerController::class, 'changeClass']);
     Route::patch('/me/player/profile', [SelfPlayerController::class, 'updateProfile']);
     Route::post('/me/player/archa-gear', [ArchaGearController::class, 'self'])->middleware('throttle:6,1');
+    Route::post('/me/player/archa-gear-snapshot', [ArchaGearController::class, 'snapshot'])->middleware('throttle:6,1');
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'read']);
