@@ -1,0 +1,11 @@
+{
+  "name": "armory-aa-backend-tools",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "install-browser": "playwright install --with-deps chromium"
+  },
+  "dependencies": {
+    "playwright": "1.62.1"
+  }
+}

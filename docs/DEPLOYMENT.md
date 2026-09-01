@@ -10,6 +10,7 @@
 - PHP 8.3+ с расширениями `pgsql`, `mbstring`, `xml`, `curl`, `zip`, `gd`, `intl`, `fileinfo`;
 - Composer 2;
 - Node.js с npm;
+- системные библиотеки Chromium (устанавливаются командой Playwright ниже);
 - PostgreSQL;
 - Certbot или другой ACME-клиент для HTTPS.
 
@@ -39,6 +40,8 @@ cp frontend/.env.production.example frontend/.env.production
 
 ```bash
 composer install --working-dir=backend --no-dev --prefer-dist --no-interaction --optimize-autoloader
+npm ci --prefix backend
+npx --prefix backend playwright install --with-deps chromium
 php backend/artisan key:generate
 npm ci --prefix frontend
 npm run build --prefix frontend

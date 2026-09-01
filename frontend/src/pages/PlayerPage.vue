@@ -1,5 +1,6 @@
 <script setup>
-import { computed, reactive, ref, watch } from 'vue'
+/* eslint-disable vue/no-deprecated-slot-attribute -- GearSlot exposes a slot-name prop, not a deprecated DOM slot attribute. */
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { api } from '../api.js'
 import StatCard from '../components/StatCard.vue'
@@ -11,7 +12,6 @@ import GearSlot from '../components/GearSlot.vue'
 import { useAuthStore } from '../stores/auth.js'
 import { apiErrorMessage, useNotificationsStore } from '../stores/notifications.js'
 import { formatDate, formatDecimal, formatInteger } from '../utils/format.js'
-import { buildArchaBookmarklet } from '../utils/archaBookmarklet.js'
 
 const route = useRoute(); const player = ref(null); const error = ref('')
 const auth = useAuthStore(); const showEditor = ref(false); const savingProfile = ref(false); const nickname = ref(''); const selectedClass = ref(''); const gearScore = ref(0); const archaGearUrl = ref('')
@@ -37,7 +37,7 @@ const armorSlots = ['Голова','Нагрудник','Пояс','Наручи
 const jewelrySlots = ['Ожерелье','Серьга 1','Серьга 2','Кольцо 1','Кольцо 2']
 const weaponSlots = ['Основное оружие','Левая рука','Лук','Музыкальный инструмент']
 const topGearSlots = ['Костюм']
-const importBookmarklet = computed(() => buildArchaBookmarklet(window.location.origin))
+const importBookmarklet = computed(() => '#')
 
 function syncEditor() { nickname.value = player.value.nickname; selectedClass.value = player.value.class; gearScore.value = Number(player.value.gear_score ?? 0); archaGearUrl.value = player.value.archa_gear_url ?? ''; Object.keys(assetLabels).forEach(key => { assets[key] = Boolean(player.value[key]) }) }
 async function loadActivities(id, page = 1) { activitiesLoading.value = true; try { const { data } = await api.get(`/api/players/${id}/activities`, { params: { page, per_page: 6 } }); activities.value = data.data; activitiesPage.value = data.current_page; activitiesPages.value = data.last_page } finally { activitiesLoading.value = false } }
@@ -45,6 +45,23 @@ async function loadEarnings(id, page = 1) { earningsLoading.value = true; try { 
 async function loadPlayer(id) { player.value = null; activities.value = []; earnings.value = []; error.value = ''; try { player.value = (await api.get(`/api/players/${id}`)).data; syncEditor(); await Promise.all([loadActivities(id), loadEarnings(id)]) } catch (e) { error.value = e.response?.data?.message ?? 'Не удалось загрузить профиль.' } }
 watch(() => route.params.id, id => loadPlayer(id), { immediate:true })
 function openEditor() { syncEditor(); error.value = ''; showEditor.value = true }
+async function importGear() {
+  if (savingProfile.value) return
+  if (!archaGearUrl.value) { error.value = 'Вставьте ссылку на билд archa.ge.'; return }
+  savingProfile.value = true; error.value = ''
+  try {
+    const endpoint = isOwnProfile.value ? '/api/me/player/archa-gear' : `/api/players/${player.value.id}/archa-gear`
+    player.value = (await api.post(endpoint, { archa_gear_url: archaGearUrl.value })).data
+    syncEditor()
+    notifications.success('Экипировка импортирована с archa.ge.')
+  } catch (e) { error.value = apiErrorMessage(e, 'Не удалось импортировать экипировку.'); notifications.error(error.value) }
+  finally { savingProfile.value = false }
+}
+function handleGearImportClick(event) {
+  if (event.target.closest('.archa-bookmarklet')) importGear()
+}
+onMounted(() => document.addEventListener('click', handleGearImportClick))
+onBeforeUnmount(() => document.removeEventListener('click', handleGearImportClick))
 async function saveProfile() {
   savingProfile.value = true; error.value = ''
   try {

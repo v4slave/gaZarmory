@@ -7,6 +7,7 @@ use DOMElement;
 use DOMXPath;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Validation\ValidationException;
+use Symfony\Component\Process\Process;
 
 final class ArchaGearImporter
 {
@@ -27,11 +28,51 @@ final class ArchaGearImporter
         }
 
         $items = $this->parse($response->body());
+        if ($items === []) $items = $this->importWithBrowser($url);
         if ($items === []) {
             throw ValidationException::withMessages(['archa_gear_url' => 'В билде не найдена экипировка. Проверьте ссылку и доступность билда.']);
         }
 
         return ['url' => $url, 'items' => $items];
+    }
+
+    private function importWithBrowser(string $url): array
+    {
+        $process = new Process([
+            (string) config('services.archa.node_binary', 'node'),
+            base_path('scripts/import-archa-gear.mjs'),
+            $url,
+        ]);
+        $process->setTimeout(45);
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            report(new \RuntimeException('Archa browser import failed: '.trim($process->getErrorOutput())));
+            return [];
+        }
+
+        $items = json_decode($process->getOutput(), true);
+        if (! is_array($items)) return [];
+
+        return array_values(array_map(fn (array $item): array => [
+            'slot' => $item['slot'],
+            'name' => $item['name'],
+            'quality' => $item['quality'] ?? '',
+            'grade' => $item['grade'] ?? '',
+            'image_url' => '/api/archa-gear/items/'.$item['item_id'],
+            'stats' => $item['stats'] ?? [],
+            'rune' => isset($item['rune']) ? [
+                'text' => $item['rune']['text'],
+                'grade' => $item['rune']['grade'] ?? '',
+                'image_url' => '/api/archa-gear/assets/runes/'.$item['rune']['id'],
+            ] : null,
+            'gems' => array_map(fn (array $gem): array => [
+                'text' => $gem['text'],
+                'grade' => $gem['grade'] ?? '',
+                'image_url' => '/api/archa-gear/assets/gems/'.$gem['id'],
+            ], $item['gems'] ?? []),
+            'synthesis' => $item['synthesis'] ?? [],
+        ], $items));
     }
 
     public function parse(string $html): array

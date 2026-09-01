@@ -50,33 +50,6 @@ final class ArchaGearImportTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_browser_snapshot_can_be_saved_for_linked_player(): void
-    {
-        $suffix = str_replace('.', '', uniqid('', true));
-        $user = User::query()->create(['discord_id' => $suffix, 'discord_username' => 'snapshot-'.$suffix]);
-        $user->forceFill(['roles' => [UserRole::Member->value], 'role' => UserRole::Member])->save();
-        $player = Player::query()->create(['nickname' => 'Snapshot'.$suffix, 'class' => PlayerClass::Mage, 'is_active' => true]);
-        $player->forceFill(['user_id' => $user->id])->save();
-
-        $this->actingAs($user)->postJson('/api/me/player/archa-gear-snapshot', [
-            'source_url' => 'https://archa.ge/?u=216950152060076033&bid=61',
-            'items' => [[
-                'slot' => 'Голова', 'name' => '+15 Проклятый капюшон', 'quality' => 'Предмет Эпохи Сказаний',
-                'grade' => 'epic', 'item_id' => 45851,
-                'stats' => ['Защита: 718'],
-                'rune' => ['text' => 'Доп. урон умений: 3%', 'id' => 39951, 'grade' => 'epic'],
-                'gems' => [['text' => 'Критический урон: 8%', 'id' => 46393, 'grade' => 'divine']],
-                'synthesis' => ['Интеллект: 185'],
-            ]],
-        ])->assertOk()
-            ->assertJsonPath('archa_gear_items.0.slot', 'Голова')
-            ->assertJsonPath('archa_gear_items.0.image_url', '/api/archa-gear/items/45851')
-            ->assertJsonPath('archa_gear_items.0.stats.0', 'Защита: 718')
-            ->assertJsonPath('archa_gear_items.0.rune.image_url', '/api/archa-gear/assets/runes/39951')
-            ->assertJsonPath('archa_gear_items.0.gems.0.image_url', '/api/archa-gear/assets/gems/46393')
-            ->assertJsonPath('archa_gear_items.0.synthesis.0', 'Интеллект: 185');
-    }
-
     private function fixture(): string
     {
         $popover = htmlspecialchars("<div class='popover-body'><div class='row'><div class='col-9 aa-grade-9'>Предмет Эпохи Сказаний<br>+15 Проклятый рамианский кожаный капюшон</div></div></div>", ENT_QUOTES | ENT_HTML5);

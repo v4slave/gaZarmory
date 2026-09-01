@@ -1,6 +1,9 @@
 <?php
 
 return [
+    'archa' => [
+        'node_binary' => env('ARCHA_IMPORT_NODE_BINARY', 'node'),
+    ],
     'discord' => [
         'client_id' => env('DISCORD_CLIENT_ID'),
         'client_secret' => env('DISCORD_CLIENT_SECRET'),
