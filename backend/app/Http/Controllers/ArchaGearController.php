@@ -20,10 +20,16 @@ final class ArchaGearController extends Controller
 
     public function image(string $itemId): Response
     {
-        $image = Cache::remember('archa-gear-item-'.$itemId, now()->addDay(), function () use ($itemId): string {
+        return $this->asset('items', $itemId);
+    }
+
+    public function asset(string $type, string $assetId): Response
+    {
+        abort_unless(in_array($type, ['items', 'runes', 'gems'], true), 404);
+        $image = Cache::remember('archa-gear-'.$type.'-'.$assetId, now()->addDay(), function () use ($type, $assetId): string {
             $request = Http::timeout(10)->withHeaders(['Referer' => 'https://archa.ge/']);
             if (app()->environment('local')) $request->withoutVerifying();
-            $response = $request->get('https://archa.ge/images/items/'.$itemId.'.jpg');
+            $response = $request->get('https://archa.ge/images/'.$type.'/'.$assetId.'.jpg');
             abort_unless($response->successful(), 404);
             return $response->body();
         });
@@ -52,10 +58,26 @@ final class ArchaGearController extends Controller
             'items.*.quality' => ['nullable', 'string', 'max:100'],
             'items.*.grade' => ['nullable', 'string', Rule::in(['basic','grand','rare','arcane','heroic','unique','celestial','divine','epic','legendary','mythic','eternal'])],
             'items.*.item_id' => ['required', 'integer', 'min:1', 'max:99999999'],
+            'items.*.stats' => ['sometimes', 'array', 'max:12'],
+            'items.*.stats.*' => ['string', 'max:120'],
+            'items.*.rune' => ['nullable', 'array'],
+            'items.*.rune.text' => ['required_with:items.*.rune', 'string', 'max:120'],
+            'items.*.rune.id' => ['required_with:items.*.rune', 'integer', 'min:1', 'max:99999999'],
+            'items.*.rune.grade' => ['nullable', 'string', 'max:20'],
+            'items.*.gems' => ['sometimes', 'array', 'max:12'],
+            'items.*.gems.*.text' => ['required', 'string', 'max:120'],
+            'items.*.gems.*.id' => ['required', 'integer', 'min:1', 'max:99999999'],
+            'items.*.gems.*.grade' => ['nullable', 'string', 'max:20'],
+            'items.*.synthesis' => ['sometimes', 'array', 'max:8'],
+            'items.*.synthesis.*' => ['string', 'max:120'],
         ]);
         $items = collect($data['items'])->unique('slot')->map(fn (array $item) => [
             'slot' => $item['slot'], 'name' => $item['name'], 'quality' => $item['quality'] ?? '',
             'grade' => $item['grade'] ?? '', 'image_url' => '/api/archa-gear/items/'.$item['item_id'],
+            'stats' => $item['stats'] ?? [],
+            'rune' => isset($item['rune']) ? ['text' => $item['rune']['text'], 'grade' => $item['rune']['grade'] ?? '', 'image_url' => '/api/archa-gear/assets/runes/'.$item['rune']['id']] : null,
+            'gems' => collect($item['gems'] ?? [])->map(fn (array $gem) => ['text' => $gem['text'], 'grade' => $gem['grade'] ?? '', 'image_url' => '/api/archa-gear/assets/gems/'.$gem['id']])->all(),
+            'synthesis' => $item['synthesis'] ?? [],
         ])->values()->all();
         if ($items === []) throw ValidationException::withMessages(['items' => 'Экипировка не найдена.']);
         $old = $player->only(['archa_gear_url', 'archa_gear_items', 'archa_gear_updated_at']);

@@ -63,10 +63,18 @@ final class ArchaGearImportTest extends TestCase
             'items' => [[
                 'slot' => 'Голова', 'name' => '+15 Проклятый капюшон', 'quality' => 'Предмет Эпохи Сказаний',
                 'grade' => 'epic', 'item_id' => 45851,
+                'stats' => ['Защита: 718'],
+                'rune' => ['text' => 'Доп. урон умений: 3%', 'id' => 39951, 'grade' => 'epic'],
+                'gems' => [['text' => 'Критический урон: 8%', 'id' => 46393, 'grade' => 'divine']],
+                'synthesis' => ['Интеллект: 185'],
             ]],
         ])->assertOk()
             ->assertJsonPath('archa_gear_items.0.slot', 'Голова')
-            ->assertJsonPath('archa_gear_items.0.image_url', '/api/archa-gear/items/45851');
+            ->assertJsonPath('archa_gear_items.0.image_url', '/api/archa-gear/items/45851')
+            ->assertJsonPath('archa_gear_items.0.stats.0', 'Защита: 718')
+            ->assertJsonPath('archa_gear_items.0.rune.image_url', '/api/archa-gear/assets/runes/39951')
+            ->assertJsonPath('archa_gear_items.0.gems.0.image_url', '/api/archa-gear/assets/gems/46393')
+            ->assertJsonPath('archa_gear_items.0.synthesis.0', 'Интеллект: 185');
     }
 
     private function fixture(): string

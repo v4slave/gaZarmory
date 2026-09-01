@@ -11,6 +11,7 @@ import GearSlot from '../components/GearSlot.vue'
 import { useAuthStore } from '../stores/auth.js'
 import { apiErrorMessage, useNotificationsStore } from '../stores/notifications.js'
 import { formatDate, formatDecimal, formatInteger } from '../utils/format.js'
+import { buildArchaBookmarklet } from '../utils/archaBookmarklet.js'
 
 const route = useRoute(); const player = ref(null); const error = ref('')
 const auth = useAuthStore(); const showEditor = ref(false); const savingProfile = ref(false); const nickname = ref(''); const selectedClass = ref(''); const gearScore = ref(0); const archaGearUrl = ref('')
@@ -36,11 +37,7 @@ const armorSlots = ['Голова','Нагрудник','Пояс','Наручи
 const jewelrySlots = ['Ожерелье','Серьга 1','Серьга 2','Кольцо 1','Кольцо 2']
 const weaponSlots = ['Основное оружие','Левая рука','Лук','Музыкальный инструмент']
 const topGearSlots = ['Костюм']
-const importBookmarklet = computed(() => {
-  const armory = window.location.origin
-  const code = `(function(){if(location.hostname!=='archa.ge'){alert('Откройте билд на archa.ge и нажмите эту закладку ещё раз.');return}var slots=${JSON.stringify(['Костюм','Голова','Нагрудник','Пояс','Наручи','Перчатки','Плащ','Поножи','Обувь','Бельё','Ожерелье','Серьга 1','Серьга 2','Кольцо 1','Кольцо 2','Основное оружие','Левая рука','Лук','Музыкальный инструмент'])},decode=function(s){var t=document.createElement('textarea');t.innerHTML=s;return t.value},items=[].slice.call(document.querySelectorAll('.aa-itemslot')).slice(0,19).map(function(el,i){var img=el.querySelector(':scope>img:not([class])'),grade=el.querySelector('.aa-gradecorner'),src=img&&img.getAttribute('src')||'',id=(src.match(/\\/items\\/(\\d+)\\.jpg/)||[])[1],html=grade&&grade.getAttribute('data-bs-content')||'',m=html.match(/<div class=['\"]col-9[^'\"]*['\"]>\\s*(.*?)\\s*<br\\s*\\/?>\\s*(.*?)\\s*<\\/div>/is),g=((grade&&grade.getAttribute('src')||'').match(/item_grade_([A-Za-z]+)\\.png/)||[])[1];return id&&m?{slot:slots[i],name:decode(m[2].replace(/<[^>]+>/g,'')),quality:decode(m[1].replace(/<[^>]+>/g,'')),grade:(g||'').toLowerCase(),item_id:Number(id)}:null}).filter(Boolean);if(!items.length){alert('Экипировка не найдена. Дождитесь полной загрузки билда.');return}var json=JSON.stringify({source_url:location.href,items:items}),bytes=new TextEncoder().encode(json),bin='';bytes.forEach(function(b){bin+=String.fromCharCode(b)});location.href='${armory}/gear-import#'+btoa(bin).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'')})()`
-  return `javascript:${code}`
-})
+const importBookmarklet = computed(() => buildArchaBookmarklet(window.location.origin))
 
 function syncEditor() { nickname.value = player.value.nickname; selectedClass.value = player.value.class; gearScore.value = Number(player.value.gear_score ?? 0); archaGearUrl.value = player.value.archa_gear_url ?? ''; Object.keys(assetLabels).forEach(key => { assets[key] = Boolean(player.value[key]) }) }
 async function loadActivities(id, page = 1) { activitiesLoading.value = true; try { const { data } = await api.get(`/api/players/${id}/activities`, { params: { page, per_page: 6 } }); activities.value = data.data; activitiesPage.value = data.current_page; activitiesPages.value = data.last_page } finally { activitiesLoading.value = false } }

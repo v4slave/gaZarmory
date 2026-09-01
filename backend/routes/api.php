@@ -39,6 +39,8 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/archa-gear/items/{itemId}', [ArchaGearController::class, 'image'])
     ->whereNumber('itemId')->middleware('throttle:120,1');
+Route::get('/archa-gear/assets/{type}/{assetId}', [ArchaGearController::class, 'asset'])
+    ->whereIn('type', ['items', 'runes', 'gems'])->whereNumber('assetId')->middleware('throttle:120,1');
 
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/me', fn (Request $request) => $request->user()?->load(['player', 'pendingPlayerLinkRequest.player:id,nickname,class']));
