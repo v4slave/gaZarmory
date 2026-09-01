@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ArchaGearController;
 use App\Http\Controllers\GuildGroupController;
 use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerLinkController;
@@ -36,6 +37,9 @@ use App\Services\DiscordProfileService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
+Route::get('/archa-gear/items/{itemId}', [ArchaGearController::class, 'image'])
+    ->whereNumber('itemId')->middleware('throttle:120,1');
+
 Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::get('/me', fn (Request $request) => $request->user()?->load(['player', 'pendingPlayerLinkRequest.player:id,nickname,class']));
     Route::post('/me/discord-profile/sync', function (Request $request, DiscordProfileService $discord) {
@@ -47,6 +51,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::patch('/me/player/nickname', [SelfPlayerController::class, 'rename']);
     Route::patch('/me/player/class', [SelfPlayerController::class, 'changeClass']);
     Route::patch('/me/player/profile', [SelfPlayerController::class, 'updateProfile']);
+    Route::post('/me/player/archa-gear', [ArchaGearController::class, 'self'])->middleware('throttle:6,1');
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/read-all', [NotificationController::class, 'readAll']);
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'read']);
@@ -70,6 +75,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
 
     Route::delete('/players/{player}/permanent', [PlayerController::class, 'destroyPermanently']);
     Route::patch('/players/{player}/profile', [PlayerController::class, 'updateProfile']);
+    Route::post('/players/{player}/archa-gear', [ArchaGearController::class, 'player'])->middleware('throttle:6,1');
     Route::get('/players/{player}/activities', [PlayerController::class, 'activities']);
     Route::get('/players/{player}/earnings', [PlayerController::class, 'earnings']);
     Route::get('/players/{player}/gear-score-history', [PlayerController::class, 'gearScoreHistory']);
