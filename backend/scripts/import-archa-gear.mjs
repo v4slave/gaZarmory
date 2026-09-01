@@ -1,4 +1,5 @@
-import { chromium } from 'playwright'
+process.env.PLAYWRIGHT_BROWSERS_PATH ||= '0'
+const { chromium } = await import('playwright')
 
 const url = process.argv[2]
 if (!url) throw new Error('Build URL is required')

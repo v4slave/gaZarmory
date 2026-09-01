@@ -41,7 +41,7 @@ cp frontend/.env.production.example frontend/.env.production
 ```bash
 composer install --working-dir=backend --no-dev --prefer-dist --no-interaction --optimize-autoloader
 npm ci --prefix backend
-npx --prefix backend playwright install --with-deps chromium
+PLAYWRIGHT_BROWSERS_PATH=0 npx --prefix backend playwright install --with-deps chromium
 php backend/artisan key:generate
 npm ci --prefix frontend
 npm run build --prefix frontend

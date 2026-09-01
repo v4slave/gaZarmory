@@ -6,7 +6,7 @@ cd "$APP_DIR"
 
 composer install --working-dir=backend --no-dev --prefer-dist --no-interaction --optimize-autoloader
 npm ci --prefix backend
-npm run install-browser --prefix backend
+PLAYWRIGHT_BROWSERS_PATH=0 npm run install-browser --prefix backend
 npm ci --prefix frontend
 npm run build --prefix frontend
 

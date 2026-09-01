@@ -3,6 +3,10 @@ defineProps({
   slot: { type: String, required: true },
   item: { type: Object, default: null },
 })
+
+function statClass(stat) {
+  return /^(Эффективность исцеления|Урон|Сопротивление|Защита|Эффективность ячейки)/i.test(stat) ? 'gear-stat-accent' : ''
+}
 </script>
 
 <template>
@@ -15,21 +19,21 @@ defineProps({
         <img :src="item.image_url" alt="">
         <div><span>{{ item.quality }}</span><b>{{ item.name }}</b></div>
       </header>
-      <section v-if="item.stats?.length" class="gear-detail-stats">
-        <p v-for="stat in item.stats" :key="stat">{{ stat }}</p>
-      </section>
-      <section v-if="item.rune" class="gear-detail-mod gear-detail-rune">
+      <div v-if="item.stats?.length" class="gear-detail-block gear-detail-stats">
+        <p v-for="stat in item.stats" :key="stat" :class="statClass(stat)">{{ stat }}</p>
+      </div>
+      <div v-if="item.rune" class="gear-detail-block gear-detail-mod gear-detail-rune">
         <img :src="item.rune.image_url" alt=""><span>{{ item.rune.text }}</span>
-      </section>
-      <section v-if="item.gems?.length" class="gear-detail-gems">
+      </div>
+      <div v-if="item.gems?.length" class="gear-detail-block gear-detail-gems">
         <div v-for="(gem, index) in item.gems" :key="`${gem.text}-${index}`">
           <img :src="gem.image_url" alt=""><span>{{ gem.text }}</span>
         </div>
-      </section>
-      <section v-if="item.synthesis?.length" class="gear-detail-synthesis">
+      </div>
+      <div v-if="item.synthesis?.length" class="gear-detail-block gear-detail-synthesis">
         <small>Эффекты синтеза</small>
         <p v-for="stat in item.synthesis" :key="stat">{{ stat }}</p>
-      </section>
+      </div>
     </div>
   </div>
 </template>
