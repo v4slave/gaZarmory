@@ -16,7 +16,7 @@ function statClass(stat) {
     <small>{{ slot }}</small>
     <div v-if="item" class="game-gear-tooltip">
       <header>
-        <img :src="item.image_url" alt="">
+        <i class="gear-tooltip-icon"><img :src="item.image_url" alt=""></i>
         <div><span>{{ item.quality }}</span><b>{{ item.name }}</b></div>
       </header>
       <div v-if="item.stats?.length" class="gear-detail-block gear-detail-stats">
