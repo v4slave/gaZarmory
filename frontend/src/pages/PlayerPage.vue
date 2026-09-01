@@ -412,12 +412,6 @@ async function saveProfile() {
             :item="gearBySlot[slot]"
           />
         </div>
-        <div class="game-gear-character">
-          <PlayerAvatar :player="player" size="hero" /><strong>{{
-            player.nickname
-          }}</strong
-          ><span>{{ labels[player.class] }}</span>
-        </div>
         <div class="game-gear-column game-gear-right">
           <GearSlot
             v-for="slot in [...jewelrySlots, ...weaponSlots]"
