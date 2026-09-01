@@ -367,7 +367,23 @@ const translations = {
   'Сессия завершена. Войдите снова.': 'Your session has ended. Sign in again.', 'У вас недостаточно прав для этой операции.': 'You do not have permission for this operation.',
   'Данные уже изменились. Обновите страницу и повторите действие.': 'The data has already changed. Refresh the page and try again.',
   'Слишком много запросов. Подождите немного и повторите действие.': 'Too many requests. Wait a moment and try again.',
-  'Сервер временно не может выполнить операцию. Попробуйте позже.': 'The server is temporarily unable to complete the operation. Try again later.'
+  'Сервер временно не может выполнить операцию. Попробуйте позже.': 'The server is temporarily unable to complete the operation. Try again later.',
+  'Эффекты синтеза': 'Synthesis effects', 'Модель персонажа': 'Character model', 'Предпросмотр модели персонажа': 'Character model preview',
+  'Персоналки': 'Personal assets', 'Экипировка персонажа': 'Character equipment', 'Открыть билд ↗': 'Open build ↗',
+  'Вырезаем персонажа…': 'Extracting character…', 'Скриншот персонажа из игры': 'In-game character screenshot',
+  'Загрузите обычный скриншот. Сервер автоматически удалит фон и покажет результат перед сохранением.': 'Upload a regular screenshot. The server will remove the background and show a preview before saving.',
+  'Экипировка archa.ge': 'archa.ge equipment', 'Ссылка на билд': 'Build link',
+  'Вставьте ссылку на билд и нажмите кнопку импорта. Armory сам загрузит экипировку с archa.ge.': 'Paste the build link and click import. Armory will load the equipment from archa.ge.',
+  'Открыть сохранённый билд ↗': 'Open saved build ↗', 'Голова': 'Head', 'Нагрудник': 'Chest', 'Пояс': 'Waist',
+  'Наручи': 'Wrists', 'Перчатки': 'Hands', 'Плащ': 'Cloak', 'Поножи': 'Legs', 'Обувь': 'Feet', 'Бельё': 'Undergarments',
+  'Ожерелье': 'Necklace', 'Серьга 1': 'Earring 1', 'Серьга 2': 'Earring 2', 'Кольцо 1': 'Ring 1', 'Кольцо 2': 'Ring 2',
+  'Основное оружие': 'Main hand', 'Левая рука': 'Off hand', 'Музыкальный инструмент': 'Instrument', 'Костюм': 'Costume',
+  'Вставьте ссылку на билд archa.ge.': 'Paste an archa.ge build link.', 'Экипировка импортирована с archa.ge.': 'Equipment imported from archa.ge.',
+  'Не удалось импортировать экипировку.': 'Could not import equipment.', 'Модель персонажа загружена.': 'Character model uploaded.',
+  'Не удалось загрузить модель персонажа.': 'Could not upload the character model.',
+  'Фон удалён. Проверьте результат и сохраните модель.': 'Background removed. Review the result and save the model.',
+  'Не удалось вырезать персонажа.': 'Could not extract the character.', 'Модель персонажа удалена.': 'Character model removed.',
+  'Не удалось удалить модель персонажа.': 'Could not remove the character model.'
 }
 
 Object.assign(translations, bossNames)

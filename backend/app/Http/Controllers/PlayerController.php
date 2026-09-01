@@ -12,15 +12,17 @@ use App\Models\PrimePlayerEarning;
 use App\Models\PlayerGearScoreHistory;
 use App\Rules\ValidPlayerNickname;
 use App\Services\AuditService;
+use App\Services\CharacterBackgroundRemover;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 final class PlayerController extends Controller
 {
-    public function __construct(private readonly AuditService $audit) {}
+    public function __construct(private readonly AuditService $audit, private readonly CharacterBackgroundRemover $backgroundRemover) {}
 
     public function index(Request $request)
     {
@@ -198,6 +200,45 @@ final class PlayerController extends Controller
 
             return $player->refresh()->load(['group', 'user']);
         });
+    }
+
+    public function uploadCharacterRender(Request $request, Player $player): Player
+    {
+        abort_unless($request->user()->player?->is($player) || $request->user()->hasRole(UserRole::Developer), 403);
+        $request->validate(['character_render' => ['required', 'image', 'mimes:png,webp', 'max:8192']]);
+
+        $oldPath = $player->character_render_path;
+        $newPath = $request->file('character_render')->store('player-character-renders', 'public');
+        $player->update(['character_render_path' => $newPath]);
+        if ($oldPath) Storage::disk('public')->delete($oldPath);
+        $this->audit->record('player.character_render_updated', $player, ['character_render_path' => $oldPath], ['character_render_path' => $newPath]);
+
+        return $player->refresh()->load(['group', 'user']);
+    }
+
+    public function previewCharacterRender(Request $request, Player $player)
+    {
+        abort_unless($request->user()->player?->is($player) || $request->user()->hasRole(UserRole::Developer), 403);
+        $data = $request->validate([
+            'character_screenshot' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:12288'],
+        ]);
+
+        return response($this->backgroundRemover->remove($data['character_screenshot']), 200, [
+            'Content-Type' => 'image/png',
+            'Cache-Control' => 'no-store, private',
+            'Content-Disposition' => 'inline; filename="character-render.png"',
+        ]);
+    }
+
+    public function deleteCharacterRender(Request $request, Player $player): Player
+    {
+        abort_unless($request->user()->player?->is($player) || $request->user()->hasRole(UserRole::Developer), 403);
+        $oldPath = $player->character_render_path;
+        if ($oldPath) Storage::disk('public')->delete($oldPath);
+        $player->update(['character_render_path' => null]);
+        $this->audit->record('player.character_render_deleted', $player, ['character_render_path' => $oldPath], ['character_render_path' => null]);
+
+        return $player->refresh()->load(['group', 'user']);
     }
 
     public function move(Request $request, Player $player): Player

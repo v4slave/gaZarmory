@@ -2,6 +2,7 @@
 /* eslint-disable vue/no-deprecated-slot-attribute -- GearSlot exposes a slot-name prop, not a deprecated DOM slot attribute. */
 import {
   computed,
+  onBeforeUnmount,
   reactive,
   ref,
   watch,
@@ -31,6 +32,10 @@ const nickname = ref("");
 const selectedClass = ref("");
 const gearScore = ref(0);
 const archaGearUrl = ref("");
+const characterRenderFile = ref(null);
+const characterRenderInput = ref(null);
+const characterRenderPreviewUrl = ref("");
+const processingCharacterRender = ref(false);
 const notifications = useNotificationsStore();
 const labels = {
   melee: "Милик",
@@ -225,6 +230,73 @@ async function importGear() {
     savingProfile.value = false;
   }
 }
+async function uploadCharacterRender() {
+  if (!characterRenderFile.value || savingProfile.value) return;
+  savingProfile.value = true;
+  error.value = "";
+  try {
+    const body = new FormData();
+    body.append("character_render", characterRenderFile.value);
+    player.value = (
+      await api.post(`/api/players/${player.value.id}/character-render`, body)
+    ).data;
+    characterRenderFile.value = null;
+    clearCharacterRenderPreview();
+    if (characterRenderInput.value) characterRenderInput.value.value = "";
+    notifications.success("Модель персонажа загружена.");
+  } catch (e) {
+    error.value = apiErrorMessage(e, "Не удалось загрузить модель персонажа.");
+    notifications.error(error.value);
+  } finally {
+    savingProfile.value = false;
+  }
+}
+function clearCharacterRenderPreview() {
+  if (characterRenderPreviewUrl.value) URL.revokeObjectURL(characterRenderPreviewUrl.value);
+  characterRenderPreviewUrl.value = "";
+}
+async function processCharacterScreenshot(file) {
+  clearCharacterRenderPreview();
+  characterRenderFile.value = null;
+  if (!file) return;
+  processingCharacterRender.value = true;
+  error.value = "";
+  try {
+    const body = new FormData();
+    body.append("character_screenshot", file);
+    const { data } = await api.post(
+      `/api/players/${player.value.id}/character-render/preview`,
+      body,
+      { responseType: "blob" },
+    );
+    const blob = new Blob([data], { type: "image/png" });
+    characterRenderFile.value = new File([blob], "character-render.png", { type: "image/png" });
+    characterRenderPreviewUrl.value = URL.createObjectURL(blob);
+    notifications.success("Фон удалён. Проверьте результат и сохраните модель.");
+  } catch (e) {
+    error.value = apiErrorMessage(e, "Не удалось вырезать персонажа.");
+    notifications.error(error.value);
+  } finally {
+    processingCharacterRender.value = false;
+  }
+}
+async function deleteCharacterRender() {
+  if (savingProfile.value) return;
+  savingProfile.value = true;
+  error.value = "";
+  try {
+    player.value = (
+      await api.delete(`/api/players/${player.value.id}/character-render`)
+    ).data;
+    notifications.success("Модель персонажа удалена.");
+  } catch (e) {
+    error.value = apiErrorMessage(e, "Не удалось удалить модель персонажа.");
+    notifications.error(error.value);
+  } finally {
+    savingProfile.value = false;
+  }
+}
+onBeforeUnmount(clearCharacterRenderPreview);
 async function saveProfile() {
   savingProfile.value = true;
   error.value = "";
@@ -412,6 +484,9 @@ async function saveProfile() {
             :item="gearBySlot[slot]"
           />
         </div>
+        <div v-if="player.character_render_url" class="game-gear-character-render">
+          <img :src="player.character_render_url" alt="Модель персонажа" />
+        </div>
         <div class="game-gear-column game-gear-right">
           <GearSlot
             v-for="slot in [...jewelrySlots, ...weaponSlots]"
@@ -529,6 +604,30 @@ async function saveProfile() {
               max="100000"
               required
           /></label>
+        </div>
+        <div class="profile-edit-section">
+          <div class="profile-edit-section-title">
+            <span>♙</span><strong>Модель персонажа</strong>
+          </div>
+          <div v-if="processingCharacterRender || characterRenderPreviewUrl || player.character_render_url" class="character-render-preview">
+            <img v-if="characterRenderPreviewUrl || player.character_render_url" :src="characterRenderPreviewUrl || player.character_render_url" alt="Предпросмотр модели персонажа" />
+            <span v-if="processingCharacterRender" class="character-render-processing">Вырезаем персонажа…</span>
+          </div>
+          <label
+            >Скриншот персонажа из игры<input
+              ref="characterRenderInput"
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              :disabled="processingCharacterRender || savingProfile"
+              @change="processCharacterScreenshot($event.target.files[0] ?? null)"
+          /></label>
+          <p class="archa-import-help">Загрузите обычный скриншот. Сервер автоматически удалит фон и покажет результат перед сохранением.</p>
+          <div class="character-render-actions">
+            <button type="button" class="secondary" :disabled="savingProfile || processingCharacterRender || !characterRenderFile" @click="uploadCharacterRender">
+              {{ processingCharacterRender ? "Обработка…" : savingProfile ? "Загрузка…" : "Сохранить модель" }}
+            </button>
+            <button v-if="player.character_render_url" type="button" class="danger" :disabled="savingProfile" @click="deleteCharacterRender">Удалить</button>
+          </div>
         </div>
         <div class="profile-edit-section">
           <div class="profile-edit-section-title">

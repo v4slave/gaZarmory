@@ -77,6 +77,9 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
 
     Route::delete('/players/{player}/permanent', [PlayerController::class, 'destroyPermanently']);
     Route::patch('/players/{player}/profile', [PlayerController::class, 'updateProfile']);
+    Route::post('/players/{player}/character-render', [PlayerController::class, 'uploadCharacterRender']);
+    Route::post('/players/{player}/character-render/preview', [PlayerController::class, 'previewCharacterRender'])->middleware('throttle:3,1');
+    Route::delete('/players/{player}/character-render', [PlayerController::class, 'deleteCharacterRender']);
     Route::post('/players/{player}/archa-gear', [ArchaGearController::class, 'player'])->middleware('throttle:6,1');
     Route::get('/players/{player}/activities', [PlayerController::class, 'activities']);
     Route::get('/players/{player}/earnings', [PlayerController::class, 'earnings']);
