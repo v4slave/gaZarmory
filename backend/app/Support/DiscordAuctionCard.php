@@ -14,7 +14,7 @@ final class DiscordAuctionCard
             self::field('КОЛИЧЕСТВО', $auction->quantity.' шт.'),
             self::field('СТАРТОВАЯ ЦЕНА', self::tokens((int) $auction->starting_bid)),
             self::field('ЗАВЕРШЕНИЕ', self::discordTime($auction->ends_at->timestamp), false),
-        ]);
+        ]) + ['mention_role_id' => config('services.discord.member_role_id')];
     }
 
     public static function finished(Auction $auction, TreasuryItem $item, ?string $winner, ?int $winningBid): array
@@ -59,6 +59,6 @@ final class DiscordAuctionCard
 
     private static function discordTime(int $timestamp): string
     {
-        return '<t:'.$timestamp.':F>\n<t:'.$timestamp.':R>';
+        return '<t:'.$timestamp.":F>\n<t:".$timestamp.':R>';
     }
 }

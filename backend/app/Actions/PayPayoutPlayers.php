@@ -2,7 +2,7 @@
 
 namespace App\Actions;
 
-use App\Jobs\SendPlayerPayoutNotification;
+use App\Jobs\SendDiscordNotification;
 use App\Models\Payout;
 use App\Models\PrimePlayerEarning;
 use App\Models\TreasuryTransaction;
@@ -21,7 +21,7 @@ final class PayPayoutPlayers
         try { return DB::transaction(function () use ($payout,$playerIds,$userId): Payout {
             $locked=Payout::query()->lockForUpdate()->findOrFail($payout->id);
             if($locked->status!=='calculated')throw ValidationException::withMessages(['payout'=>__('domain.payout.pay_calculated_only')]);
-            $rows=$locked->players()->with('player.user:id,discord_id')->whereIn('player_id',$playerIds)->where('status','pending')->lockForUpdate()->get();
+            $rows=$locked->players()->whereIn('player_id',$playerIds)->where('status','pending')->lockForUpdate()->get();
             if($rows->isEmpty())throw ValidationException::withMessages(['players'=>__('domain.payout.no_pending_players')]);
             $amount=(int)$rows->sum('amount');
             DB::select('SELECT pg_advisory_xact_lock(?)',[834721]);
@@ -29,18 +29,18 @@ final class PayPayoutPlayers
             if($balance<$amount)throw ValidationException::withMessages(['treasury'=>__('domain.payout.insufficient_gold', ['required'=>$amount, 'available'=>$balance])]);
             TreasuryTransaction::query()->create(['type'=>'payout','amount'=>-$amount,'balance_after'=>$balance-$amount,'description'=>'Нахрюк #'.$locked->id.': фактически выдано '.count($rows).' игрокам','related_entity_type'=>Payout::class,'related_entity_id'=>$locked->id,'created_by'=>$userId]);
             $ids=$rows->pluck('player_id');
-            $earningsByPlayer=PrimePlayerEarning::query()
+            $earnings=PrimePlayerEarning::query()
                 ->where('payout_id',$locked->id)
                 ->whereIn('player_id',$ids)
                 ->with('activity.definition:id,name')
-                ->get()
-                ->groupBy('player_id');
+                ->get();
             PrimePlayerEarning::query()->where('payout_id',$locked->id)->whereIn('player_id',$ids)->where('status','pending')->update(['status'=>'paid']);
             $locked->players()->whereIn('player_id',$ids)->update(['status'=>'paid','paid_at'=>now()]);
             $remaining=$locked->players()->where('status','pending')->exists();
             if(!$remaining)$locked->update(['status'=>'paid','paid_at'=>now()]);
             $this->audit->record('payout.players_paid',$locked,null,['player_ids'=>$ids->all(),'amount'=>$amount,'completed'=>!$remaining]);
-            foreach($rows as $row){$discordId=$row->player?->user?->discord_id;if(!$discordId)continue;$breakdown=$earningsByPlayer->get($row->player_id,collect())->groupBy(fn($earning)=>$earning->activity?->definition?->name??'Активность')->map(fn($items)=>(int)$items->sum('player_share'))->all();DB::afterCommit(fn()=>SendPlayerPayoutNotification::dispatch((string)$discordId,'Выплата начислена','Золото выдано вашему персонажу. Откройте расчёт, чтобы посмотреть детали.',DiscordPayoutCard::paid($locked->id,(int)$row->amount,$breakdown)));}
+            $breakdown=$earnings->groupBy(fn($earning)=>$earning->activity?->definition?->name??'Активность')->map(fn($items)=>(int)$items->sum('player_share'))->all();
+            DB::afterCommit(fn()=>SendDiscordNotification::dispatch('Выплата начислена','Золото выдано участникам. Откройте расчёт, чтобы посмотреть детали.','green','payouts',DiscordPayoutCard::paid($locked->id,$amount,$rows->count(),$breakdown)));
             return $locked->refresh()->load('players');
         }); } catch (ValidationException $exception) { if(isset($exception->errors()['treasury'])){$recipients=$this->notifications->financialLeaders();$requester=User::query()->find($userId);if($requester)$recipients->push($requester);$this->notifications->notify($recipients,'insufficient_gold','Не хватает золота',$exception->errors()['treasury'][0],'/payouts/'.$payout->id);}throw $exception; }
     }
