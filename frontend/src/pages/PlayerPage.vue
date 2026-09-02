@@ -424,7 +424,10 @@ async function saveProfile() {
         />
       </div>
     </div>
-    <div class="profile-equipment-row">
+    <div
+      class="profile-equipment-row"
+      :class="{ 'without-gear': !player.archa_gear_items?.length }"
+    >
     <div class="panel player-assets-panel">
       <div class="panel-title">
         <h2>Персоналки</h2>
