@@ -18,7 +18,10 @@ class ParticipantScreenshotRecognizer
         try {
             $outputs = [];
             $passes = [[$image->getRealPath(), 11]];
-            foreach ($prepared as $index => $inputPath) $passes[] = [$inputPath, $index >= 2 ? 6 : 11];
+            foreach ($prepared as $index => $inputPath) {
+                $passes[] = [$inputPath, $index >= 2 ? 6 : 11];
+                if ($index >= 2) $passes[] = [$inputPath, 11];
+            }
             foreach ($passes as [$inputPath, $pageSegmentationMode]) {
                 $process = new Process([
                     $binary,
@@ -63,7 +66,7 @@ class ParticipantScreenshotRecognizer
             $nickname = $this->normalize($player->nickname);
             $best = $candidates->map(fn (string $candidate) => $this->similarity($nickname, $candidate))->max() ?? 0;
 
-            return $best >= 0.50 ? [
+            return $best >= 0.45 ? [
                 'player_id' => $player->id,
                 'nickname' => $player->nickname,
                 'class' => $player->class->value,
