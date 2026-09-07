@@ -13,12 +13,12 @@ class ParticipantScreenshotRecognizer
     public function recognize(UploadedFile $image, Collection $players): array
     {
         $binary = (string) config('services.tesseract.binary', 'tesseract');
-        $prepared = $this->prepareImage($image);
+        $prepared = $this->prepareImages($image);
 
         try {
             $outputs = [];
-            $passes = [[$image->getRealPath(), 11], [$prepared, 6]];
-            if ($prepared !== $image->getRealPath()) $passes[] = [$prepared, 11];
+            $passes = [[$image->getRealPath(), 11]];
+            foreach ($prepared as $index => $inputPath) $passes[] = [$inputPath, $index === 2 ? 6 : 11];
             foreach ($passes as [$inputPath, $pageSegmentationMode]) {
                 $process = new Process([
                     $binary,
@@ -41,7 +41,7 @@ class ParticipantScreenshotRecognizer
                 'screenshot' => 'Не удалось распознать скриншот. Проверьте настройку Tesseract OCR или загрузите другое изображение.',
             ]);
         } finally {
-            if ($prepared !== $image->getRealPath()) @unlink($prepared);
+            foreach ($prepared as $path) @unlink($path);
         }
 
         return $this->match(implode("\n", $outputs), $players);
@@ -77,30 +77,159 @@ class ParticipantScreenshotRecognizer
         return ['matches' => $matches, 'recognized_lines' => $lines->all()];
     }
 
-    private function prepareImage(UploadedFile $image): string
+    private function prepareImages(UploadedFile $image): array
     {
-        if (!function_exists('imagecreatefromstring') || !function_exists('imagescale')) return $image->getRealPath();
+        if (!function_exists('imagecreatefromstring') || !function_exists('imagescale')) return [];
         $contents = file_get_contents($image->getRealPath());
         $source = $contents === false ? false : @imagecreatefromstring($contents);
-        if ($source === false) return $image->getRealPath();
+        if ($source === false) return [];
 
         $width = imagesx($source);
         $height = imagesy($source);
+        $cellSheetPath = $this->prepareCellSheet($source);
         $scale = max(2, min(4, (int) ceil(1600 / max($width, $height))));
         $prepared = imagescale($source, $width * $scale, $height * $scale, IMG_BICUBIC_FIXED);
         imagedestroy($source);
-        if ($prepared === false) return $image->getRealPath();
+        if ($prepared === false) return [];
 
         imagefilter($prepared, IMG_FILTER_GRAYSCALE);
         imagefilter($prepared, IMG_FILTER_CONTRAST, -35);
         imageconvolution($prepared, [[-1,-1,-1],[-1,9,-1],[-1,-1,-1]], 1, 0);
-        $path = tempnam(sys_get_temp_dir(), 'participant-ocr-');
-        if ($path === false || !imagepng($prepared, $path)) {
-            imagedestroy($prepared);
-            if ($path !== false) @unlink($path);
-            return $image->getRealPath();
-        }
+        $normalPath = $this->writeTemporaryPng($prepared);
+        imagefilter($prepared, IMG_FILTER_NEGATE);
+        imagefilter($prepared, IMG_FILTER_CONTRAST, -20);
+        $invertedPath = $this->writeTemporaryPng($prepared);
         imagedestroy($prepared);
+
+        return array_values(array_filter([$normalPath, $invertedPath, $cellSheetPath]));
+    }
+
+    private function prepareCellSheet(\GdImage $source): ?string
+    {
+        $width = imagesx($source);
+        $height = imagesy($source);
+        $rowProjection = array_fill(0, $height, 0);
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                if ($this->isRaidFramePixel(imagecolorat($source, $x, $y))) $rowProjection[$y]++;
+            }
+        }
+        $rows = $this->projectionBands($rowProjection, max(25, (int) ($width * .12)), 12, 60);
+        $cells = [];
+        foreach ($rows as [$top, $bottom]) {
+            $columnProjection = array_fill(0, $width, 0);
+            for ($x = 0; $x < $width; $x++) {
+                for ($y = $top; $y <= $bottom; $y++) {
+                    if ($this->isRaidFramePixel(imagecolorat($source, $x, $y))) $columnProjection[$x]++;
+                }
+            }
+            $columns = $this->projectionBands($columnProjection, max(5, (int) (($bottom - $top + 1) * .35)), 20, 140);
+            foreach ($columns as [$left, $right]) {
+                $cells[] = [$left, $top, $right - $left + 1, $bottom - $top + 1];
+            }
+        }
+        if (count($cells) < 10) $cells = $this->detectLightBackgroundCells($source);
+        if (count($cells) < 10 || count($cells) > 150) return null;
+
+        $sheetWidth = 420;
+        $rowHeight = 110;
+        $sheet = imagecreatetruecolor($sheetWidth, count($cells) * $rowHeight);
+        imagefill($sheet, 0, 0, imagecolorallocate($sheet, 255, 255, 255));
+        foreach ($cells as $index => [$left, $top, $cellWidth, $cellHeight]) {
+            $crop = imagecrop($source, ['x'=>$left,'y'=>$top,'width'=>$cellWidth,'height'=>max(8, (int) ($cellHeight * .82))]);
+            if ($crop === false) continue;
+            $scaled = imagescale($crop, min(400, $cellWidth * 6), min(100, $cellHeight * 5), IMG_BICUBIC_FIXED);
+            imagedestroy($crop);
+            if ($scaled === false) continue;
+            imagefilter($scaled, IMG_FILTER_GRAYSCALE);
+            imagefilter($scaled, IMG_FILTER_CONTRAST, -35);
+            imagefilter($scaled, IMG_FILTER_NEGATE);
+            imagecopy($sheet, $scaled, 8, $index * $rowHeight + 5, 0, 0, imagesx($scaled), imagesy($scaled));
+            imagedestroy($scaled);
+        }
+        $path = $this->writeTemporaryPng($sheet);
+        imagedestroy($sheet);
+
+        return $path;
+    }
+
+    private function detectLightBackgroundCells(\GdImage $source): array
+    {
+        $width = imagesx($source);
+        $height = imagesy($source);
+        $projection = array_fill(0, $height, 0);
+        for ($y = 0; $y < $height; $y++) {
+            for ($x = 0; $x < $width; $x++) {
+                if ($this->isDarkRaidFramePixel(imagecolorat($source, $x, $y))) $projection[$y]++;
+            }
+        }
+        $anchors = $this->projectionBands($projection, max(50, (int) ($width * .55)), 2, 12);
+        $columnProjection = array_fill(0, $width, 0);
+        for ($x = 0; $x < $width; $x++) {
+            for ($y = 0; $y < $height; $y++) {
+                if ($this->isDarkRaidFramePixel(imagecolorat($source, $x, $y))) $columnProjection[$x]++;
+            }
+        }
+        $columns = $this->projectionBands($columnProjection, max(20, (int) ($height * .1)), 20, 140);
+        if (count($columns) < 3 || count($columns) > 10) return [];
+        $cells = [];
+        foreach ($anchors as [$top]) {
+            $bottom = min($height - 1, $top + 30);
+            foreach ($columns as [$left, $right]) $cells[] = [$left, $top, $right - $left + 1, $bottom - $top + 1];
+        }
+
+        return $cells;
+    }
+
+    private function isRaidFramePixel(int $color): bool
+    {
+        $red = ($color >> 16) & 0xff;
+        $green = ($color >> 8) & 0xff;
+        $blue = $color & 0xff;
+        $maximum = max($red, $green, $blue);
+        $minimum = min($red, $green, $blue);
+
+        return $blue > 38 && $maximum < 250 && $minimum < 175 && ($maximum - $minimum) > 18
+            && ($blue > $red * .45 || $red > $green * 1.25);
+    }
+
+    private function isDarkRaidFramePixel(int $color): bool
+    {
+        $red = ($color >> 16) & 0xff;
+        $green = ($color >> 8) & 0xff;
+        $blue = $color & 0xff;
+
+        return $blue > 38 && max($red, $green, $blue) < 180
+            && (max($red, $green, $blue) - min($red, $green, $blue)) > 18
+            && ($blue > $red * .45 || $red > $green * 1.25);
+    }
+
+    private function projectionBands(array $projection, int $threshold, int $minimumSize, int $maximumSize): array
+    {
+        $bands = [];
+        $start = null;
+        foreach ($projection as $position => $count) {
+            if ($count >= $threshold && $start === null) $start = $position;
+            if ($count >= $threshold || $start === null) continue;
+            $size = $position - $start;
+            if ($size >= $minimumSize && $size <= $maximumSize) $bands[] = [$start, $position - 1];
+            $start = null;
+        }
+        if ($start !== null) {
+            $size = count($projection) - $start;
+            if ($size >= $minimumSize && $size <= $maximumSize) $bands[] = [$start, count($projection) - 1];
+        }
+
+        return $bands;
+    }
+
+    private function writeTemporaryPng(\GdImage $image): ?string
+    {
+        $path = tempnam(sys_get_temp_dir(), 'participant-ocr-');
+        if ($path === false || !imagepng($image, $path)) {
+            if ($path !== false) @unlink($path);
+            return null;
+        }
 
         return $path;
     }
