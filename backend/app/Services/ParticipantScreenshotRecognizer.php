@@ -18,7 +18,7 @@ class ParticipantScreenshotRecognizer
         try {
             $outputs = [];
             $passes = [[$image->getRealPath(), 11]];
-            foreach ($prepared as $index => $inputPath) $passes[] = [$inputPath, $index === 2 ? 6 : 11];
+            foreach ($prepared as $index => $inputPath) $passes[] = [$inputPath, $index >= 2 ? 6 : 11];
             foreach ($passes as [$inputPath, $pageSegmentationMode]) {
                 $process = new Process([
                     $binary,
@@ -63,16 +63,13 @@ class ParticipantScreenshotRecognizer
             $nickname = $this->normalize($player->nickname);
             $best = $candidates->map(fn (string $candidate) => $this->similarity($nickname, $candidate))->max() ?? 0;
 
-            return $best >= 0.72 ? [
+            return $best >= 0.58 ? [
                 'player_id' => $player->id,
                 'nickname' => $player->nickname,
                 'class' => $player->class->value,
                 'confidence' => (int) round($best * 100),
             ] : null;
-        })->filter()->sortBy([
-            ['confidence', 'desc'],
-            ['nickname', 'asc'],
-        ])->values()->all();
+        })->filter()->sortBy('nickname', SORT_NATURAL | SORT_FLAG_CASE)->values()->all();
 
         return ['matches' => $matches, 'recognized_lines' => $lines->all()];
     }
@@ -87,6 +84,7 @@ class ParticipantScreenshotRecognizer
         $width = imagesx($source);
         $height = imagesy($source);
         $cellSheetPath = $this->prepareCellSheet($source);
+        $groupSheetPath = $this->prepareGroupSheet($source);
         $scale = max(2, min(4, (int) ceil(1600 / max($width, $height))));
         $prepared = imagescale($source, $width * $scale, $height * $scale, IMG_BICUBIC_FIXED);
         imagedestroy($source);
@@ -101,7 +99,7 @@ class ParticipantScreenshotRecognizer
         $invertedPath = $this->writeTemporaryPng($prepared);
         imagedestroy($prepared);
 
-        return array_values(array_filter([$normalPath, $invertedPath, $cellSheetPath]));
+        return array_values(array_filter([$normalPath, $invertedPath, $cellSheetPath, $groupSheetPath]));
     }
 
     private function prepareCellSheet(\GdImage $source): ?string
@@ -145,6 +143,41 @@ class ParticipantScreenshotRecognizer
             imagefilter($scaled, IMG_FILTER_CONTRAST, -35);
             imagefilter($scaled, IMG_FILTER_NEGATE);
             imagecopy($sheet, $scaled, 8, $index * $rowHeight + 5, 0, 0, imagesx($scaled), imagesy($scaled));
+            imagedestroy($scaled);
+        }
+        $path = $this->writeTemporaryPng($sheet);
+        imagedestroy($sheet);
+
+        return $path;
+    }
+
+    private function prepareGroupSheet(\GdImage $source): ?string
+    {
+        $width = imagesx($source);
+        $height = imagesy($source);
+        if ($width / max(1, $height) < 1.2) return null;
+
+        $sheetWidth = 900;
+        $rowHeight = 240;
+        $sheet = imagecreatetruecolor($sheetWidth, $rowHeight * 10);
+        imagefill($sheet, 0, 0, imagecolorallocate($sheet, 255, 255, 255));
+        $top = (int) round($height * .18);
+        $middle = (int) round($height * .56);
+        $bottom = (int) round($height * .88);
+        $groupWidth = (int) floor($width / 5);
+        foreach (range(0, 9) as $index) {
+            $cropTop = $index < 5 ? $top : $middle;
+            $cropBottom = $index < 5 ? $middle - 2 : $bottom;
+            $column = $index % 5;
+            $crop = imagecrop($source, ['x'=>$column * $groupWidth, 'y'=>$cropTop, 'width'=>min($groupWidth, $width - $column * $groupWidth), 'height'=>max(8, $cropBottom - $cropTop)]);
+            if ($crop === false) continue;
+            $scaled = imagescale($crop, min(880, imagesx($crop) * 5), min(225, imagesy($crop) * 3), IMG_BICUBIC_FIXED);
+            imagedestroy($crop);
+            if ($scaled === false) continue;
+            imagefilter($scaled, IMG_FILTER_GRAYSCALE);
+            imagefilter($scaled, IMG_FILTER_CONTRAST, -25);
+            imagefilter($scaled, IMG_FILTER_NEGATE);
+            imagecopy($sheet, $scaled, 10, $index * $rowHeight + 5, 0, 0, imagesx($scaled), imagesy($scaled));
             imagedestroy($scaled);
         }
         $path = $this->writeTemporaryPng($sheet);

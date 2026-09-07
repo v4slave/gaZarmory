@@ -23,10 +23,10 @@ final class ParticipantScreenshotRecognizerTest extends TestCase
             $players,
         );
 
-        self::assertSame([3, 2, 1], array_column($result['matches'], 'player_id'));
+        self::assertSame([3, 1, 2], array_column($result['matches'], 'player_id'));
         self::assertSame(100, $result['matches'][0]['confidence']);
-        self::assertGreaterThanOrEqual(72, $result['matches'][1]['confidence']);
-        self::assertSame(85, $result['matches'][2]['confidence']);
+        self::assertSame(85, $result['matches'][1]['confidence']);
+        self::assertGreaterThanOrEqual(72, $result['matches'][2]['confidence']);
     }
 
     private function player(int $id, string $nickname): object
