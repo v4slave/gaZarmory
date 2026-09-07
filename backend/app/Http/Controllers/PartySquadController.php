@@ -21,7 +21,7 @@ final class PartySquadController extends Controller
         $totalPrimes = Activity::query()->where('occurred_at', '>=', $periodStart)
             ->whereHas('definition', fn ($query) => $query->where('type', 'prime'))->count();
         $players = $group->players()->where('is_active', true)
-            ->select(['players.id','user_id','group_id','nickname','class','gear_score'])
+            ->select(['players.id','user_id','group_id','nickname','class','gear_score','has_ship'])
             ->with('user:id,discord_id,discord_username,discord_display_name,discord_avatar,role,roles')
             ->withCount(['activities as primes_count' => fn ($query) => $query->where('occurred_at', '>=', $periodStart)
                 ->whereHas('definition', fn ($definition) => $definition->where('type', 'prime'))])
