@@ -19,7 +19,7 @@ final class ParticipantScreenshotRecognizerTest extends TestCase
         ]);
 
         $result = (new ParticipantScreenshotRecognizer())->match(
-            "Razrivnoi\nКошкомальчнк\nBunnySlash\nПосторонний текст",
+            "Razrivnoi      Кошкомальчнк | BunnySlash\nПосторонний текст",
             $players,
         );
 

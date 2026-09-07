@@ -13,27 +13,38 @@ class ParticipantScreenshotRecognizer
     public function recognize(UploadedFile $image, Collection $players): array
     {
         $binary = (string) config('services.tesseract.binary', 'tesseract');
-        $process = new Process([
-            $binary,
-            $image->getRealPath(),
-            'stdout',
-            '-l',
-            (string) config('services.tesseract.languages', 'rus+eng'),
-            '--psm',
-            '11',
-        ]);
-        $process->setTimeout((int) config('services.tesseract.timeout', 45));
+        $prepared = $this->prepareImage($image);
 
         try {
-            $process->mustRun();
+            $outputs = [];
+            $passes = [[$image->getRealPath(), 11], [$prepared, 6]];
+            if ($prepared !== $image->getRealPath()) $passes[] = [$prepared, 11];
+            foreach ($passes as [$inputPath, $pageSegmentationMode]) {
+                $process = new Process([
+                    $binary,
+                    $inputPath,
+                    'stdout',
+                    '-l',
+                    (string) config('services.tesseract.languages', 'rus+eng'),
+                    '--psm',
+                    (string) $pageSegmentationMode,
+                    '-c',
+                    'preserve_interword_spaces=1',
+                ]);
+                $process->setTimeout((int) config('services.tesseract.timeout', 45));
+                $process->mustRun();
+                $outputs[] = $process->getOutput();
+            }
         } catch (Throwable $exception) {
             report($exception);
             throw ValidationException::withMessages([
                 'screenshot' => 'Не удалось распознать скриншот. Проверьте настройку Tesseract OCR или загрузите другое изображение.',
             ]);
+        } finally {
+            if ($prepared !== $image->getRealPath()) @unlink($prepared);
         }
 
-        return $this->match($process->getOutput(), $players);
+        return $this->match(implode("\n", $outputs), $players);
     }
 
     public function match(string $text, Collection $players): array
@@ -43,10 +54,14 @@ class ParticipantScreenshotRecognizer
             ->filter()
             ->unique()
             ->values();
+        $candidates = $lines->flatMap(fn (string $line) => array_merge(
+            [$line],
+            preg_split('/[\s|]+/u', $line, -1, PREG_SPLIT_NO_EMPTY) ?: [],
+        ))->map(fn (string $value) => $this->normalize($value))->filter()->unique()->values();
 
-        $matches = $players->map(function ($player) use ($lines) {
+        $matches = $players->map(function ($player) use ($candidates) {
             $nickname = $this->normalize($player->nickname);
-            $best = $lines->map(fn (string $line) => $this->similarity($nickname, $this->normalize($line)))->max() ?? 0;
+            $best = $candidates->map(fn (string $candidate) => $this->similarity($nickname, $candidate))->max() ?? 0;
 
             return $best >= 0.72 ? [
                 'player_id' => $player->id,
@@ -60,6 +75,34 @@ class ParticipantScreenshotRecognizer
         ])->values()->all();
 
         return ['matches' => $matches, 'recognized_lines' => $lines->all()];
+    }
+
+    private function prepareImage(UploadedFile $image): string
+    {
+        if (!function_exists('imagecreatefromstring') || !function_exists('imagescale')) return $image->getRealPath();
+        $contents = file_get_contents($image->getRealPath());
+        $source = $contents === false ? false : @imagecreatefromstring($contents);
+        if ($source === false) return $image->getRealPath();
+
+        $width = imagesx($source);
+        $height = imagesy($source);
+        $scale = max(2, min(4, (int) ceil(1600 / max($width, $height))));
+        $prepared = imagescale($source, $width * $scale, $height * $scale, IMG_BICUBIC_FIXED);
+        imagedestroy($source);
+        if ($prepared === false) return $image->getRealPath();
+
+        imagefilter($prepared, IMG_FILTER_GRAYSCALE);
+        imagefilter($prepared, IMG_FILTER_CONTRAST, -35);
+        imageconvolution($prepared, [[-1,-1,-1],[-1,9,-1],[-1,-1,-1]], 1, 0);
+        $path = tempnam(sys_get_temp_dir(), 'participant-ocr-');
+        if ($path === false || !imagepng($prepared, $path)) {
+            imagedestroy($prepared);
+            if ($path !== false) @unlink($path);
+            return $image->getRealPath();
+        }
+        imagedestroy($prepared);
+
+        return $path;
     }
 
     private function normalize(string $value): string
