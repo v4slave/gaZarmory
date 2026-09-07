@@ -11,7 +11,7 @@
 
 ## Локальный запуск
 
-Требуются PHP 8.3+, Composer, Node.js и PostgreSQL.
+Требуются PHP 8.3+, Composer, Node.js и PostgreSQL. Для распознавания участников по скриншоту также нужен Tesseract OCR с языками `rus` и `eng`; путь к бинарнику задаётся через `TESSERACT_BINARY`.
 
 ```bash
 cd backend

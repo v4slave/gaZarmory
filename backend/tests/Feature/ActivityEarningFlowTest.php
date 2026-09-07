@@ -10,7 +10,9 @@ use App\Models\ActivityLoot;
 use App\Models\Player;
 use App\Models\TreasuryTransaction;
 use App\Models\User;
+use App\Services\ParticipantScreenshotRecognizer;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 final class ActivityEarningFlowTest extends TestCase
@@ -77,6 +79,56 @@ final class ActivityEarningFlowTest extends TestCase
         self::assertSame(3, $activity->earnings()->count());
         self::assertSame([333], $activity->earnings()->pluck('player_share')->unique()->values()->all());
         self::assertSame($goldTransactionsBefore, TreasuryTransaction::query()->count());
+    }
+
+    public function test_prime_can_be_calculated_without_loot(): void
+    {
+        $leader = $this->leader();
+        $definition = ActivityDefinition::query()->create([
+            'name' => 'No loot '.uniqid(),
+            'type' => 'prime',
+            'is_active' => true,
+        ]);
+        $activity = Activity::query()->create([
+            'activity_definition_id' => $definition->id,
+            'occurred_at' => now(),
+            'created_by' => $leader->id,
+        ]);
+        $player = Player::query()->create([
+            'nickname' => 'Participant'.uniqid(),
+            'class' => PlayerClass::Melee,
+            'is_active' => true,
+        ]);
+        $activity->players()->attach($player->id, ['created_at' => now()]);
+
+        $this->actingAs($leader)
+            ->postJson('/api/activities/'.$activity->id.'/calculate-prime')
+            ->assertOk()
+            ->assertJsonPath('gold_value', 0)
+            ->assertJsonPath('earnings.0.player_share', 0);
+
+        self::assertNotNull($activity->fresh()->completed_at);
+        self::assertSame(1, $activity->earnings()->count());
+    }
+
+    public function test_participant_scan_returns_only_available_active_roster_matches(): void
+    {
+        $leader = $this->leader();
+        $definition = ActivityDefinition::query()->create(['name'=>'OCR '.uniqid(),'type'=>'prime','is_active'=>true]);
+        $activity = Activity::query()->create(['activity_definition_id'=>$definition->id,'occurred_at'=>now(),'created_by'=>$leader->id]);
+        $existing = Player::query()->create(['nickname'=>'Existing'.uniqid(),'class'=>PlayerClass::Melee,'is_active'=>true]);
+        $available = Player::query()->create(['nickname'=>'Available'.uniqid(),'class'=>PlayerClass::Melee,'is_active'=>true]);
+        Player::query()->create(['nickname'=>'Inactive'.uniqid(),'class'=>PlayerClass::Melee,'is_active'=>false]);
+        $activity->players()->attach([$existing->id, $leader->player->id], ['created_at'=>now()]);
+        $this->mock(ParticipantScreenshotRecognizer::class)
+            ->shouldReceive('recognize')
+            ->once()
+            ->withArgs(fn ($image, $players) => $image instanceof UploadedFile && $players->pluck('id')->all() === [$available->id])
+            ->andReturn(['matches'=>[['player_id'=>$available->id,'nickname'=>$available->nickname,'class'=>'melee','confidence'=>100]],'recognized_lines'=>[$available->nickname]]);
+
+        $this->actingAs($leader)->postJson('/api/activities/'.$activity->id.'/participant-scan', [
+            'screenshot' => UploadedFile::fake()->image('raid.png', 400, 400),
+        ])->assertOk()->assertJsonPath('matches.0.player_id', $available->id);
     }
 
     private function leader(): User

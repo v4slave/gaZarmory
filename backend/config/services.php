@@ -10,6 +10,11 @@ return [
         'model' => env('REMBG_MODEL', 'isnet-anime'),
         'timeout' => (int) env('REMBG_TIMEOUT', 90),
     ],
+    'tesseract' => [
+        'binary' => env('TESSERACT_BINARY', 'tesseract'),
+        'languages' => env('TESSERACT_LANGUAGES', 'rus+eng'),
+        'timeout' => (int) env('TESSERACT_TIMEOUT', 45),
+    ],
     'discord' => [
         'client_id' => env('DISCORD_CLIENT_ID'),
         'client_secret' => env('DISCORD_CLIENT_SECRET'),
