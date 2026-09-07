@@ -63,7 +63,7 @@ class ParticipantScreenshotRecognizer
             $nickname = $this->normalize($player->nickname);
             $best = $candidates->map(fn (string $candidate) => $this->similarity($nickname, $candidate))->max() ?? 0;
 
-            return $best >= 0.58 ? [
+            return $best >= 0.50 ? [
                 'player_id' => $player->id,
                 'nickname' => $player->nickname,
                 'class' => $player->class->value,
@@ -269,7 +269,13 @@ class ParticipantScreenshotRecognizer
 
     private function normalize(string $value): string
     {
-        return mb_strtolower(preg_replace('/[^\p{L}\p{N}]+/u', '', $value) ?? '');
+        $value = mb_strtolower($value);
+        $value = strtr($value, [
+            'а'=>'a', 'в'=>'b', 'е'=>'e', 'к'=>'k', 'м'=>'m', 'н'=>'h', 'о'=>'o',
+            'р'=>'p', 'с'=>'c', 'т'=>'t', 'х'=>'x', 'у'=>'y', 'і'=>'i',
+        ]);
+
+        return preg_replace('/[^a-z\p{L}\p{N}]+/u', '', $value) ?? '';
     }
 
     private function similarity(string $nickname, string $line): float
