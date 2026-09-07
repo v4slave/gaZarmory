@@ -12,7 +12,7 @@ const matches=computed(()=>result.value?.matches??[])
 function clearPreview(){if(preview.value)URL.revokeObjectURL(preview.value);preview.value=''}
 function choose(event){clearPreview();file.value=event.target.files?.[0]??null;result.value=null;selected.value=[];error.value='';if(file.value)preview.value=URL.createObjectURL(file.value)}
 async function scan(){if(!file.value)return;busy.value=true;error.value='';try{result.value=await activities.scanParticipants(props.activityId,file.value);selected.value=result.value.matches.map(item=>item.player_id)}catch(e){error.value=apiErrorMessage(e,'Не удалось распознать участников.')}finally{busy.value=false}}
-async function add(){if(!selected.value.length)return;busy.value=true;error.value='';try{const count=selected.value.length;await activities.addPlayers(props.activityId,selected.value);notifications.success(`Добавлено участников со скриншота: ${count}.`);close()}catch(e){error.value=apiErrorMessage(e,'Не удалось добавить участников.')}finally{busy.value=false}}
+async function add(){if(!selected.value.length)return;busy.value=true;error.value='';try{const count=selected.value.length;await activities.addPlayers(props.activityId,selected.value);notifications.success(`Добавлено участников со скриншота: ${count}.`);busy.value=false;close()}catch(e){error.value=apiErrorMessage(e,'Не удалось добавить участников.')}finally{busy.value=false}}
 function close(){if(busy.value)return;clearPreview();file.value=null;result.value=null;selected.value=[];error.value='';emit('close')}
 onBeforeUnmount(clearPreview)
 </script>

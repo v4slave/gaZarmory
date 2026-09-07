@@ -56,6 +56,7 @@ const assetLabels = {
   has_invulnerable_pet: "Пет на неуяз",
   has_shield_swap: "Щит на свап",
   has_flippers: "Ласты",
+  has_ashyar_look: "Лик Ашьяры",
 };
 const assetImages = {
   has_ship: "/images/profile-assets/ship.png",
@@ -68,6 +69,7 @@ const assetImages = {
   has_invulnerable_pet: "/images/profile-assets/invulnerable-pet.png",
   has_shield_swap: "/images/profile-assets/shield-swap.png",
   has_flippers: "/images/profile-assets/flippers.png",
+  has_ashyar_look: "/images/profile-assets/ship.png",
 };
 const assetImagePositions = {
   has_ship: "30%",
@@ -80,6 +82,7 @@ const assetImagePositions = {
   has_invulnerable_pet: "32%",
   has_shield_swap: "38%",
   has_flippers: "42%",
+  has_ashyar_look: "50%",
 };
 const assets = reactive(
   Object.fromEntries(Object.keys(assetLabels).map((key) => [key, false])),

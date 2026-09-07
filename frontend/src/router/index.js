@@ -38,7 +38,7 @@ const routes = [
   { path: '/roster', component: RosterPage, meta: { title: 'Состав' } },
   { path: '/groups', component: GroupsPage, meta: { title: 'Конст-пати' } },
   { path: '/groups/:id/squads', component: PartySquadsPage, meta: { title: 'Пятёрки КП' } },
-  { path: '/roster-readiness', component: RosterReadinessPage, meta: { title: 'Готовность состава', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
+  { path: '/roster-readiness', component: RosterReadinessPage, meta: { title: 'Готовность состава', roles: ['guild_leader', 'developer', 'party_leader'] } },
   { path: '/attendance-analytics', component: AttendanceAnalyticsPage, meta: { title: 'Аналитика посещаемости', roles: ['guild_leader', 'micro_guild_leader', 'developer', 'party_leader'] } },
   { path: '/financial-reconciliation', component: FinancialReconciliationPage, meta: { title: 'Финансовая сверка', roles: ['guild_leader', 'developer'] } },
   { path: '/players/:id', component: PlayerPage, meta: { title: 'Игрок' } },

@@ -64,7 +64,7 @@ final class SelfPlayerController extends Controller
     {
         $player = $request->user()->player;
         abort_unless($player, 404, __('domain.profile.not_linked'));
-        $fields = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers'];
+        $fields = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers','has_ashyar_look'];
         $rules = ['gear_score' => ['required', 'integer', 'min:0', 'max:100000']];
         foreach ($fields as $field) $rules[$field] = ['required', 'boolean'];
         $data = $request->validate($rules);

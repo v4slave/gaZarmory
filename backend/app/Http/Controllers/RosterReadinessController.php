@@ -12,7 +12,7 @@ use Illuminate\Validation\Rule;
 
 final class RosterReadinessController extends Controller
 {
-    private const ASSETS = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers'];
+    private const ASSETS = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers','has_ashyar_look'];
 
     public function __invoke(Request $request)
     {
@@ -28,10 +28,8 @@ final class RosterReadinessController extends Controller
             'missing_asset' => ['nullable', Rule::in(self::ASSETS)],
         ]);
 
-        $partyGroupId = $user->hasRole(UserRole::PartyLeader) && !$user->canManageGuild()
-            ? $user->player?->group_id
-            : null;
-        if ($user->hasRole(UserRole::PartyLeader) && !$user->canManageGuild()) abort_unless($partyGroupId, 403, __('domain.party.leader_not_linked'));
+        // PL получает обзор всей гильдии.
+        $partyGroupId = null;
 
         $query = Player::query()->where('is_active', true)->with(['group:id,name', 'user:id,discord_id,discord_username,discord_display_name,discord_avatar,role,roles']);
         if ($partyGroupId) $query->where('group_id', $partyGroupId);
@@ -67,6 +65,8 @@ final class RosterReadinessController extends Controller
                 'players' => $players->count(),
                 'average_gear_score' => (int) round($players->avg('gear_score') ?? 0),
                 'ready' => $players->filter(fn ($player) => collect(self::ASSETS)->every(fn ($asset) => $player->{$asset}))->count(),
+                'ships' => $players->where('has_ship', true)->count(),
+                'ashyar_looks' => $players->where('has_ashyar_look', true)->count(),
             ],
         ]);
     }

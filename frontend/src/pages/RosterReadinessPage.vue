@@ -15,7 +15,7 @@ const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг
 const assets = [
   ['has_ship','Корабль'], ['has_tank','Танк'], ['has_fuchsias','Фуксория'], ['has_clouds','Облачко'],
   ['has_machaon','Махаон'], ['has_tare','Таре'], ['has_deer','Олень'], ['has_invulnerable_pet','Пет на неуяз'],
-  ['has_shield_swap','Щит на свап'], ['has_flippers','Ласты'],
+  ['has_shield_swap','Щит на свап'], ['has_flippers','Ласты'], ['has_ashyar_look','Лик Ашьяры'],
 ]
 const activeFilterCount = computed(() => Object.values(filters).filter(value => String(value).trim() !== '').length)
 let timer
@@ -43,7 +43,7 @@ onMounted(()=>{Object.keys(filters).forEach(key=>{filters[key]=String(route.quer
     <div class="readiness-summary">
       <article><span>В выборке</span><strong>{{ data.summary.players ?? 0 }}</strong><small>игроков</small></article>
       <article><span>Средний ГС</span><strong>{{ formatInteger(data.summary.average_gear_score ?? 0) }}</strong><small>по текущему фильтру</small></article>
-      <article><span>Полностью оснащены</span><strong>{{ data.summary.ready ?? 0 }}</strong><small>все отметки профиля</small></article>
+      <article><span>Полностью оснащены</span><strong>{{ data.summary.ready ?? 0 }}</strong><small>все отметки профиля</small></article><article><span>Корабли в гильдии</span><strong>{{ data.summary.ships ?? 0 }}</strong><small>персонажей с кораблём</small></article><article><span>Лики Ашьяры</span><strong>{{ data.summary.ashyar_looks ?? 0 }}</strong><small>персонажей с персоналкой</small></article>
     </div>
 
     <div class="panel readiness-filters">

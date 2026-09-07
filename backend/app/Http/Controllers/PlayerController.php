@@ -172,7 +172,7 @@ final class PlayerController extends Controller
     {
         abort_unless($request->user()->hasRole(UserRole::Developer), 403);
 
-        $assetFields = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers'];
+        $assetFields = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers','has_ashyar_look'];
         $rules = [
             'nickname' => ['required', 'string', new ValidPlayerNickname(), Rule::unique('players', 'nickname')->ignore($player)],
             'class' => ['required', Rule::enum(PlayerClass::class)],
