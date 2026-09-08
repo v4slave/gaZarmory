@@ -15,18 +15,18 @@ final class PlayerLinkRequestController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $this->authorizeAdministrator($request);
+        abort_unless($request->user()?->canAdministrate() || $request->user()?->hasRole('party_leader'), 403);
 
-        return response()->json(PlayerLinkRequest::query()
+        $query = PlayerLinkRequest::query()
             ->where('status', 'pending')
-            ->with(['user:id,discord_id,discord_username,discord_display_name,discord_avatar', 'player:id,nickname,class,group_id'])
-            ->latest('id')
-            ->get());
+            ->with(['user:id,discord_id,discord_username,discord_display_name,discord_avatar', 'player:id,nickname,class,group_id', 'requestedGroup:id,name']);
+        if (!$request->user()->canAdministrate()) $query->where('requested_group_id', $request->user()->player?->group_id);
+        return response()->json($query->latest('id')->get());
     }
 
     public function approve(Request $request, PlayerLinkRequest $playerLinkRequest, LinkDiscordUserToPlayer $link, AuditService $audit): JsonResponse
     {
-        $this->authorizeAdministrator($request);
+        $this->authorizeReviewer($request, $playerLinkRequest);
 
         $approved = DB::transaction(function () use ($request, $playerLinkRequest, $link, $audit): PlayerLinkRequest {
             $locked = PlayerLinkRequest::query()->lockForUpdate()->findOrFail($playerLinkRequest->id);
@@ -63,5 +63,11 @@ final class PlayerLinkRequestController extends Controller
     private function authorizeAdministrator(Request $request): void
     {
         abort_unless($request->user()?->canAdministrate(), 403);
+    }
+
+    private function authorizeReviewer(Request $request, PlayerLinkRequest $linkRequest): void
+    {
+        if ($request->user()?->canAdministrate()) return;
+        abort_unless($request->user()?->hasRole('party_leader') && $linkRequest->requested_group_id && $request->user()->player?->group_id === $linkRequest->requested_group_id, 403);
     }
 }

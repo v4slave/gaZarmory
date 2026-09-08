@@ -12,6 +12,7 @@ export const bossNames = Object.freeze({
   'Т2 АГЛ': 'JMG T2',
   'Т2 Кракен': 'Kraken T2',
   'Т2 Левиафан': 'Leviathan T2',
+  'Марля': 'Rangora',
 })
 
 export function localizeBossName(name, locale) {

@@ -7,9 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 final class PlayerLinkRequest extends Model
 {
-    protected $fillable = ['user_id', 'player_id', 'status', 'reviewed_by', 'reviewed_at'];
-    protected function casts(): array { return ['reviewed_at' => 'immutable_datetime']; }
+    protected $fillable = ['user_id', 'player_id', 'requested_group_id', 'created_by_applicant', 'status', 'reviewed_by', 'reviewed_at'];
+    protected function casts(): array { return ['reviewed_at' => 'immutable_datetime', 'created_by_applicant' => 'boolean']; }
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function player(): BelongsTo { return $this->belongsTo(Player::class); }
+    public function requestedGroup(): BelongsTo { return $this->belongsTo(GuildGroup::class, 'requested_group_id'); }
     public function reviewer(): BelongsTo { return $this->belongsTo(User::class, 'reviewed_by'); }
 }

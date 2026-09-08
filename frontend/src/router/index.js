@@ -52,7 +52,7 @@ const routes = [
   { path: '/payouts/:id', component: PayoutPage, meta: { title: 'Нахрюк' } },
   { path: '/admin', component: AdminPage, meta: { title: 'Админка', roles: ['guild_leader', 'developer'] } },
   { path: '/admin/users', component: AdminUsersPage, meta: { title: 'Пользователи и роли', roles: ['guild_leader', 'developer'] } },
-  { path: '/admin/requests', component: AdminRequestsPage, meta: { title: 'Заявки', roles: ['guild_leader', 'developer'] } },
+  { path: '/admin/requests', component: AdminRequestsPage, meta: { title: 'Заявки', roles: ['guild_leader', 'developer', 'party_leader'] } },
   { path: '/admin/activities', component: AdminActivitiesPage, meta: { title: 'Справочник активностей', roles: ['guild_leader', 'developer'] } },
   { path: '/admin/loot', component: AdminLootPage, meta: { title: 'Справочник лута', roles: ['guild_leader', 'developer'] } },
   { path: '/admin/audit', component: AdminAuditPage, meta: { title: 'Аудит', roles: ['guild_leader', 'developer'] } },

@@ -17,6 +17,11 @@ const { t } = useLocale()
 const menuOpen = ref(false)
 const showLinker = ref(false)
 const selectedPlayerId = ref('')
+const onboardingMode = ref('existing')
+const newNickname = ref('')
+const newClass = ref('melee')
+const selectedGroupId = ref('')
+const groups = ref([])
 const linking = ref(false)
 const linkError = ref('')
 const activeAuctions = ref(0)
@@ -88,9 +93,15 @@ async function openLinker() {
   showLinker.value = true
   linkError.value = ''
   playerOptionsLoading.value = true
-  try { freePlayers.value = (await api.get('/api/me/player-options')).data }
+  try { const data = (await api.get('/api/me/onboarding-options')).data; freePlayers.value = data.players; groups.value = data.groups }
   catch (error) { linkError.value = error.response?.data?.message ?? 'Не удалось загрузить список персонажей.' }
   finally { playerOptionsLoading.value = false }
+}
+async function createProfile() {
+  linking.value = true; linkError.value = ''
+  try { await api.post('/api/me/player/create', { nickname: newNickname.value, class: newClass.value, group_id: selectedGroupId.value || null }); showLinker.value = false; await auth.fetchMe() }
+  catch (error) { linkError.value = error.response?.data?.message ?? 'Не удалось создать персонажа.' }
+  finally { linking.value = false }
 }
 async function linkProfile() {
   if (!selectedPlayerId.value) return
@@ -115,6 +126,7 @@ async function linkProfile() {
       </div>
       <nav><div class="nav-section"><span class="nav-section-title">{{ t('Основное') }}</span><RouterLink v-for="link in primaryLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true"><AppIcon :name="link.icon"/></i><span>{{ t(link.label) }}</span></RouterLink></div><div class="nav-section"><span class="nav-section-title">{{ t('Экономика') }}</span><RouterLink v-for="link in economyLinks" :key="link.to" :to="link.to"><i class="nav-icon" aria-hidden="true"><AppIcon :name="link.icon"/></i><span>{{ t(link.label) }}</span><b v-if="link.to==='/auctions'&&activeAuctions" class="nav-count">{{ activeAuctions }}</b></RouterLink></div></nav>
       <nav class="management-nav"><div class="nav-section"><span class="nav-section-title">{{ t('Управление') }}</span>
+        <RouterLink v-if="auth.isPartyLeader" class="admin leader-action-link" to="/admin/requests"><i class="nav-icon" aria-hidden="true">✓</i><span>Заявки на вход</span><b class="nav-hint">{{ auth.user?.player?.group?.name || 'моя КП' }}</b></RouterLink>
         <RouterLink v-if="auth.canViewReadiness" class="admin" to="/roster-readiness"><i class="nav-icon" aria-hidden="true">◉</i><span>{{ t('Готовность состава') }}</span></RouterLink>
         <RouterLink v-if="auth.canViewReadiness" class="admin" to="/attendance-analytics"><i class="nav-icon" aria-hidden="true">↗</i><span>{{ t('Посещаемость') }}</span></RouterLink>
         <RouterLink v-if="auth.canHandleTreasuryItems" class="admin" to="/financial-reconciliation"><i class="nav-icon" aria-hidden="true">✓</i><span>{{ t('Финансовая сверка') }}</span></RouterLink>
@@ -142,10 +154,10 @@ async function linkProfile() {
       <RouterView :key="route.fullPath" />
     </main>
   </div>
-  <AppModal :open="showLinker" title="Привязать игровой профиль" @close="showLinker=false">
-    <form class="form-card" @submit.prevent="linkProfile">
-      <h2>{{ t('Привязать игровой профиль') }}</h2>
-      <p class="muted">{{ t('Выберите своего персонажа. Заявку проверит ГЛ или администратор.') }}</p>
+  <AppModal :open="showLinker" title="Персонаж и КП" @close="showLinker=false">
+    <form v-if="onboardingMode==='existing'" class="form-card" @submit.prevent="linkProfile">
+      <h2>{{ t('Выберите персонажа') }}</h2>
+      <p class="muted">Заявку подтвердит ГЛ или ПЛ выбранной КП.</p>
       <label>{{ t('Игровой никнейм') }}
         <select v-model="selectedPlayerId" required>
           <option value="" disabled>{{ t('Выберите персонажа') }}</option>
@@ -154,7 +166,8 @@ async function linkProfile() {
       </label>
       <p v-if="!playerOptionsLoading&&!freePlayers.length" class="empty">{{ t('Свободных активных профилей не найдено.') }}</p>
       <p v-if="linkError" class="notice error">{{ t(linkError) }}</p>
-      <div class="form-actions"><button type="button" @click="showLinker=false">{{ t('Отмена') }}</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ t(linking?'Отправка…':'Отправить заявку') }}</button></div>
+      <div class="form-actions"><button type="button" @click="onboardingMode='create'">Создать персонажа</button><button class="primary" :disabled="linking||!selectedPlayerId">{{ t(linking?'Отправка…':'Отправить заявку') }}</button></div>
     </form>
+    <form v-else class="form-card" @submit.prevent="createProfile"><h2>Новый персонаж</h2><label>Никнейм<input v-model.trim="newNickname" required maxlength="120"></label><label>Класс<select v-model="newClass"><option value="melee">Мили</option><option value="archer">Лучник</option><option value="mage">Маг</option><option value="healer">Хил</option><option value="bard">Бард</option><option value="tank">Танк</option></select></label><label>Конст-пати<select v-model="selectedGroupId"><option value="">Сольник</option><option v-for="group in groups" :key="group.id" :value="group.id">{{ group.name }}</option></select></label><p class="muted">Вход подтвердит ГЛ или ПЛ выбранной КП.</p><p v-if="linkError" class="notice error">{{ t(linkError) }}</p><div class="form-actions"><button type="button" @click="onboardingMode='existing'">Назад</button><button class="primary" :disabled="linking||!newNickname">Создать и отправить заявку</button></div></form>
   </AppModal>
 </template>

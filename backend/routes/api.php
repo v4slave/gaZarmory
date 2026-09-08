@@ -51,6 +51,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/me/player', [SelfPlayerController::class, 'link']);
     Route::get('/me/player-options', [SelfPlayerController::class, 'options']);
+    Route::get('/me/onboarding-options', [SelfPlayerController::class, 'onboardingOptions']);
+    Route::post('/me/player/create', [SelfPlayerController::class, 'createAndRequest']);
     Route::patch('/me/player/nickname', [SelfPlayerController::class, 'rename']);
     Route::patch('/me/player/class', [SelfPlayerController::class, 'changeClass']);
     Route::patch('/me/player/profile', [SelfPlayerController::class, 'updateProfile']);

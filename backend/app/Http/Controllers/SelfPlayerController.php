@@ -3,6 +3,9 @@ namespace App\Http\Controllers;
 use App\Enums\PlayerClass;
 use App\Models\Player;
 use App\Models\PlayerLinkRequest;
+use App\Models\GuildGroup;
+use App\Models\User;
+use App\Enums\UserRole;
 use App\Models\PlayerGearScoreHistory;
 use App\Rules\ValidPlayerNickname;
 use App\Services\AuditService;
@@ -21,6 +24,26 @@ final class SelfPlayerController extends Controller
             ->whereNull('user_id')
             ->orderBy('nickname')
             ->get(['id', 'nickname', 'class']);
+    }
+
+    public function onboardingOptions()
+    {
+        return response()->json(['players' => $this->options(), 'groups' => GuildGroup::query()->orderBy('name')->get(['id', 'name'])]);
+    }
+
+    public function createAndRequest(Request $request, ArmoryNotificationService $notifications)
+    {
+        $data = $request->validate(['nickname' => ['required', 'string', new ValidPlayerNickname(), Rule::unique('players', 'nickname')], 'class' => ['required', Rule::enum(PlayerClass::class)], 'group_id' => ['nullable', 'integer', 'exists:groups,id']]);
+        if ($request->user()->player()->exists() || PlayerLinkRequest::query()->where('user_id', $request->user()->id)->where('status', 'pending')->exists()) throw ValidationException::withMessages(['request' => __('domain.profile.request_pending')]);
+        $linkRequest = DB::transaction(function () use ($request, $data) {
+            $player = Player::query()->create(['nickname' => $data['nickname'], 'class' => $data['class'], 'group_id' => $data['group_id'] ?? null, 'is_active' => true]);
+            return PlayerLinkRequest::query()->create(['user_id' => $request->user()->id, 'player_id' => $player->id, 'requested_group_id' => $data['group_id'] ?? null, 'created_by_applicant' => true, 'status' => 'pending']);
+        });
+        $applicant = $request->user()->discord_display_name ?: $request->user()->discord_username;
+        $recipients = $notifications->administrators();
+        if (!empty($data['group_id'])) $recipients = $recipients->merge(User::query()->whereHas('player', fn ($q) => $q->where('group_id', $data['group_id']))->get()->filter(fn ($u) => $u->hasRole(UserRole::PartyLeader)));
+        $notifications->notify($recipients->unique('id'), 'link_request', 'Новая заявка на вступление', $applicant.' создал персонажа «'.$data['nickname'].'».', '/admin', 'link-request-'.$linkRequest->id);
+        return response()->json($linkRequest->load(['player.group']), 201);
     }
 
     public function link(Request $request, ArmoryNotificationService $notifications)
