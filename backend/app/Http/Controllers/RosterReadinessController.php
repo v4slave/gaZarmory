@@ -26,6 +26,7 @@ final class RosterReadinessController extends Controller
             'min_gear_score' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'max_gear_score' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'missing_asset' => ['nullable', Rule::in(self::ASSETS)],
+            'present_asset' => ['nullable', Rule::in(['has_ship', 'has_tank', 'has_ashyar_look'])],
         ]);
 
         // PL получает обзор всей гильдии.
@@ -39,6 +40,7 @@ final class RosterReadinessController extends Controller
         if (isset($data['min_gear_score'])) $query->where('gear_score', '>=', $data['min_gear_score']);
         if (isset($data['max_gear_score'])) $query->where('gear_score', '<=', $data['max_gear_score']);
         if (!empty($data['missing_asset'])) $query->where($data['missing_asset'], false);
+        if (!empty($data['present_asset'])) $query->where($data['present_asset'], true);
 
         $players = $query->orderByDesc('gear_score')->orderBy('nickname')->get();
         $history = PlayerGearScoreHistory::query()

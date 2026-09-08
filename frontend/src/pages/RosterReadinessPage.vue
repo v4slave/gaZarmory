@@ -10,7 +10,7 @@ const loading = ref(true)
 const route = useRoute(), router = useRouter()
 const error = ref('')
 const data = ref({ players: [], groups: [], summary: {} })
-const filters = reactive({ search: '', group_id: '', class: '', min_gear_score: '', max_gear_score: '', missing_asset: '' })
+const filters = reactive({ search: '', group_id: '', class: '', min_gear_score: '', max_gear_score: '', present_asset: '' })
 const classLabels = { melee: 'Милик', archer: 'Лучник', mage: 'Маг', healer: 'Хил', bard: 'Бард', tank: 'Танк' }
 const assets = [
   ['has_ship','Корабль'], ['has_tank','Танк'], ['has_fuchsias','Фуксория'], ['has_clouds','Облачко'],
@@ -52,10 +52,10 @@ onMounted(()=>{Object.keys(filters).forEach(key=>{filters[key]=String(route.quer
       <select v-model="filters.class"><option value="">Все классы</option><option v-for="(label,key) in classLabels" :key="key" :value="key">{{ label }}</option></select>
       <input v-model.number="filters.min_gear_score" type="number" min="0" placeholder="ГС от">
       <input v-model.number="filters.max_gear_score" type="number" min="0" placeholder="ГС до">
-      <select v-model="filters.missing_asset"><option value="">Любое оснащение</option><option v-for="asset in assets" :key="asset[0]" :value="asset[0]">Нет: {{ asset[1] }}</option></select>
+      <select v-model="filters.present_asset"><option value="">Любое оснащение</option><option value="has_ship">Есть корабль</option><option value="has_tank">Есть танк</option><option value="has_ashyar_look">Есть лик Ашьяры</option></select>
       <button v-if="activeFilterCount" type="button" @click="resetFilters">Сбросить · {{ activeFilterCount }}</button><span class="filter-result">{{ loading?'Обновляем…':`${data.summary.players??0} игроков` }}</span>
     </div>
-    <div v-if="activeFilterCount" class="active-filters" aria-label="Активные фильтры"><span v-for="(value,key) in filters" v-show="String(value).trim()" :key="key">{{ key==='search'?'Поиск':key==='group_id'?'Конста':key==='class'?'Класс':key==='min_gear_score'?'ГС от':key==='max_gear_score'?'ГС до':'Нет оснащения' }}: <b>{{ value }}</b><button aria-label="Убрать фильтр" @click="removeFilter(key)">×</button></span></div>
+    <div v-if="activeFilterCount" class="active-filters" aria-label="Активные фильтры"><span v-for="(value,key) in filters" v-show="String(value).trim()" :key="key">{{ key==='search'?'Поиск':key==='group_id'?'Конста':key==='class'?'Класс':key==='min_gear_score'?'ГС от':key==='max_gear_score'?'ГС до':'Есть оснащение' }}: <b>{{ value }}</b><button aria-label="Убрать фильтр" @click="removeFilter(key)">×</button></span></div>
 
     <AsyncState :loading="loading" :error="error" loading-text="Загружаем готовность состава…" @retry="load" />
     <div v-if="!loading&&!error&&data.players.length" class="readiness-list">
