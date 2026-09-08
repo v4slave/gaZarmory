@@ -26,6 +26,7 @@ const navigationGroups = [
   ] },
 ]
 const managementNavigation = [
+  { to: '/admin/requests', icon: 'users', label: 'Заявки на вход', permission: 'canReviewRequests' },
   { to: '/roster-readiness', icon: 'readiness', label: 'Готовность состава', permission: 'canViewReadiness' },
   { to: '/attendance-analytics', icon: 'attendance', label: 'Посещаемость', permission: 'canViewReadiness' },
   { to: '/financial-reconciliation', icon: 'reconcile', label: 'Финансовая сверка', permission: 'canHandleTreasuryItems' },

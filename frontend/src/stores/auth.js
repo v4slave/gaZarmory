@@ -14,6 +14,10 @@ export const useAuthStore = defineStore('auth', {
     isGuildLeader: (state) => (state.user?.roles ?? [state.user?.role]).includes('guild_leader'),
     isDeveloper: (state) => (state.user?.roles ?? [state.user?.role]).includes('developer'),
     isPartyLeader: (state) => (state.user?.roles ?? [state.user?.role]).includes('party_leader'),
+    canReviewRequests: (state) => {
+      const roles = state.user?.roles ?? [state.user?.role]
+      return roles.some(role => ['guild_leader', 'developer', 'party_leader'].includes(role))
+    },
     canCreatePlayer: (state) => {
       const roles = state.user?.roles ?? [state.user?.role]
       return roles.some(role => ['guild_leader', 'micro_guild_leader', 'developer'].includes(role))
