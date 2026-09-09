@@ -1472,4 +1472,6 @@ html,body,#app{font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif
 .prime-coefficient-compact { display:flex;align-items:center;gap:7px;color:#b9aa96;font-size:12px; }
 .prime-coefficient-compact input { width:68px;padding:8px 9px;border-color:#8b5b20;text-align:center; }
 .player-chip .player-coefficient { min-height:0;margin-left:4px;padding:2px 5px;border:0;border-radius:999px;background:rgba(0,0,0,.24);color:inherit;font-size:10px;line-height:1.2; }
-.player-chip .player-coefficient:hover { background:rgba(255,255,255,.12); }
+.player-chip .player-coefficient.is-default { width:0;margin:0;padding:0;overflow:hidden;opacity:0; }
+.player-chip:hover .player-coefficient.is-default,.player-chip:focus-within .player-coefficient.is-default { width:auto;margin-left:4px;padding:2px 5px;opacity:.75; }
+.player-chip .player-coefficient:hover { background:rgba(255,255,255,.12);opacity:1; }

@@ -33,7 +33,7 @@ final class ActivityController extends Controller
     public function store(Request $request)
     {
         $this->authorize('create', Activity::class);
-        $data=$request->validate(['activity_definition_id'=>['required','exists:activity_definitions,id'],'occurred_at'=>['required','date'],'gold_value'=>['nullable','integer','min:0'],'prime_coefficient'=>['sometimes','numeric','min:0.01','max:10']]);
+        $data=$request->validate(['activity_definition_id'=>['required','exists:activity_definitions,id'],'occurred_at'=>['required','date'],'gold_value'=>['nullable','integer','min:0'],'prime_coefficient'=>['sometimes','numeric','min:0.01','max:2']]);
         $data['occurred_at']=CarbonImmutable::parse($data['occurred_at'])->setTimezone(config('app.timezone'));
         $definition=ActivityDefinition::query()->findOrFail($data['activity_definition_id']);
         abort_unless($definition->type->value === 'prime', 422, __('domain.activity.prime_only'));
@@ -50,7 +50,7 @@ final class ActivityController extends Controller
         $this->authorize('update',$activity);
         abort_if($activity->completed_at,409,__('domain.activity.completed_locked'));
         abort_if($activity->earnings()->exists(),409,__('domain.activity.earnings_locked'));
-        $data=$request->validate(['occurred_at'=>['sometimes','date'],'gold_value'=>['sometimes','nullable','integer','min:0'],'prime_coefficient'=>['sometimes','numeric','min:0.01','max:10']]);
+        $data=$request->validate(['occurred_at'=>['sometimes','date'],'gold_value'=>['sometimes','nullable','integer','min:0'],'prime_coefficient'=>['sometimes','numeric','min:0.01','max:2']]);
         if(isset($data['occurred_at']))$data['occurred_at']=CarbonImmutable::parse($data['occurred_at'])->setTimezone(config('app.timezone'));
         $old=$activity->only(array_keys($data)); $activity->update($data); $this->audit->record('activity.updated',$activity,$old,$data);
         return $activity->refresh()->load('definition');
@@ -60,7 +60,7 @@ final class ActivityController extends Controller
     {
         $this->authorize('update', $activity);
         abort_if($activity->completed_at || $activity->earnings()->exists(), 409, __('domain.activity.participants_locked'));
-        $coefficient = $request->validate(['prime_coefficient'=>['required','numeric','min:0.01','max:10']])['prime_coefficient'];
+        $coefficient = $request->validate(['prime_coefficient'=>['required','numeric','min:0.01','max:2']])['prime_coefficient'];
         abort_unless($activity->players()->whereKey($playerId)->exists(), 404);
         $activity->players()->updateExistingPivot($playerId, ['prime_coefficient'=>$coefficient]);
         return $activity->refresh()->load('players');
