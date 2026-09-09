@@ -27,7 +27,6 @@ export const useActivitiesStore = defineStore('activities', {
     async scanParticipants(id, screenshot) { const body = new FormData(); body.append('screenshot', screenshot); return (await api.post(`/api/activities/${id}/participant-scan`, body, { timeout: 60000 })).data },
     async removePlayer(id, playerId) { await api.delete(`/api/activities/${id}/players/${playerId}`); await this.fetchActivity(id) },
     async updatePlayerCoefficient(id, playerId, coefficient) { await api.patch(`/api/activities/${id}/players/${playerId}/coefficient`, { prime_coefficient: coefficient }); await this.fetchActivity(id) },
-    async updatePlayerCoefficient(id, playerId, coefficient) { await api.patch(`/api/activities/${id}/players/${playerId}/coefficient`, { prime_coefficient: coefficient }); await this.fetchActivity(id) },
     async updateActivity(id, payload) { await api.patch(`/api/activities/${id}`, payload); await Promise.all([this.fetchActivity(id),this.fetchActivities()]) },
     async deleteActivity(id) { await api.delete(`/api/activities/${id}`); this.current = null; await this.fetchActivities() },
     async addLoot(id, payload) {
