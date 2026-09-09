@@ -31,5 +31,13 @@ final class PrimePayoutCalculator
             'remainder' => $remainder,
         ];
     }
-}
 
+    public function calculateWeighted(int $goldValue, array $weights): array
+    {
+        if ($goldValue < 0 || !$weights || min($weights) <= 0) throw new InvalidArgumentException('Prime weights must be positive.');
+        $total = array_sum($weights); $shares = [];
+        foreach ($weights as $id => $weight) $shares[$id] = (int) floor($goldValue * $weight / $total);
+        $distributed = array_sum($shares);
+        return ['shares'=>$shares, 'player_share'=>0, 'distributed'=>$distributed, 'remainder'=>$goldValue-$distributed];
+    }
+}

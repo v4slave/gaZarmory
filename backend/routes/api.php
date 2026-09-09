@@ -104,7 +104,8 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::apiResource('activities', ActivityController::class);
     Route::post('/activities/{activity}/players', [ActivityController::class, 'addPlayers']);
     Route::post('/activities/{activity}/participant-scan', ActivityParticipantScanController::class);
-    Route::delete('/activities/{activity}/players/{playerId}', [ActivityController::class, 'removePlayer']);
+      Route::delete('/activities/{activity}/players/{playerId}', [ActivityController::class, 'removePlayer']);
+      Route::patch('/activities/{activity}/players/{playerId}/coefficient', [ActivityController::class, 'updatePlayerCoefficient']);
     // Compatibility for records created before the mini-activity removal migration.
     Route::post('/activities/{activity}/complete', [ActivityController::class, 'complete']);
     Route::post('/activities/{activity}/reopen', [ActivityController::class, 'reopen']);

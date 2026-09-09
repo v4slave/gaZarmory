@@ -37,7 +37,7 @@ CREATE TABLE activity_definitions (
 );
 CREATE TABLE activities (
   id BIGSERIAL PRIMARY KEY, activity_definition_id BIGINT NOT NULL REFERENCES activity_definitions(id),
-  occurred_at TIMESTAMPTZ NOT NULL, gold_value BIGINT,
+  occurred_at TIMESTAMPTZ NOT NULL, gold_value BIGINT, prime_coefficient NUMERIC(5,2) NOT NULL DEFAULT 1.00,
   created_by BIGINT NOT NULL REFERENCES users(id),
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(), updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   CHECK (gold_value IS NULL OR gold_value >= 0)
@@ -45,7 +45,7 @@ CREATE TABLE activities (
 CREATE INDEX activities_occurred_idx ON activities(occurred_at DESC);
 CREATE TABLE activity_players (
   id BIGSERIAL PRIMARY KEY, activity_id BIGINT NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
-  player_id BIGINT NOT NULL REFERENCES players(id), created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE(activity_id, player_id)
+  player_id BIGINT NOT NULL REFERENCES players(id), prime_coefficient NUMERIC(5,2) NOT NULL DEFAULT 1.00, created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE(activity_id, player_id)
 );
 CREATE TABLE activity_loot (
   id BIGSERIAL PRIMARY KEY, activity_id BIGINT NOT NULL REFERENCES activities(id), item_name VARCHAR(255) NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE activity_loot (
 CREATE TABLE prime_player_earnings (
   id BIGSERIAL PRIMARY KEY, activity_id BIGINT NOT NULL REFERENCES activities(id), player_id BIGINT NOT NULL REFERENCES players(id),
   nickname_snapshot VARCHAR(120) NOT NULL, prime_gold_value_snapshot BIGINT NOT NULL, participants_count_snapshot INTEGER NOT NULL,
-  player_share BIGINT NOT NULL, status earning_status NOT NULL DEFAULT 'pending', payout_id BIGINT,
+  player_share BIGINT NOT NULL, prime_coefficient_snapshot NUMERIC(8,4), status earning_status NOT NULL DEFAULT 'pending', payout_id BIGINT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(), UNIQUE(activity_id, player_id),
   CHECK (prime_gold_value_snapshot >= 0), CHECK (participants_count_snapshot > 0), CHECK (player_share >= 0)
 );
