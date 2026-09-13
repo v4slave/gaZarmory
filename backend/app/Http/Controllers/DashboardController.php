@@ -173,8 +173,12 @@ final class DashboardController extends Controller
             foreach ($schedule[$day->dayOfWeekIso] as [$time, $name]) {
                 $startsAt = $day->setTimeFromTimeString($time);
                 $definition = $definitions->get(mb_strtolower($name));
+                $tierTwoDefinition = $definitions->get(mb_strtolower('Т2 '.$name));
                 $activity = $definition
                     ? $activitiesBySlot->get($definition->id.'|'.$startsAt->getTimestamp())
+                    : null;
+                $activity ??= $tierTwoDefinition
+                    ? $activitiesBySlot->get($tierTwoDefinition->id.'|'.$startsAt->getTimestamp())
                     : null;
                 $events->push([
                     'name' => $name,

@@ -114,6 +114,39 @@ final class DashboardQueryEfficiencyTest extends TestCase
         });
     }
 
+    public function test_tier_two_boss_activity_links_to_the_base_calendar_slot(): void
+    {
+        $user = User::query()->create([
+            'discord_id' => 'dashboard-tier-two-'.uniqid(),
+            'discord_username' => 'dashboard-tier-two',
+        ]);
+        $user->forceFill(['role' => UserRole::Member, 'roles' => [UserRole::Member->value]])->save();
+        Player::query()->create([
+            'nickname' => 'CalendarTierTwo',
+            'class' => PlayerClass::Melee,
+            'is_active' => true,
+        ])->forceFill(['user_id' => $user->id])->save();
+
+        $slot = collect($this->actingAs($user)->getJson('/api/dashboard')->assertOk()->json('weekly_events'))
+            ->firstWhere('name', 'Кракен');
+        self::assertNotNull($slot);
+
+        $definition = ActivityDefinition::query()->firstOrCreate(
+            ['name' => 'Т2 Кракен'],
+            ['type' => 'prime', 'is_active' => true],
+        );
+        $activity = Activity::query()->create([
+            'activity_definition_id' => $definition->id,
+            'occurred_at' => CarbonImmutable::parse($slot['starts_at']),
+            'created_by' => $user->id,
+        ]);
+
+        $linkedSlot = collect($this->actingAs($user)->getJson('/api/dashboard')->assertOk()->json('weekly_events'))
+            ->first(fn (array $event): bool => $event['name'] === 'Кракен' && $event['starts_at'] === $slot['starts_at']);
+
+        self::assertSame($activity->id, $linkedSlot['activity_id']);
+    }
+
     public function test_dashboard_attendance_ignores_drafts_and_includes_legacy_earnings(): void
     {
         $user = User::query()->create(['discord_id'=>'dashboard-stats-'.uniqid(),'discord_username'=>'dashboard-stats']);
