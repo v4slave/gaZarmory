@@ -21,6 +21,7 @@ use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\PayoutPreviewController;
 use App\Http\Controllers\TreasuryItemSaleController;
 use App\Http\Controllers\TreasuryItemIssueController;
+use App\Http\Controllers\TreasuryItemAddController;
 use App\Http\Controllers\TreasuryIssueOptionsController;
 use App\Http\Controllers\TreasuryTransactionController;
 use App\Http\Controllers\SelfPlayerController;
@@ -130,6 +131,7 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::post('/payouts/{payout}/cancel', [PayoutController::class, 'cancel']);
     Route::get('/treasury', TreasuryController::class);
     Route::get('/treasury/items', [TreasuryController::class, 'items']);
+    Route::post('/treasury/items', TreasuryItemAddController::class);
     Route::post('/treasury/transactions', [TreasuryTransactionController::class, 'store']);
     Route::get('/treasury/issue-options', TreasuryIssueOptionsController::class);
     Route::post('/treasury/items/{item}/issue', TreasuryItemIssueController::class);

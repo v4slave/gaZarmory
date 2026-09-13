@@ -12,6 +12,8 @@
 - Node.js с npm;
 - системные библиотеки Chromium (устанавливаются командой Playwright ниже);
 - PostgreSQL;
+- Tesseract OCR с языковыми пакетами `rus` и `eng` для сканирования участников;
+- отдельный Python venv с `rembg` и локально сохранённой моделью для вырезания персонажа;
 - Certbot или другой ACME-клиент для HTTPS.
 
 Путь приложения в готовых конфигурациях: `/var/www/gaz-armory/current`. Домен-заглушка: `armory.example.com`.
@@ -36,7 +38,7 @@ cp backend/.env.production.example backend/.env
 cp frontend/.env.production.example frontend/.env.production
 ```
 
-В `backend/.env` обязательно замените домен, данные PostgreSQL и Discord credentials. Затем:
+В `backend/.env` обязательно замените домен, данные PostgreSQL и Discord credentials. Если нужны OCR и вырезание персонажа, также проверьте `TESSERACT_*`, `REMBG_PYTHON_BINARY`, `REMBG_MODEL_DIR`, `REMBG_MODEL` и `REMBG_TIMEOUT`: Python venv и модель должны находиться вне каталога релизов и быть доступны пользователю `www-data`. Затем:
 
 ```bash
 composer install --working-dir=backend --no-dev --prefer-dist --no-interaction --optimize-autoloader
@@ -111,6 +113,8 @@ journalctl -u gaz-armory-scheduler -f
 
 Скрипт сохраняет PostgreSQL и `backend/storage/app/public`, затем удаляет копии старше 14 дней.
 
+> Важно: текущий `backup.sh` не включает `backend/storage/app/private/media`. Пока скрипт не расширен, добавьте private media в отдельную резервную копию; иначе пользовательские загрузки раздела «Контент» не восстановятся вместе с базой.
+
 ```bash
 sudo mkdir -p /etc/gaz-armory /var/backups/gaz-armory
 sudo cp deploy/backup.env.example /etc/gaz-armory/backup.env
@@ -148,9 +152,13 @@ APP_DIR=/var/www/gaz-armory/current deploy/scripts/deploy.sh
 - вход и выход через Discord работают;
 - cookie имеет флаги `Secure` и `HttpOnly`;
 - cookie-сессия зашифрована (`SESSION_ENCRYPT=true`);
+- `APP_ENV=production`, TLS verification внешних сервисов не отключён;
 - ответы содержат CSP, `X-Content-Type-Options`, `Referrer-Policy` и запрет framing;
 - создаётся тестовая активность;
 - очередь обрабатывает Discord-уведомление;
 - истёкший тестовый аукцион закрывается scheduler;
 - выполняется и восстанавливается резервная копия;
+- восстанавливаются как public uploads, так и `storage/app/private/media`;
 - `APP_DEBUG=false`, `.env` недоступен из браузера.
+
+После функционального smoke test проверьте p95 latency и потребление памяти отдельно для dashboard, attendance export, participant OCR и character background removal. Для тяжёлых image endpoints примените отдельные PHP-FPM/worker limits; известные риски и рекомендуемые budgets перечислены в [`TECHNICAL_AUDIT.md`](TECHNICAL_AUDIT.md).
