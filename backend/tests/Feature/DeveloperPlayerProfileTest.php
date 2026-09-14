@@ -6,6 +6,7 @@ use App\Enums\PlayerClass;
 use App\Enums\UserRole;
 use App\Models\Activity;
 use App\Models\ActivityDefinition;
+use App\Models\GuildGroup;
 use App\Models\Player;
 use App\Models\PlayerGearScoreHistory;
 use App\Models\PrimePlayerEarning;
@@ -53,6 +54,61 @@ final class DeveloperPlayerProfileTest extends TestCase
 
         $this->actingAs($member)
             ->patchJson('/api/players/'.$player->id.'/profile', $this->payload())
+            ->assertForbidden();
+    }
+
+    public function test_party_leader_can_update_own_party_members_profile(): void
+    {
+        $group = GuildGroup::query()->create(['name' => 'Profile party']);
+        $leader = $this->userWithRole(UserRole::PartyLeader, 'pl-own');
+        $leader->player()->create([
+            'nickname' => 'Profileleader',
+            'class' => PlayerClass::Melee,
+            'group_id' => $group->id,
+            'is_active' => true,
+        ]);
+        $member = Player::query()->create([
+            'nickname' => 'Partymember',
+            'class' => PlayerClass::Melee,
+            'group_id' => $group->id,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($leader)
+            ->patchJson('/api/players/'.$member->id.'/profile', $this->payload())
+            ->assertOk()
+            ->assertJsonPath('nickname', 'Afterprofile')
+            ->assertJsonPath('gear_score', 15000);
+    }
+
+    public function test_party_leader_cannot_update_player_outside_own_party(): void
+    {
+        $ownGroup = GuildGroup::query()->create(['name' => 'Own profile party']);
+        $otherGroup = GuildGroup::query()->create(['name' => 'Other profile party']);
+        $leader = $this->userWithRole(UserRole::PartyLeader, 'pl-other');
+        $leader->player()->create([
+            'nickname' => 'Restrictedleader',
+            'class' => PlayerClass::Melee,
+            'group_id' => $ownGroup->id,
+            'is_active' => true,
+        ]);
+        $otherMember = Player::query()->create([
+            'nickname' => 'Othermember',
+            'class' => PlayerClass::Melee,
+            'group_id' => $otherGroup->id,
+            'is_active' => true,
+        ]);
+        $solo = Player::query()->create([
+            'nickname' => 'Solomember',
+            'class' => PlayerClass::Melee,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($leader)
+            ->patchJson('/api/players/'.$otherMember->id.'/profile', $this->payload())
+            ->assertForbidden();
+        $this->actingAs($leader)
+            ->patchJson('/api/players/'.$solo->id.'/profile', $this->payload())
             ->assertForbidden();
     }
 
@@ -162,6 +218,7 @@ final class DeveloperPlayerProfileTest extends TestCase
             'has_invulnerable_pet' => false,
             'has_shield_swap' => true,
             'has_flippers' => false,
+            'has_ashyar_look' => false,
         ];
     }
 }

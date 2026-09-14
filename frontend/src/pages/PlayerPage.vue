@@ -107,7 +107,15 @@ const isOwnProfile = computed(
 const isDeveloper = computed(() =>
   (auth.user?.roles ?? [auth.user?.role]).includes("developer"),
 );
-const canEditProfile = computed(() => isOwnProfile.value || isDeveloper.value);
+const canEditPartyMemberProfile = computed(
+  () =>
+    auth.isPartyLeader &&
+    auth.partyGroupId !== null &&
+    Number(auth.partyGroupId) === Number(player.value?.group_id),
+);
+const canEditProfile = computed(
+  () => isOwnProfile.value || isDeveloper.value || canEditPartyMemberProfile.value,
+);
 const gearDelta = computed(() =>
   player.value?.previous_gear_score === null ||
   player.value?.previous_gear_score === undefined
@@ -304,7 +312,7 @@ async function saveProfile() {
   savingProfile.value = true;
   error.value = "";
   try {
-    if (!isOwnProfile.value && isDeveloper.value) {
+    if (!isOwnProfile.value && (isDeveloper.value || canEditPartyMemberProfile.value)) {
       await api.patch(`/api/players/${player.value.id}/profile`, {
         nickname: nickname.value,
         class: selectedClass.value,
@@ -611,7 +619,7 @@ async function saveProfile() {
               required
           /></label>
         </div>
-        <div class="profile-edit-section">
+        <div v-if="isOwnProfile || isDeveloper" class="profile-edit-section">
           <div class="profile-edit-section-title">
             <span>♙</span><strong>Модель персонажа</strong>
           </div>
@@ -635,7 +643,7 @@ async function saveProfile() {
             <button v-if="player.character_render_url" type="button" class="danger" :disabled="savingProfile" @click="deleteCharacterRender">Удалить</button>
           </div>
         </div>
-        <div class="profile-edit-section">
+        <div v-if="isOwnProfile || isDeveloper" class="profile-edit-section">
           <div class="profile-edit-section-title">
             <span>↗</span><strong>Экипировка archa.ge</strong>
           </div>

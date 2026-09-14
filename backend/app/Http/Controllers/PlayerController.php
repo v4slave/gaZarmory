@@ -170,7 +170,12 @@ final class PlayerController extends Controller
 
     public function updateProfile(Request $request, Player $player): Player
     {
-        abort_unless($request->user()->hasRole(UserRole::Developer), 403);
+        $user = $request->user();
+        $isDeveloper = $user->hasRole(UserRole::Developer);
+        $isOwnPartyMember = $user->hasRole(UserRole::PartyLeader)
+            && $user->player?->group_id !== null
+            && $user->player->group_id === $player->group_id;
+        abort_unless($isDeveloper || $isOwnPartyMember, 403);
 
         $assetFields = ['has_ship','has_tank','has_fuchsias','has_clouds','has_machaon','has_tare','has_deer','has_invulnerable_pet','has_shield_swap','has_flippers','has_ashyar_look'];
         $rules = [
@@ -181,7 +186,7 @@ final class PlayerController extends Controller
         foreach ($assetFields as $field) $rules[$field] = ['required', 'boolean'];
         $data = $request->validate($rules);
 
-        return DB::transaction(function () use ($player, $data): Player {
+        return DB::transaction(function () use ($player, $data, $isDeveloper): Player {
             $trackedFields = array_keys($data);
             $old = $player->only($trackedFields);
 
@@ -196,7 +201,12 @@ final class PlayerController extends Controller
             }
 
             $player->update($data);
-            $this->audit->record('player.profile_updated_by_developer', $player, $old, $player->only($trackedFields));
+            $this->audit->record(
+                $isDeveloper ? 'player.profile_updated_by_developer' : 'player.profile_updated_by_party_leader',
+                $player,
+                $old,
+                $player->only($trackedFields),
+            );
 
             return $player->refresh()->load(['group', 'user']);
         });
