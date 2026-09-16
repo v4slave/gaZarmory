@@ -45,6 +45,6 @@ Laravel HTTP API
 
 ## Развёртывание
 
-Предполагаются Laravel/PHP-FPM, отдельные queue worker и scheduler, статический Vue build, PostgreSQL, file cache/session, Tesseract OCR, а также опциональные Playwright и `rembg` для расширенных функций. Все secrets задаются через `.env`; production cookies — encrypted, `secure`, `httpOnly`, `sameSite=lax`.
+Предполагаются Laravel/PHP-FPM, отдельные queue worker и scheduler, статический Vue build, PostgreSQL, file cache/session, а также опциональные Playwright и `rembg` для расширенных функций. Все secrets задаются через `.env`; production cookies — encrypted, `secure`, `httpOnly`, `sameSite=lax`.
 
-Тяжёлые OCR и `rembg` операции пока выполняются синхронно в HTTP worker. Ограничения и план изоляции описаны в [`TECHNICAL_AUDIT.md`](TECHNICAL_AUDIT.md).
+Тяжёлые операции `rembg` пока выполняются синхронно в HTTP worker. Ограничения и план изоляции описаны в [`TECHNICAL_AUDIT.md`](TECHNICAL_AUDIT.md).

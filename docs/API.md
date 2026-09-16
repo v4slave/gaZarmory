@@ -42,7 +42,6 @@
 - resource `/api/activity-definitions` и `/icon` — справочник праймов;
 - resource `/api/activities` — журнал активностей;
 - `/api/activities/{activity}/players[...]` — состав и индивидуальные коэффициенты;
-- `POST /api/activities/{activity}/participant-scan` — OCR скриншота участников;
 - `/api/activities/{activity}/loot[...]` — позиции лута;
 - `/api/activities/{activity}/loot-imports` и `/api/loot-imports[...]` — draft/confirm импорт CSV/XLS/XLSX;
 - `/complete`, `/reopen`, `/calculate-prime` — переходы расчёта.
@@ -51,7 +50,7 @@
 
 ## Казна, выплаты и аукционы
 
-- `GET /api/treasury`, `/items`, `/issue-options` — агрегаты и склад;
+- `GET /api/treasury`, `/items`, `/issue-options` — агрегаты и склад; истории в `/treasury` пагинируются независимо параметрами `item_page` и `gold_page` по 10 строк;
 - `POST /api/treasury/transactions` — ручная операция с золотом;
 - `POST /api/treasury/items/{item}/issue|sell` — выдача/продажа;
 - `GET /api/earnings/pending` — ожидающие начисления;

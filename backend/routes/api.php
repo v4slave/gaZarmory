@@ -7,7 +7,6 @@ use App\Http\Controllers\PlayerController;
 use App\Http\Controllers\PlayerLinkController;
 use App\Http\Controllers\PlayerLinkRequestController;
 use App\Http\Controllers\ActivityController;
-use App\Http\Controllers\ActivityParticipantScanController;
 use App\Http\Controllers\ActivityDefinitionController;
 use App\Http\Controllers\LootImportController;
 use App\Http\Controllers\ActivityLootController;
@@ -104,7 +103,6 @@ Route::middleware(['auth:sanctum', 'throttle:api'])->group(function (): void {
     Route::delete('/activity-definitions/{activityDefinition}/icon', [ActivityDefinitionController::class, 'deleteIcon']);
     Route::apiResource('activities', ActivityController::class);
     Route::post('/activities/{activity}/players', [ActivityController::class, 'addPlayers']);
-    Route::post('/activities/{activity}/participant-scan', ActivityParticipantScanController::class);
       Route::delete('/activities/{activity}/players/{playerId}', [ActivityController::class, 'removePlayer']);
       Route::patch('/activities/{activity}/players/{playerId}/coefficient', [ActivityController::class, 'updatePlayerCoefficient']);
     // Compatibility for records created before the mini-activity removal migration.

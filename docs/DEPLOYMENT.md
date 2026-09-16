@@ -12,7 +12,6 @@
 - Node.js с npm;
 - системные библиотеки Chromium (устанавливаются командой Playwright ниже);
 - PostgreSQL;
-- Tesseract OCR с языковыми пакетами `rus` и `eng` для сканирования участников;
 - отдельный Python venv с `rembg` и локально сохранённой моделью для вырезания персонажа;
 - Certbot или другой ACME-клиент для HTTPS.
 
@@ -38,7 +37,7 @@ cp backend/.env.production.example backend/.env
 cp frontend/.env.production.example frontend/.env.production
 ```
 
-В `backend/.env` обязательно замените домен, данные PostgreSQL и Discord credentials. Если нужны OCR и вырезание персонажа, также проверьте `TESSERACT_*`, `REMBG_PYTHON_BINARY`, `REMBG_MODEL_DIR`, `REMBG_MODEL` и `REMBG_TIMEOUT`: Python venv и модель должны находиться вне каталога релизов и быть доступны пользователю `www-data`. Затем:
+В `backend/.env` обязательно замените домен, данные PostgreSQL и Discord credentials. Если нужно вырезание персонажа, также проверьте `REMBG_PYTHON_BINARY`, `REMBG_MODEL_DIR`, `REMBG_MODEL` и `REMBG_TIMEOUT`: Python venv и модель должны находиться вне каталога релизов и быть доступны пользователю `www-data`. Затем:
 
 ```bash
 composer install --working-dir=backend --no-dev --prefer-dist --no-interaction --optimize-autoloader
@@ -161,4 +160,4 @@ APP_DIR=/var/www/gaz-armory/current deploy/scripts/deploy.sh
 - восстанавливаются как public uploads, так и `storage/app/private/media`;
 - `APP_DEBUG=false`, `.env` недоступен из браузера.
 
-После функционального smoke test проверьте p95 latency и потребление памяти отдельно для dashboard, attendance export, participant OCR и character background removal. Для тяжёлых image endpoints примените отдельные PHP-FPM/worker limits; известные риски и рекомендуемые budgets перечислены в [`TECHNICAL_AUDIT.md`](TECHNICAL_AUDIT.md).
+После функционального smoke test проверьте p95 latency и потребление памяти отдельно для dashboard, attendance export и character background removal. Для тяжёлых image endpoints примените отдельные PHP-FPM/worker limits; известные риски и рекомендуемые budgets перечислены в [`TECHNICAL_AUDIT.md`](TECHNICAL_AUDIT.md).

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\TreasuryItem;
 use App\Models\TreasuryItemTransaction;
 use App\Models\TreasuryTransaction;
+use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
 final class TreasuryController extends Controller
@@ -14,8 +16,12 @@ final class TreasuryController extends Controller
         return TreasuryItem::query()->where('quantity', '>', 0)->orderBy('item_name')->get();
     }
 
-    public function __invoke(): array
+    public function __invoke(Request $request): array
     {
+        $filters = $request->validate([
+            'item_page' => ['nullable', 'integer', 'min:1'],
+            'gold_page' => ['nullable', 'integer', 'min:1'],
+        ]);
         $items = TreasuryItem::query()->where('quantity', '>', 0)->orderBy('item_name')->get();
         $tokenSettings = DB::table('treasury_token_settings')->where('id', 1)->first();
         $tokenUnitValue = (int) ($tokenSettings?->token_unit_value ?? 0);
@@ -61,6 +67,14 @@ final class TreasuryController extends Controller
             })
             ->values();
 
+        $transactions = $transactionQuery
+            ->latest('id')
+            ->paginate(10, ['*'], 'item_page', $filters['item_page'] ?? 1);
+        $goldTransactions = TreasuryTransaction::query()
+            ->with('creator:id,discord_username,discord_display_name')
+            ->latest('id')
+            ->paginate(10, ['*'], 'gold_page', $filters['gold_page'] ?? 1);
+
         return [
             'gold' => $gold,
             'token_count' => $tokenCount,
@@ -68,12 +82,22 @@ final class TreasuryController extends Controller
             'inventory_value' => (int) $items->sum(fn ($item) => $item->quantity * $item->unit_value),
             'items' => $items,
             'recent_drops' => $recentDrops,
-            'transactions' => $transactionQuery->latest('id')->limit(50)->get(),
-            'gold_transactions' => TreasuryTransaction::query()
-                ->with('creator:id,discord_username,discord_display_name')
-                ->latest('id')
-                ->limit(50)
-                ->get(),
+            'transactions' => $transactions->items(),
+            'transactions_meta' => $this->paginationMeta($transactions),
+            'gold_transactions' => $goldTransactions->items(),
+            'gold_transactions_meta' => $this->paginationMeta($goldTransactions),
+        ];
+    }
+
+    private function paginationMeta(LengthAwarePaginator $paginator): array
+    {
+        return [
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+            'from' => $paginator->firstItem(),
+            'to' => $paginator->lastItem(),
         ];
     }
 }

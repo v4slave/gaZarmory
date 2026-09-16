@@ -33,12 +33,12 @@
 2. **Срок remembered-сессии.** Вход сейчас всегда выполняется с `remember=true`; срок и отзыв устройств не определены.
 3. **Внешние direct media.** Нужен выбор между любым HTTPS URL, allowlist платформ и защищённым proxy.
 4. **Масштаб отчётов.** Не определены максимальный период/размер XLSX и момент перехода на async export.
-5. **Retention файлов.** Нужно согласовать срок хранения private media, OCR temp и character renders вместе с backup policy.
+5. **Retention файлов.** Нужно согласовать срок хранения private media и character renders вместе с backup policy.
 
 ## Ближайший технический план
 
 1. Исправить stale tests и отсутствующие английские переводы, вернуть CI в зелёное состояние.
 2. Закрыть backup gap для `storage/app/private/media`.
-3. Ограничить размеры изображений по dimensions/pixels и изолировать OCR/rembg.
+3. Ограничить размеры изображений по dimensions/pixels и изолировать `rembg`.
 4. Оптимизировать крупные PNG/favicon и font payload.
-5. Добавить observability: slow queries, queue failures, external HTTP latency, OCR/rembg time и disk usage.
+5. Добавить observability: slow queries, queue failures, external HTTP latency, `rembg` time и disk usage.
